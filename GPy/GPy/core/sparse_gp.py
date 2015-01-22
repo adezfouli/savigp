@@ -414,6 +414,7 @@ class SparseGP(GPBase):
         :param plot_limits: The limits of the plot. If 1D [xmin,xmax], if 2D [[xmin,ymin],[xmax,ymax]]. Defaluts to data limits
         :type plot_limits: np.array
         :param which_data_rows: which of the training data to plot (default all)
+
         :type which_data_rows: 'all' or a slice object to slice self.X, self.Y
         :param which_data_ycols: when the data has several columns (independant outputs), only plot these
         :type which_data_rows: 'all' or a list of integers

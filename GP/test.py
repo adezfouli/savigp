@@ -31,4 +31,15 @@ def test_direct_gp(optimize=True, plot=True):
     m.plot(plot_raw=True)
     show(block=True)
 
-test_direct_gp()
+def test():
+    # num_samples = 10
+    # X = np.random.uniform(-3., 3., (num_samples, 2))
+    # Y = np.sin(X[:, 0:1]) * np.sin(X[:, 1:2]) + np.random.randn(num_samples, 1) * 0.05
+
+    # x = np.array([np.eye(3)] * 3)
+    # print x
+    # print Y
+    np.random.random()
+
+
+test()
