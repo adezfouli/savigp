@@ -10,3 +10,6 @@
 .classpath
 .project
 .settings/
+
+#python
+*.pyc
