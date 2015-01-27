@@ -5,3 +5,5 @@ class MoG:
         self.s = np.array([np.array([np.eye(num_dim)] * num_process)] * num_comp)
         # self.pi = np.array([1. / num_comp] * (num_comp-1) + [0])
         self.pi = np.array([1. / num_comp] * num_comp)
+
+
