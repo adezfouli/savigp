@@ -13,7 +13,8 @@ from GPy.core import Model
 from GPy.util.linalg import mdot
 from MoG import MoG
 from MoG_Diag import MoG_Diag
-from util import mdiag_dot
+from util import mdiag_dot, cross_ent_normal, KL_normal
+
 
 class SAVIGP(Model):
 
@@ -27,6 +28,8 @@ class SAVIGP(Model):
         self.num_MoG_comp = num_MoG_comp
         self.kernel = GPy.kern.rbf(X.shape[1])
         self.likelihood = likelihood
+        self.X = X
+        self.Y = Y
 
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
@@ -97,16 +100,17 @@ class SAVIGP(Model):
         """
         return Kj[n] + mdot(self.MoG.s[:,j,:], (Aj[n, :] * Aj[n, :].T))
 
-    def _ell(self, n_sample, p_X, p_Y):
+    def _ell(self, n_sample, p_X, p_Y, log_likelihood, ll_sigma):
 
         """
         calculating expected log-likelihood, and it's derivatives
         """
 
-        print 'ell started'
+        # print 'ell started'
         total_ell = 0
+        normal_ell = 0
         d_ell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
-        d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing, self.num_inducing))
+        d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         d_ell_dPi = np.zeros(self.num_MoG_comp)
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
@@ -115,7 +119,7 @@ class SAVIGP(Model):
             Kj[j] = self._Kdiag(p_X, Aj[j], j)
 
         for n in  range(len(p_X)):
-            print 'ell for point #', n
+            # print 'ell for point #', n
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
             for j in range(self.num_latent_proc):
@@ -131,20 +135,22 @@ class SAVIGP(Model):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
                 for k in range(self.num_MoG_comp):
-                    f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]))
+                    f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), n_sample)
 
             for k in range(self.num_MoG_comp):
                 for i in range(n_sample):
                     ### for calculating ell
-                    self_likelihood = self.likelihood(f[i,k,:], p_Y[n, :])
-                    k_ell[k] += self_likelihood
-                    d_ell_dPi[k] += self_likelihood
+                    ll = log_likelihood(f[i,k,:], p_Y[n, :])
+                    k_ell[k] += ll
+                    d_ell_dPi[k] += ll
                     ### for calculating d_ell_dm
                     for j in range(self.num_latent_proc):
-                        s_dell_dm[k,j] += (f[i,k,j] - mean_kj[k,j]) * self_likelihood
-                        s_dell_dS[k,j] += (sigma_kj[k,j] ** -2 * (f[i,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1) * self_likelihood
+                        s_dell_dm[k,j] += (f[i,k,j] - mean_kj[k,j]) * ll
+                        s_dell_dS[k,j] += (sigma_kj[k,j] ** -2 * (f[i,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1) * ll
                     pass
                 total_ell += k_ell[k] * self.MoG.pi[k]
+                if ll_sigma is not None:
+                    normal_ell += cross_ent_normal(mean_kj[k,:], np.diag(sigma_kj[k,:]), p_Y[n, :], ll_sigma) * self.MoG.pi[k]
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
@@ -152,7 +158,7 @@ class SAVIGP(Model):
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    d_ell_dS[k,j] += np.multiply(Aj[j,n], Aj[j,n].T)* s_dell_dm[k,j]
+                    d_ell_dS[k,j] += (Aj[j,n] * Aj[j,n].T)* s_dell_dS[k,j]
 
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
@@ -160,12 +166,11 @@ class SAVIGP(Model):
 
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
-                d_ell_dS[k,j,:] = self.MoG.pi[k]/n_sample / 2 * d_ell_dm[k,j,:]
+                d_ell_dS[k,j,:] = self.MoG.pi[k]/n_sample / 2. * d_ell_dS[k,j,:]
 
-        for k in range(self.num_MoG_comp):
-            d_ell_dPi /= n_sample
+        d_ell_dPi = d_ell_dPi/n_sample
 
-        return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi
+        return total_ell / n_sample, normal_ell, d_ell_dm, d_ell_dS, d_ell_dPi
 
     def _dcorss_dm(self):
         """
@@ -252,12 +257,21 @@ class SAVIGP(Model):
     @staticmethod
     def normal_likelihood(epsilon):
         def ll(f, y):
-            return sum(f) - y ** 2
+            # return sum(f) - y ** 2
             return scipy.stats.norm.logpdf(y, loc=f[0], scale=epsilon)
+            # return 1
+        return ll
+
+    @staticmethod
+    def multivariate_likelihood(sigma):
+        def ll(f, y):
+            # return sum(f) - y ** 2
+            return scipy.stats.multivariate_normal.logpdf(y, mean=f, cov=sigma)
+            # return 1
         return ll
 
 
-def generate_samples(num_samples, input_dim):
+def generate_samples(num_samples, input_dim, y_dim):
     # seed=1000
     noise=0.02
     # np.random.seed(seed=seed)
@@ -266,23 +280,24 @@ def generate_samples(num_samples, input_dim):
     rbf = GPy.kern.rbf(input_dim, variance=1., lengthscale=np.array((0.25,)))
     white = GPy.kern.white(input_dim, variance=noise)
     kernel = rbf + white
-    Y = np.sin([X.sum(axis=1).T]).T + np.random.randn(num_samples, 1) * 0.05
+    Y = np.sin([X.sum(axis=1).T]).T + np.random.randn(num_samples, y_dim) * 0.05
     return X, Y, kernel, noise
 
 
 def test():
-    num_input_samples = 50
-    input_dim = 20
-    num_inducing = 3
-    num_MoG = 3
-    num_latent_proc = 2
-    num_samples = 1000
+    num_input_samples = 1
+    input_dim = 1
+    num_inducing = 1
+    num_MoG = 1
+    num_latent_proc = 5
+    num_samples = 50000
 
-    X, Y, kernel, noise = generate_samples(num_input_samples, input_dim)
+    X, Y, kernel, noise = generate_samples(num_input_samples, input_dim, num_latent_proc)
     print 'samples generated'
     np.random.seed()
 
     s1 = SAVIGP(X, Y, num_inducing, num_MoG, num_latent_proc, SAVIGP.normal_likelihood(1), False)
-    # print s1._ell(num_samples, X, Y)
+    print s1._ell(num_samples, X, Y, SAVIGP.multivariate_likelihood(np.eye(num_latent_proc)), np.eye(num_latent_proc))
 
-
+if __name__ == '__main__':
+    test()
