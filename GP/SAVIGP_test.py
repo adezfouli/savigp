@@ -87,7 +87,7 @@ class SAVIGP_test:
         def approx(pi):
             s2.MoG.pi = pi
             s2._update()
-            return s2.l_ent()
+            return s2._l_ent()
 
         def exact(pi):
             s1.MoG.pi = pi
@@ -108,7 +108,7 @@ class SAVIGP_test:
         def approx(s):
             s2.MoG.s_from_array(s)
             s2._update()
-            return s2.l_ent()
+            return s2._l_ent()
 
         def exact(s):
             s1.MoG.s_from_array(s)
@@ -128,7 +128,7 @@ class SAVIGP_test:
         def approx(m):
             s2.MoG.m_from_array(m)
             s2._update()
-            return s2.l_ent()
+            return s2._l_ent()
 
         def exact(m):
             s1.MoG.m_from_array(m)
@@ -173,7 +173,7 @@ class SAVIGP_test:
 
         def exact(s):
             s1.MoG.s_from_array(s)
-            return s1._dcorss_dS().flatten()
+            return s1._dcross_dS().flatten()
 
         samples = 20
         m = np.random.uniform(low=0.1, high=5.0, size=(samples, s1.num_MoG_comp *  s1.num_latent_proc * s1.num_inducing))
