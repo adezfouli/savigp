@@ -15,4 +15,7 @@ def KL_normal(m1, sigma1, m2, sigma2):
 
 
 def cross_ent_normal(m1, sigma1, m2, sigma2):
+    """
+    calculates cross entropy between two Gaussian
+    """
     return -KL_normal(m1, sigma1, m2, sigma2) - 1. / 2 * math.log(det(2.0 * math.pi * math.e * sigma1))
