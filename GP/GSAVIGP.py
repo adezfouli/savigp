@@ -4,6 +4,20 @@ import numpy as np
 
 
 class GSAVIGP(SAVIGP):
+    """
+    Scalable Variational Inference Gaussian Process where the conditional likelihood is gaussian
+
+    :param X: input observations
+    :param Y: outputs
+    :param num_inducing: number of inducing variables
+    :param num_MoG_comp: number of components of the MoG
+    :param num_latent_proc: number of latent processes
+    :param likelihood: conditional likelihood function
+    :param normal_sigma: covariance matrix of the conditional likelihood function
+    :param kernel: of the GP
+    :param n_samples: number of samples drawn for approximating ell and its gradient
+    :rtype: model object
+    """
     def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, normal_sigma, kernel, n_samples, normalize_X):
         self.normal_sigma = normal_sigma
         super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X)
@@ -30,5 +44,6 @@ class GSAVIGP(SAVIGP):
         return normal_ell
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi  = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
-        return self._gaussian_ell(p_X, p_Y), xdell_dm, xdell_dS, xdell_dpi
+        xell, xdell_dm, xdell_dS, xdell_dpi = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
+        gell = self._gaussian_ell(p_X, p_Y)
+        return gell, xdell_dm, xdell_dS, xdell_dpi

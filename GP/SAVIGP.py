@@ -2,11 +2,10 @@ import math
 import numpy as np
 from numpy.linalg import inv, det
 import scipy.stats
-import GPy
 from GPy.core import Model
 from GPy.util.linalg import mdot
 from MoG_Diag import MoG_Diag
-from util import mdiag_dot, cross_ent_normal
+from util import mdiag_dot
 
 
 class SAVIGP(Model):
@@ -190,15 +189,12 @@ class SAVIGP(Model):
                     f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), n_sample)
 
             for k in range(self.num_MoG_comp):
-                for i in range(n_sample):
-                    ### for calculating ell
-                    cond_ll = cond_log_likelihood(f[i,k,:], p_Y[n, :])
-                    k_ell[k] += cond_ll
-                    d_ell_dPi[k] += cond_ll
-                    ### for calculating d_ell_dm
-                    for j in range(self.num_latent_proc):
-                        s_dell_dm[k,j] += (f[i,k,j] - mean_kj[k,j]) * cond_ll
-                        s_dell_dS[k,j] += (sigma_kj[k,j] ** -2 * (f[i,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1) * cond_ll
+                cond_ll = cond_log_likelihood(f[:,k,:], p_Y[n, :])
+                k_ell[k] += sum(cond_ll)
+                d_ell_dPi[k] += sum(cond_ll)
+                for j in range(self.num_latent_proc):
+                    s_dell_dm[k,j] += np.dot(f[:,k,j] - mean_kj[k,j], cond_ll)
+                    s_dell_dS[k,j] += np.dot(sigma_kj[k,j] ** -2 * (f[:,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1, cond_ll)
 
                 total_ell += k_ell[k] * self.MoG.pi[k]
 
@@ -235,10 +231,10 @@ class SAVIGP(Model):
         """
         calculating L_corss by s_k for all k's
         """
-        dcds = np.empty((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
+        dc_ds = np.empty((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         for j in range(self.num_latent_proc):
-            dcds[:,j,:] = -1. /2 * np.array([np.diag(self.invZ[j,:,:]) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
-        return dcds
+            dc_ds[:,j,:] = -1. /2 * np.array([np.diag(self.invZ[j,:,:]) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
+        return dc_ds
 
     def _cross_dcorss_dpi(self, N):
         """
