@@ -40,8 +40,12 @@ class SAVIGP(Model):
 
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
+
         for j in range(self.num_latent_proc):
-            i = np.random.permutation(X.shape[0])[:self.num_inducing]
+            if self.num_inducing == X.shape[0]:
+                i = range(self.X.shape[0])
+            else:
+                i = np.random.permutation(X.shape[0])[:self.num_inducing]
             Z[j, :, :] = X[i].copy()
 
         # Z is Q * M * D
@@ -104,6 +108,7 @@ class SAVIGP(Model):
         receives parameter from optimizer and transforms them
         :param p: input parameters
         """
+        # print 'set', p
         self.last_param = p
         self.MoG.m_from_array(p[:self.MoG.n])
         self.MoG.s_from_array(np.exp(p[self.MoG.n:(2 * self.MoG.n)]))
@@ -115,12 +120,15 @@ class SAVIGP(Model):
         """
         exposes parameters to the optimizer
         """
+        # print 'get'
         return np.hstack([self.MoG.m.flatten(), self.MoG.s.flatten(), self.MoG.pi])
 
     def log_likelihood(self):
+        # print 'll', self.ll
         return self.ll
 
     def _log_likelihood_gradients(self):
+        # print 'll grad', self.grad_ll
         return self.grad_ll
 
     def _get_data_partition(self):

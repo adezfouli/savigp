@@ -12,7 +12,8 @@ class MoG_Diag:
         self.m =[]
         self.s = []
         self.pi = []
-        self._random_init()
+        # self._random_init()
+        self.fixed_init()
 
         self.pi = np.array([1. / num_comp] * num_comp)
 
@@ -25,6 +26,7 @@ class MoG_Diag:
     def fixed_init(self):
         self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
         self.s = np.ones((self.num_comp, self.num_process, self.num_dim))
+        self.pi = [1./self.num_comp] * self.num_comp
 
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
