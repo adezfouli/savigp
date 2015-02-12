@@ -12,8 +12,8 @@ class MoG_Diag:
         self.m =[]
         self.s = []
         self.pi = []
-        # self._random_init()
-        self.fixed_init()
+        self._random_init()
+        # self.fixed_init()
 
         self.pi = np.array([1. / num_comp] * num_comp)
 

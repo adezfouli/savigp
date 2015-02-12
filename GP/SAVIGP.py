@@ -2,13 +2,15 @@ import math
 import numpy as np
 from numpy.linalg import inv, det
 import scipy.stats
+from GPy import likelihoods
 from GPy.core import Model
+from GPy.core.gp_base import GPBase
 from GPy.util.linalg import mdot
 from MoG_Diag import MoG_Diag
 from util import mdiag_dot
 
 
-class SAVIGP(Model):
+class SAVIGP(GPBase):
 
     """
     Scalable Variational Inference Gaussian Process
@@ -25,7 +27,7 @@ class SAVIGP(Model):
     """
 
     def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X):
-        super(SAVIGP, self).__init__()
+        super(SAVIGP, self).__init__(X, likelihoods.Gaussian(Y, False), kernel)
 
         self.MoG = MoG_Diag(num_MoG_comp, num_latent_proc, num_inducing)
         self.input_dim = X[0].shape[0]
@@ -33,7 +35,7 @@ class SAVIGP(Model):
         self.num_latent_proc = num_latent_proc
         self.num_MoG_comp = num_MoG_comp
         self.kernel = kernel
-        self.likelihood = likelihood
+        self.cond_likelihood = likelihood
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
@@ -51,6 +53,10 @@ class SAVIGP(Model):
         # Z is Q * M * D
         self.Z = Z
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+        # updating inverse of Zjj
+        for j in range(self.num_latent_proc):
+            self.invZ[j, :, :] = inv(self.kernel.K(self.Z[j,:,:], self.Z[j,:,:]))
+
         self._update()
 
     def _get_param_names(self):
@@ -60,12 +66,6 @@ class SAVIGP(Model):
         """
         updating internal variables for later use
         """
-
-        # updating inverse of Zjj
-        for j in range(self.num_latent_proc):
-            self.invZ[j, :, :] = inv(self.kernel.K(self.Z[j,:,:], self.Z[j,:,:]))
-
-
         #updating N_lk, and z_k used for updating d_ent
         self.N_kl = np.ones((self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
@@ -84,7 +84,7 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
             for l in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    self.invC_klj[k,l,j] = 1. /(self.MoG.s[l,j,:] + self.MoG.s[k,j,:])
+                    self.invC_klj[k,l,j] = 1. / (self.MoG.s[l,j,:] + self.MoG.s[k,j,:])
 
         #calculating ll and gradients for future uses
         pX, pY = self._get_data_partition()
@@ -93,7 +93,7 @@ class SAVIGP(Model):
         pi = np.repeat(np.array([self.MoG.pi.T]), self.num_MoG_comp, 0)
         dpi_dx = pi * (-pi.T + np.eye(self.num_MoG_comp))
 
-        xell, xdell_dm, xdell_dS, xdell_dpi = self._ell(self.n_samples, pX, pY, self.likelihood)
+        xell, xdell_dm, xdell_dS, xdell_dpi = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
         xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
         self.ll = xell + xcross + self._l_ent()
 
@@ -181,9 +181,6 @@ class SAVIGP(Model):
             # print 'ell for point #', n
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
-            for j in range(self.num_latent_proc):
-                mean_kj[:,j] = self._b(n, j, Aj[j])
-                sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
 
             k_ell = np.zeros(self.num_MoG_comp)
             s_dell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc))
@@ -305,6 +302,8 @@ class SAVIGP(Model):
 
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  np.log(self.z))
+
+
 
 
 

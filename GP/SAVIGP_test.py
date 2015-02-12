@@ -3,9 +3,8 @@ from SGD import SGD
 from cond_likelihood import multivariate_likelihood
 import numpy as np
 import GPy
+
 from matplotlib.pyplot import show
-
-
 
 class SAVIGP_test:
     def __init__(self):
@@ -27,13 +26,13 @@ class SAVIGP_test:
     @staticmethod
     def test_grad():
         # number of input data points
-        num_input_samples = 500
+        num_input_samples = 100
         input_dim = 1
-        num_inducing = 10
+        num_inducing = 100
         num_MoG_comp = 1
         num_latent_proc = 1
         # number of samples
-        num_samples = 1000
+        num_samples = 10000
         gaussian_sigma = np.diag(np.ones(num_latent_proc))
         X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
         s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, num_latent_proc, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
@@ -72,10 +71,26 @@ class SAVIGP_test:
         gp_mean, gp_var, _025pm, _975pm = gp.predict(X)
         s1 = GSAVIGP(X, Y, num_input_samples, 1, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                     kernel, num_samples, False)
-        SGD.optimize(s1, 0.001,  s1._get_params(), 10000)
+        SGD.optimize(s1, 0.001,  s1._get_params(), 20)
+        s1._predict(X)
         print 'asvig:', s1.MoG
         print 'gp_mean:' , gp_mean
         print 'gp_var:' , gp_var
 
+
+    @staticmethod
+    def prediction():
+        num_input_samples = 10
+        num_samples = 10000
+        gaussian_sigma = 0.02
+        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        s1 = GSAVIGP(X, Y, num_input_samples, 1, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+                    kernel, num_samples, False)
+        SGD.optimize(s1, 0.001,  s1._get_params(), 10000, 1e-6, 1e-6)
+        s1.plot(plot_raw=True)
+        gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
+        gp.plot()
+        show(block=True)
+
 if __name__ == '__main__':
-    SAVIGP_test.test_gp()
+    SAVIGP_test.prediction()
