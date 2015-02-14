@@ -1,7 +1,7 @@
 import math
 from GPy.util.linalg import mdot
 import numpy as np
-from numpy.ma import trace
+from numpy.ma import trace, vstack
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
@@ -21,26 +21,25 @@ class SAVIGP(Model):
     :param num_MoG_comp: number of components of the MoG
     :param num_latent_proc: number of latent processes
     :param likelihood: conditional likelihood function
-    :param kernel: of the GP
+    :param kernel: list of kernels of the HP
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
 
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X):
-        super(SAVIGP, self).__init__("SAVIGP")
+    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples):
 
-        self.MoG = MoG_Diag(num_MoG_comp, num_latent_proc, num_inducing)
+        super(SAVIGP, self).__init__("SAVIGP")
+        self.num_latent_proc = len(kernels)
+        self.num_MoG_comp = num_MoG_comp
+        self.num_inducing = num_inducing
+        self.MoG = MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
         self.input_dim = X[0].shape[0]
         self.output_dim = Y[0].shape[0]
-        self.num_inducing = num_inducing
-        self.num_latent_proc = num_latent_proc
-        self.num_MoG_comp = num_MoG_comp
-        self.kernel = kernel
+        self.kernels = kernels
         self.cond_likelihood = likelihood
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
-
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -51,25 +50,25 @@ class SAVIGP(Model):
                 i = np.random.permutation(X.shape[0])[:self.num_inducing]
             Z[j, :, :] = X[i].copy()
 
+
+
         # Z is Q * M * D
         self.Z = Z
-
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+
 
         self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.array([0] * self.num_latent_proc)
 
         for j in range(self.num_latent_proc):
-            L = jitchol(self.kernel.K(self.Z[j,:,:], self.Z[j,:,:]))
+            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
             self.invZ[j, :, :], self.log_detZ[j] = (inv_chol(L), pddet(L))
 
         self._update()
 
     def _get_param_names(self):
         return ['m'] * self.MoG.n + ['s'] * self.MoG.n + ['pi'] * self.num_MoG_comp
-
-
 
     def _update(self):
         """
@@ -155,13 +154,13 @@ class SAVIGP(Model):
         """
         calculating A for latent process j (eq 4)
         """
-        return mdot(self.kernel.K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
+        return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
 
     def _Kdiag(self, p_X, A, j):
         """
         calculating diagonal terms of K_tilda for latent process j (eq 4)
         """
-        return self.kernel.Kdiag(p_X) - mdiag_dot(A, self.kernel.K(self.Z[j,:,:], p_X))
+        return self.kernels[j].Kdiag(p_X) - mdiag_dot(A, self.kernels[j].K(self.Z[j,:,:], p_X))
 
     def _b(self, n, j, Aj):
         """
@@ -176,6 +175,8 @@ class SAVIGP(Model):
         """
         return Kj[n] + self.MoG.aSa(Aj[n, :], j)
 
+    def dK_dtheta(self, j):
+        return self.kernels[j].gradient
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
 
@@ -223,7 +224,7 @@ class SAVIGP(Model):
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * self.kernel.K(p_X[np.newaxis, n, :], self.Z[j,:,:])[0,:]
+                    d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * self.kernels[j].K(p_X[np.newaxis, n, :], self.Z[j,:,:])[0,:]
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
@@ -279,6 +280,19 @@ class SAVIGP(Model):
         cross *= -1. / 2
         return cross, d_pi
 
+    def _dcross_K_j(self, j):
+        dc_dK = np.zeros((self.num_inducing, self.num_inducing))
+        for k in range(self.num_MoG_comp):
+            dc_dK += -0.5 * self.MoG.pi[k] * (self.invZ[j]
+                     -mdot(self.invZ[j], self.MoG.mmTS(k,j), self.invZ[j])
+            )
+
+        return dc_dK
+
+    def _dcross_dtheta(self):
+        for j in range(self.num_latent_proc):
+            self.kernels[j].update_gradients_full(self._dcross_K_j(j), self.Z[j])
+            print self.kernels[j].gradient
 
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)

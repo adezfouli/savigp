@@ -18,9 +18,9 @@ class GSAVIGP(SAVIGP):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, normal_sigma, kernel, n_samples, normalize_X):
+    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, normal_sigma, kernels, n_samples):
         self.normal_sigma = normal_sigma
-        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X)
+        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples)
 
     def _gaussian_ell(self, p_X, p_Y):
         normal_ell = 0

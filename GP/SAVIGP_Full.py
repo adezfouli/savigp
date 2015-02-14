@@ -4,8 +4,8 @@ __author__ = 'AT'
 
 
 class SAVIGP_Full(SAVIGP):
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X):
-        super(SAVIGP_Full, self).__init__(X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X)
+    def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernels, n_samples, normalize_X):
+        super(SAVIGP_Full, self).__init__(X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernels, n_samples, normalize_X)
 
     def _dcross_dS(self):
         """

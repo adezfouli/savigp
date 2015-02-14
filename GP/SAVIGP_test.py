@@ -27,7 +27,6 @@ class SAVIGP_test:
         Y = np.sin([X.sum(axis=1).T]).T + np.random.randn(num_samples, y_dim) * 0.05
         return X, Y, kernel, noise
 
-
     @staticmethod
     def test_grad():
         # number of input data points
@@ -40,8 +39,8 @@ class SAVIGP_test:
         num_samples = 10000
         gaussian_sigma = np.diag(np.ones(num_latent_proc))
         X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
-        s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, num_latent_proc, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
-                    kernel, num_samples, False)
+        s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
+                    [kernel] * num_latent_proc, num_samples)
 
         def f(x):
             s1._set_params(x)

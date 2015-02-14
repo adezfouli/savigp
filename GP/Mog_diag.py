@@ -71,6 +71,9 @@ class MoG_Diag:
     def __str__(self):
         return 'm:' + str(self.m) + '\n' + 's:' + str(self.s) + '\n' + 'pi:' + str(self.pi)
 
+    def mmTS(self, k, j):
+        return mdot(self.m[k,j], self.m[k,j].T) + np.diag(self.s[k,j])
+
     def update(self):
         for k in range(self.num_comp):
             for l in range(self.num_comp):
