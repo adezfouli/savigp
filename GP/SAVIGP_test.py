@@ -1,6 +1,5 @@
 from GPy.inference.optimization.conjugate_gradient_descent import CGD
 from scipy.optimize import check_grad, minimize, lbfgsb, fmin_l_bfgs_b, basinhopping
-from BFGS import Newton_BFGS
 from GSAVIGP import GSAVIGP
 from Optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
@@ -35,10 +34,10 @@ class SAVIGP_test:
         num_input_samples = 5
         input_dim = 4
         num_inducing = 5
-        num_MoG_comp = 2
-        num_latent_proc = 1
+        num_MoG_comp = 3
+        num_latent_proc = 3
         # number of samples
-        num_samples = 20000
+        num_samples = 10000
         gaussian_sigma = np.diag(np.ones(num_latent_proc))
         X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
         s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, num_latent_proc, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
@@ -110,8 +109,8 @@ class SAVIGP_test:
         show(block=True)
 
 if __name__ == '__main__':
-    SAVIGP_test.prediction()
-    # SAVIGP_test.test_grad()
+    # SAVIGP_test.prediction()
+    SAVIGP_test.test_grad()
     # X = np.random.rand(3, 1)
     # print X
     #

@@ -46,7 +46,7 @@ class GSAVIGP(SAVIGP):
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
         xell, xdell_dm, xdell_dS, xdell_dpi = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
         gell = self._gaussian_ell(p_X, p_Y)
-        return xell, xdell_dm, xdell_dS, xdell_dpi
+        return gell, xdell_dm, xdell_dS, xdell_dpi
 
     def _predict(self, t_X):
         """

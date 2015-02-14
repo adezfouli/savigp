@@ -1,7 +1,6 @@
 import math
 from scipy.optimize import fmin_l_bfgs_b
 import numpy as np
-from BFGS import Newton_BFGS
 
 __author__ = 'AT'
 
