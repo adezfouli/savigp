@@ -1,16 +1,16 @@
 import math
+from GPy.util.linalg import mdot
 import numpy as np
-from numpy.linalg import inv, det
+from numpy.ma import trace
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
-from GPy.core.gp_base import GPBase
-from GPy.util.linalg import mdot
+from GPy.core.gp import GP
 from MoG_Diag import MoG_Diag
-from util import mdiag_dot
+from util import mdiag_dot, jitchol, pddet, inv_chol
 
 
-class SAVIGP(GPBase):
+class SAVIGP(Model):
 
     """
     Scalable Variational Inference Gaussian Process
@@ -27,10 +27,11 @@ class SAVIGP(GPBase):
     """
 
     def __init__(self, X, Y, num_inducing, num_MoG_comp, num_latent_proc, likelihood, kernel, n_samples, normalize_X):
-        super(SAVIGP, self).__init__(X, likelihoods.Gaussian(Y, False), kernel)
+        super(SAVIGP, self).__init__("SAVIGP")
 
         self.MoG = MoG_Diag(num_MoG_comp, num_latent_proc, num_inducing)
         self.input_dim = X[0].shape[0]
+        self.output_dim = Y[0].shape[0]
         self.num_inducing = num_inducing
         self.num_latent_proc = num_latent_proc
         self.num_MoG_comp = num_MoG_comp
@@ -52,10 +53,16 @@ class SAVIGP(GPBase):
 
         # Z is Q * M * D
         self.Z = Z
+
+        self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+
+        self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
-        # updating inverse of Zjj
+        self.log_detZ = np.array([0] * self.num_latent_proc)
+
         for j in range(self.num_latent_proc):
-            self.invZ[j, :, :] = inv(self.kernel.K(self.Z[j,:,:], self.Z[j,:,:]))
+            L = jitchol(self.kernel.K(self.Z[j,:,:], self.Z[j,:,:]))
+            self.invZ[j, :, :], self.log_detZ[j] = (inv_chol(L), pddet(L))
 
         self._update()
 
@@ -67,18 +74,35 @@ class SAVIGP(GPBase):
         updating internal variables for later use
         """
         #updating N_lk, and z_k used for updating d_ent
-        self.N_kl = np.ones((self.num_MoG_comp, self.num_MoG_comp))
+        self.N_kll = np.ones((self.num_MoG_comp, self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
-            for l in range(self.num_MoG_comp):
-                for j in range(self.num_latent_proc):
-                    self.N_kl[k,l] *= \
-                        scipy.stats.multivariate_normal.pdf(self.MoG.m[k,j,:],
-                                  mean=self.MoG.m[l,j,:], cov=np.diag(self.MoG.s[l,j,:] + self.MoG.s[k,j,:]))
+            for l1 in range(self.num_MoG_comp):
+                for l2 in range(self.num_MoG_comp):
+                    for j in range(self.num_latent_proc):
+                        e = np.dot((self.MoG.m[k,j,:] - self.MoG.m[l1,j,:]) * (1.0 / (self.MoG.s[l1,j,:] + self.MoG.s[k,j,:])),
+                                   (self.MoG.m[k,j,:] - self.MoG.m[l1,j,:]))
+                        e -= np.dot((self.MoG.m[k,j,:] - self.MoG.m[l2,j,:]) * (1.0 / (self.MoG.s[l2,j,:] + self.MoG.s[k,j,:])),
+                                   (self.MoG.m[k,j,:] - self.MoG.m[l2,j,:]))
+                        dets = np.product((self.MoG.s[l2,j,:] + self.MoG.s[k,j,:]) / (self.MoG.s[l1,j,:] + self.MoG.s[k,j,:]))
+                        self.N_kll[k,l1, l2] *= math.exp(-0.5 * e) * math.sqrt(dets)
 
-        self.z = np.zeros((self.num_MoG_comp))
+        self.N_kl_z_k = np.zeros((self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
             for l in range(self.num_MoG_comp):
-                self.z[k] += self.MoG.pi[l] * self.N_kl[k,l]
+                for x in range(self.num_MoG_comp):
+                    self.N_kl_z_k[k,l] += self.MoG.pi[x] * self.N_kll[k,x,l]
+                self.N_kl_z_k[k,l] = 1.0 / self.N_kl_z_k[k,l]
+
+        self.N_k0 = np.zeros((self.num_MoG_comp))
+        for k in range(self.num_MoG_comp):
+            for j in range(self.num_latent_proc):
+                self.N_k0[k] += \
+                    scipy.stats.multivariate_normal.logpdf(self.MoG.m[k,j,:],
+                              mean=self.MoG.m[0,j,:], cov=np.diag(self.MoG.s[0,j,:] + self.MoG.s[k,j,:]))
+        self.log_z = np.zeros((self.num_MoG_comp))
+        for k in range(self.num_MoG_comp):
+                self.log_z[k] = -math.log(self.N_kl_z_k[k,0]) + self.N_k0[k]
+
 
         self.invC_klj = np.empty((self.num_MoG_comp, self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         for k in range(self.num_MoG_comp):
@@ -249,11 +273,10 @@ class SAVIGP(GPBase):
         cross = 0
         d_pi = np.zeros(self.num_MoG_comp)
         for j in range(self.num_latent_proc):
-            detK = math.log(det(self.kernel.K(self.Z[j,:,:], self.Z[j, :, :])))
             for k in range(self.num_MoG_comp):
                 d_pi[k] +=  \
                         N * math.log(2 * math.pi) + \
-                        detK + \
+                        self.log_detZ[j] + \
                         mdot(self.MoG.m[k, j, :].T, self.invZ[j,:,:], self.MoG.m[k, j, :]) + \
                         np.dot(np.diagonal(self.invZ[j,:,:]), self.MoG.s[k,j,:])
         for k in range(self.num_MoG_comp):
@@ -262,10 +285,17 @@ class SAVIGP(GPBase):
         cross *= -1. / 2
         return cross, d_pi
 
+    def _dcross_dKernel(self, dK_dt):
+        dc_dK = 0
+        for k in range(self.num_MoG_comp):
+            dc_dK += self.MoG.pi[k] * trace(mdot(self.invZ[j,:,:], dK_dt)-
+                    mdot(self.invZ[j,:,:], dK_dt, self.invZ[j,:,:], mdot(self.MoG.m[k,j,:], self.MoG.m[k,j,:].T) + np.diag(self.MoG.s[k,j,:,:]) ))
+
+
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)
         for l in range(self.num_MoG_comp):
-            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl[k,l] / self.z[k] + self.N_kl[k,l] / self.z[l]) * \
+            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl_z_k[k,l] + self.N_kl_z_k[l, k]) * \
                     (self.invC_klj[k,l,j] * (self.MoG.m[k,j,:] - self.MoG.m[l,j,:]))
         return m_k
 
@@ -279,15 +309,15 @@ class SAVIGP(GPBase):
     def _d_ent_d_pi(self):
         pi = np.empty(self.num_MoG_comp)
         for k in range(self.num_MoG_comp):
-            pi[k] = -math.log(self.z[k])
+            pi[k] = -self.log_z[k]
             for l in range(self.num_MoG_comp):
-                pi[k] -= self.MoG.pi[l] * self.N_kl[k,l] / self.z[l]
+                pi[k] -= self.MoG.pi[l] * self.N_kl_z_k[l,k]
         return pi
 
     def _d_ent_d_S_kj(self, k, j):
         s_k = np.zeros(self.num_inducing)
         for l in range(self.num_MoG_comp):
-            s_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl[k,l] / self.z[k] + self.N_kl[k,l] / self.z[l]) * \
+            s_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl_z_k[k,l] + self.N_kl_z_k[l, k]) * \
                     (self.invC_klj[k,l,j] -
                      self.invC_klj[k,l,j] * (self.MoG.m[k,j,:] -  self.MoG.m[l,j,:]) *
                     (self.MoG.m[k,j,:] - self.MoG.m[l,j,:]) * self.invC_klj[k,l,j])
@@ -301,7 +331,7 @@ class SAVIGP(GPBase):
         return dent_ds
 
     def _l_ent(self):
-        return -np.dot(self.MoG.pi,  np.log(self.z))
+        return -np.dot(self.MoG.pi,  self.log_z)
 
 
 

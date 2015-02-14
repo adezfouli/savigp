@@ -6,12 +6,11 @@ import numpy as np
 from numpy.linalg import inv
 from numpy.ma import diag
 import pylab as pb
-from GPy.core.gp_base import GPBase
+from GPy.core.gp import GP
 from GPy.util.linalg import mdot
-from GPy.kern.kern import kern as GP_kern
 
 
-class BCM_GP(GPBase):
+class BCM_GP(GP):
 
     def __init__(self, X, likelihood, kernel, normalize_X, sigma, p):
         GPBase.__init__(self, X, likelihood, kernel, normalize_X=normalize_X)

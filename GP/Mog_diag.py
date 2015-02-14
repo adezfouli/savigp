@@ -15,8 +15,6 @@ class MoG_Diag:
         self._random_init()
         # self.fixed_init()
 
-        self.pi = np.array([1. / num_comp] * num_comp)
-
     def _random_init(self):
         self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
         self.s = np.random.uniform(low=0.1, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
