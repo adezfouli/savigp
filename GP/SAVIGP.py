@@ -32,7 +32,7 @@ class SAVIGP(Model):
         self.num_latent_proc = len(kernels)
         self.num_MoG_comp = num_MoG_comp
         self.num_inducing = num_inducing
-        self.MoG = MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
+        self.MoG = self._get_MoG()
         self.input_dim = X[0].shape[0]
         self.output_dim = Y[0].shape[0]
         self.kernels = kernels
@@ -67,8 +67,11 @@ class SAVIGP(Model):
 
         self._update()
 
+    def _get_MoG(self):
+        return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
+
     def _get_param_names(self):
-        return ['m'] * self.MoG.n + ['s'] * self.MoG.n + ['pi'] * self.num_MoG_comp
+        return ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp
 
     def _update(self):
         """
@@ -100,23 +103,17 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
                 self.log_z[k] = -math.log(self.N_kl_z_k[k,0]) + self.N_k0[k]
 
-        self.MoG.update()
-
         #calculating ll and gradients for future uses
         pX, pY = self._get_data_partition()
-
-        #calculating gradient of pi wrt to the parameters
-        pi = np.repeat(np.array([self.MoG.pi.T]), self.num_MoG_comp, 0)
-        dpi_dx = pi * (-pi.T + np.eye(self.num_MoG_comp))
 
         xell, xdell_dm, xdell_dS, xdell_dpi = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
         xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
         self.ll = xell + xcross + self._l_ent()
 
-        ds_dx = self.MoG.s.flatten()
         self.grad_ll = np.hstack([xdell_dm.flatten() + self._dcorss_dm().flatten() + self._d_ent_d_m().flatten(),
-                                 (xdell_dS.flatten() + self._dcross_dS().flatten() + self._d_ent_d_S().flatten())* ds_dx,
-                                 mdot(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi(), dpi_dx)
+                                 self.MoG.transform_S_grad(xdell_dS + self._dcross_dS() + self._d_ent_d_S()),
+                                 # self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
+                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi())
                                    ])
 
     def _set_params(self, p):
@@ -126,18 +123,14 @@ class SAVIGP(Model):
         """
         # print 'set', p
         self.last_param = p
-        self.MoG.m_from_array(p[:self.MoG.n])
-        self.MoG.s_from_array(np.exp(p[self.MoG.n:(2 * self.MoG.n)]))
-        pis = np.exp(p[(2 * self.MoG.n):])
-        self.MoG.pi = pis / sum(pis)
+        self.MoG.update_parameters(p)
         self._update()
 
     def _get_params(self):
         """
         exposes parameters to the optimizer
         """
-        # print 'get'
-        return np.hstack([self.MoG.m.flatten(), self.MoG.s.flatten(), self.MoG.pi])
+        return self.MoG.parameters
 
     def log_likelihood(self):
         # print 'll', self.ll
@@ -188,7 +181,7 @@ class SAVIGP(Model):
         # print 'ell started'
         total_ell = 0
         d_ell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
-        d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
+        d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
         d_ell_dPi = np.zeros(self.num_MoG_comp)
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
@@ -228,7 +221,7 @@ class SAVIGP(Model):
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    d_ell_dS[k,j] += (Aj[j,n] * Aj[j,n].T)* s_dell_dS[k,j]
+                    d_ell_dS[k,j] += self.mdot_Aj(Aj[j,n, np.newaxis])* s_dell_dS[k,j]
 
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
@@ -241,6 +234,10 @@ class SAVIGP(Model):
         d_ell_dPi = d_ell_dPi/n_sample
 
         return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi
+
+
+    def mdot_Aj(self,Ajn):
+        return (Ajn * Ajn.T)
 
     def _dcorss_dm(self):
         """
@@ -255,9 +252,9 @@ class SAVIGP(Model):
         """
         calculating L_corss by s_k for all k's
         """
-        dc_ds = np.empty((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
+        dc_ds = np.empty((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
         for j in range(self.num_latent_proc):
-            dc_ds[:,j] = -1. /2 * np.array([np.diag(self.invZ[j,:,:]) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
+            dc_ds[:,j] = -1. /2 * np.array([self.MoG.dAS_dS(self.invZ[j,:,:]) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
         return dc_ds
 
     def _cross_dcorss_dpi(self, N):
@@ -317,14 +314,14 @@ class SAVIGP(Model):
         return pi
 
     def _d_ent_d_S_kj(self, k, j):
-        s_k = np.zeros(self.num_inducing)
+        s_k = np.zeros(self.MoG.S_dim())
         for l in range(self.num_MoG_comp):
             s_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl_z_k[k,l] + self.N_kl_z_k[l, k]) * \
                    self.MoG.C_m_C(j, k, l)
         return 1./2 * s_k
 
     def _d_ent_d_S(self):
-        dent_ds = np.empty((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
+        dent_ds = np.empty((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
                 dent_ds[k,j] = self._d_ent_d_S_kj(k,j)

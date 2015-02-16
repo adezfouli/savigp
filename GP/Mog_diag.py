@@ -1,40 +1,46 @@
-import math
-from GPy.util.linalg import mdot
-
 __author__ = 'AT'
 
+import math
+from GPy.util.linalg import mdot
+from MoG import MoG
 import numpy as np
 
-class MoG_Diag:
-    def __init__(self, num_comp, num_process, num_dim):
-        self.num_comp = num_comp
-        self.num_process = num_process
-        self.num_dim = num_dim
-        self.n = num_comp * num_process * num_dim
-        self.invC_klj = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
 
-        self.m =[]
+class MoG_Diag(object, MoG):
+
+    def __init__(self, num_comp, num_process, num_dim):
+        MoG.__init__(self, num_comp, num_process, num_dim)
+        self.invC_klj = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
         self.s = []
-        self.pi = []
         self._random_init()
-        # self.fixed_init()
+        self.parameters = self.get_parameters()
+        self._update()
+
+    def get_parameters(self):
+        return np.hstack([self.m.flatten(), self.s.flatten(), self.pi])
 
     def _random_init(self):
-        self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        super(MoG_Diag, self)._random_init()
         self.s = np.random.uniform(low=0.1, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
-        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
-        self.pi = self.pi / sum(self.pi)
 
     def fixed_init(self):
-        self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
+        super(MoG_Diag, self).fixed_init()
         self.s = np.ones((self.num_comp, self.num_process, self.num_dim))
-        self.pi = [1./self.num_comp] * self.num_comp
+
+    def transform_S_grad(self, g):
+        return g.flatten() * self.s.flatten()
+
+    def get_s_size(self):
+        return self.num_comp * self.num_process * self.num_dim
+
+    def S_dim(self):
+        return (self.num_dim,)
 
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
 
     def s_from_array(self, sa):
-        self.s = sa.reshape((self.num_comp, self.num_process, self.num_dim))
+        self.s = np.exp(sa).reshape((self.num_comp, self.num_process, self.num_dim))
 
     def ratio(self, j, k, l1, l2):
         e = np.dot((self.m[k, j, :] - self.m[l1, j, :]) * (1.0 / (self.s[l1, j, :] + self.s[k, j, :])),
@@ -68,13 +74,13 @@ class MoG_Diag:
     def aSa(self, a, j):
         return mdot(self.s[:,j,:], (a ** 2))
 
-    def __str__(self):
-        return 'm:' + str(self.m) + '\n' + 's:' + str(self.s) + '\n' + 'pi:' + str(self.pi)
-
     def mmTS(self, k, j):
         return mdot(self.m[k,j], self.m[k,j].T) + np.diag(self.s[k,j])
 
-    def update(self):
+    def dAS_dS(self, A):
+        return np.diag(A)
+
+    def _update(self):
         for k in range(self.num_comp):
             for l in range(self.num_comp):
                 for j in range(self.num_process):

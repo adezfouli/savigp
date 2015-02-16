@@ -1,0 +1,107 @@
+from GPy.util.linalg import mdot
+
+__author__ = 'AT'
+
+import numpy as np
+
+class MoG:
+    def __init__(self, num_comp, num_process, num_dim):
+        self.num_comp = num_comp
+        self.num_process = num_process
+        self.num_dim = num_dim
+        self.m = []
+        self.pi = []
+        self.parameters = []
+
+    def __str__(self):
+        return 'm:' + str(self.m) + '\n' + 's:' + str(self.s) + '\n' + 'pi:' + str(self.pi)
+
+    def update_parameters(self, params):
+        self.parameters = params
+        self.m_from_array(params[:self.get_m_size()])
+        self.s_from_array(params[self.get_m_size():(self.get_m_size() + self.get_s_size())])
+        self.pi_from_array(params[(self.get_m_size() + self.get_s_size()):])
+        self._update()
+
+    def _random_init(self):
+        self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
+        self.pi = self.pi / sum(self.pi)
+
+    def transform_S_grad(self, g):
+        """ transforms gradients to expose to the optimizer  """
+        raise NotImplementedError
+
+    def fixed_init(self):
+        self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
+        self.pi = [1./self.num_comp] * self.num_comp
+
+    def pi_from_array(self, p):
+        pis = np.exp(p)
+        self.pi = pis / sum(pis)
+
+    def dpi_dx(self):
+        pit = np.repeat(np.array([self.pi.T]), self.num_comp, 0)
+        return pit * (-pit.T + np.eye(self.num_comp))
+
+    def transform_pi_grad(self, p):
+        return mdot(p, self.dpi_dx())
+
+    def get_m_size(self):
+        return self.num_comp * self.num_process * self.num_dim
+
+    def get_s_size(self):
+        """ return size of s when flattened """
+        raise NotImplementedError
+
+    def S_dim(self):
+        """ dimensionality of covariance matrix exposed """
+        raise NotImplementedError
+
+    def m_from_array(self, ma):
+        """ initializes the mean from ma"""
+        raise NotImplementedError
+
+    def s_from_array(self, sa):
+        """ initializes the covariance matrix from sa"""
+        raise NotImplementedError
+
+    def log_pdf(self, j, k, l):
+        """ :return N_j(m_k|m_l, S_l + S_k)"""
+        raise NotImplementedError
+
+    def inv_cov(self, j, k, l):
+        """ :return  (S_l + S_k)^-1 """
+        raise NotImplementedError
+
+    def tr_A_mult_S(self, A, k, j):
+        """ :return  trace(A S_kj) """
+        raise NotImplementedError
+
+    def C_m(self, j, k, l):
+        """ :return  C_kl^-1 (m_kj - m_lj) """
+        raise NotImplementedError
+
+    def ratio(self, j, k, l1, l2):
+        """ :return N_j(m_k|m_l1, S_l1 + S_k) / N_j(m_k|m_l2, S_l2 + S_k) """
+        raise NotImplementedError
+
+    def C_m_C(self, j, k, l):
+        """ :return  C_kl^-1 (m_kj - m_lj)(m_kj - m_lj)T C_kl^-1"""
+        raise NotImplementedError
+
+    def aSa(self, a, j):
+        """ :return  a S_j aT"""
+        raise NotImplementedError
+
+    def mmTS(self, k, j):
+        """ :return  m_kj m_kj^T s_kj  """
+        raise NotImplementedError
+
+    def dAS_dS(self, A):
+        """ :return  dAS dS  """
+        raise NotImplementedError
+
+    def _update(self):
+        """ updates internal variables of the class """
+        pass

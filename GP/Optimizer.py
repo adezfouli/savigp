@@ -59,8 +59,9 @@ class Optimizer:
 
         restart = True
         while restart:
-            try:
+            # try:
                 fmin_l_bfgs_b(f, model._get_params(), f_grad, factr=100, epsilon=1e-3)
                 restart = False
-            except:
-                restart = True
+            # except Exception as e:
+            #     print e
+            #     restart = True

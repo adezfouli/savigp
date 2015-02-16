@@ -9,6 +9,8 @@ class GradChecker:
     @staticmethod
     def check(f, f_grad, x0, name):
         g = f_grad(x0)
+        if len(g) != len(x0):
+            raise Exception('dimensions mismatch')
         table = Texttable()
         table.set_cols_align(["l", "r", "c", "c"])
         table.set_cols_valign(["t", "m", "b" , "r"])
@@ -18,7 +20,7 @@ class GradChecker:
         for i in range(len(x0)):
             def f_i(x):
                 return f((concatenate((x0[:i], x, x0[(i+1):]))))
-            t = get_d1(f_i, [x0[i]], diffInt=1.0)
+            t = get_d1(f_i, [x0[i]])
             rows += [[name[i], g[i], t, abs(t-g[i])]]
             print 'element:', i
         table.add_rows(rows)
