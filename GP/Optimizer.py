@@ -11,7 +11,7 @@ class Optimizer:
         pass
 
     @staticmethod
-    def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True):
+    def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True, factor = 1.0):
         iter = 0
         x = start
         last_f = float('Inf')
@@ -23,8 +23,8 @@ class Optimizer:
                 print 'iter:' , iter, 'objective fun:', new_f, 'alpha:', alpha
             grad = model.objective_function_gradients()
 
-            if alpha > 1. / (new_f * 100):
-                alpha = 1. / (new_f * 100)
+            if alpha > factor / (new_f):
+                alpha = factor / (new_f)
 
             x -= grad * alpha
             if math.fabs(new_f - last_f) < ftol:
@@ -32,7 +32,6 @@ class Optimizer:
 
             # if new_f < last_f:
             #     alpha = (last_f - new_f) * 10
-
             last_f = new_f
             iter += 1
 
@@ -41,15 +40,15 @@ class Optimizer:
 
     @staticmethod
     def loopy_opt(model):
-        x_old = model._get_params()
+        x_old = [model._get_params()]
 
         def f(x):
             model._set_params(x)
             if np.isnan(model.objective_function()):
-                model._set_params(x_old)
+                model._set_params(x_old[0])
                 print 'restart'
                 raise Exception('restart')
-            x_old = x
+            x_old[0] = x
             print model.objective_function()
             return model.objective_function()
 

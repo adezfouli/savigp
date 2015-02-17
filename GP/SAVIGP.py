@@ -237,7 +237,7 @@ class SAVIGP(Model):
 
 
     def mdot_Aj(self,Ajn):
-        return (Ajn * Ajn.T)
+        return (Ajn[0] * Ajn.T[0])
 
     def _dcorss_dm(self):
         """

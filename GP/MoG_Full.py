@@ -1,10 +1,10 @@
 from numpy.ma import trace
-from util import chol_grad, pddet
+from util import chol_grad, pddet, inv_chol
 
 __author__ = 'AT'
 
 import math
-from GPy.util.linalg import mdot, symmetrify
+from GPy.util.linalg import mdot, symmetrify, dtrtrs
 from numpy.linalg import inv, det
 from MoG import MoG
 import numpy as np
@@ -32,7 +32,7 @@ class MoG_Full(MoG):
         self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
         for k in range(self.num_comp):
             for j in range(self.num_process):
-                self.L_flatten[k,j,:] = np.random.uniform(low=-4.0, high=4.0, size=self.get_sjk_size())
+                self.L_flatten[k,j,:] = np.random.uniform(low=1.0, high=1.0, size=self.get_sjk_size())
         self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
         self.pi = self.pi / sum(self.pi)
 
@@ -64,14 +64,14 @@ class MoG_Full(MoG):
                    (self.m[k, j, :] - self.m[l1, j, :]))
         e -= mdot((self.m[k, j, :] - self.m[l2, j, :]).T, inv((self.s[l2, j, :] + self.s[k, j, :])),
                     (self.m[k, j, :] - self.m[l2, j, :]))
-        dets = det((self.s[l2, j, :] + self.s[k, j, :])) / det(self.s[l1, j, :] + self.s[k, j, :])
-        return math.exp(-0.5 * e) * math.sqrt(dets)
+        return math.exp(-0.5 * e + (self.log_det[k,l2,j] - self.log_det[k,l1,j]) / 2)
 
     def log_pdf(self, j, k, l):
         return -0.5 * mdot(
             mdot(self.m[k, j, :] - self.m[l, j, :]).T, inv ((self.s[l, j, :] + self.s[k, j, :])),
-            (self.m[k, j, :] - self.m[l, j, :])) - \
-               -(self.s[l, j, :, :].shape[0]/2) * math.log(2 * math.pi)  - math.log(math.sqrt(det((self.s[l, j, :, :] + self.s[k, j, :, :]))))
+            (self.m[k, j, :] - self.m[l, j, :]))  \
+               -((self.s[l, j, :, :].shape[0])/2) * math.log(2 * math.pi)  - \
+               0.5 * self.log_det[k,l,j]
 
     def inv_cov(self, j, k, l):
         return inv(self.s[l, j, :] + self.s[k, j, :])
@@ -100,7 +100,9 @@ class MoG_Full(MoG):
         grad = np.empty((self.num_comp, self.num_process, self.get_sjk_size()))
         for k in range(self.num_comp):
             for j in range(self.num_process):
-                grad[k,j] = chol_grad(self.L[k,j], g[k,j])[np.tril_indices_from(self.L[k,j])]
+                tmp = chol_grad(self.L[k,j], g[k,j])
+                tmp[np.diag_indices_from(tmp)] *= self.L[k,j][ np.diag_indices_from(tmp)]
+                grad[k,j] = tmp[np.tril_indices_from(self.L[k,j])]
         return grad.flatten()
 
     def _update(self):
@@ -116,3 +118,12 @@ class MoG_Full(MoG):
             for l in range(self.num_comp):
                 for j in range(self.num_process):
                     self.invC_klj[k,l,j] = self.inv_cov(j, k, l)
+
+                    # self.log_det[k,l,j] = pddet(self.L[k,j]) + math.log(det(np.eye(self.num_dim) + mdot(self.L[l,j].T ,
+                    #                         inv_chol(np.asfortranarray(self.L[k,j,:,:])), self.L[l,j] ) ))
+                    #
+
+                    self.log_det[k,l,j] = pddet(self.L[k,j]) + math.log(det(np.eye(self.num_dim) +
+                                                                            mdot(self.L[l,j].T, dtrtrs(self.L[k,j],
+                                                                                                       dtrtrs(self.L[k,j],
+                                                                                                              self.L[l,j])[0])[0].T) ))

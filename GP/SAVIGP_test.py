@@ -1,3 +1,4 @@
+import cProfile
 from DerApproximator import get_d1
 from GPy.inference.optimization.conjugate_gradient_descent import CGD
 from GPy.util.linalg import mdot
@@ -37,13 +38,13 @@ class SAVIGP_test:
     @staticmethod
     def test_grad():
         # number of input data points
-        num_input_samples = 2
+        num_input_samples = 1
         input_dim = 1
-        num_inducing = 2
-        num_MoG_comp = 2
-        num_latent_proc = 2
+        num_inducing = num_input_samples
+        num_MoG_comp = 1
+        num_latent_proc = 1
         # number of samples
-        num_samples = 100000
+        num_samples = 10000
         gaussian_sigma = np.diag(np.ones(num_latent_proc))
         X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
         s1 = GSAVIGP_Full(X, Y, num_inducing, num_MoG_comp, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
@@ -77,23 +78,28 @@ class SAVIGP_test:
         kernel = rbf + white
         K = kernel.K(X)
         y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
-        return X, y, kernel
+        return X, y, rbf
 
     @staticmethod
     def test_gp():
-        num_input_samples = 1000
-        num_samples = 10000
-        gaussian_sigma = 0.2
+        num_input_samples = 1
+        num_samples = 100000
+        gaussian_sigma = 2.0
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
-        gp_mean, gp_var, _025pm, _975pm = gp.predict(X)
-        s1 = GSAVIGP(X, Y, num_input_samples, 1, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    kernel, num_samples, False)
-        Optimizer.optimize(s1, 0.001,  s1._get_params(), 20)
+        gp_mean, gp_var = gp.predict(X)
+        s1 = GSAVIGP_Full(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+                    [kernel], num_samples)
+        Optimizer.SGD(s1, 0.001, s1._get_params(), 10000,  factor=1)
         s1._predict(X)
-        print 'asvig:', s1.MoG
-        print 'gp_mean:' , gp_mean
-        print 'gp_var:' , gp_var
+        print 'asvig mean:', s1.MoG.m[0,0]
+        print 'gp_mean:' , gp_mean.T
+        if s1.MoG.s[0,0].ndim > 1:
+            print 'asvig var:', np.diagonal(s1.MoG.s[0,0])
+        else:
+            print 'asvig var:', s1.MoG.s[0,0]
+        print 'gp_var:' , gp_var.T
+        print 'savigp s', s1.MoG.s
 
 
     @staticmethod
@@ -116,7 +122,7 @@ class SAVIGP_test:
 
     @staticmethod
     def prediction_full_gp():
-        num_input_samples = 10
+        num_input_samples = 200
         num_samples = 10000
         gaussian_sigma = 0.02
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -151,25 +157,12 @@ class SAVIGP_test:
 
 
 if __name__ == '__main__':
-    # SAVIGP_test.prediction()
-    SAVIGP_test.prediction_full_gp()
-    # SAVIGP_test.test_grad()
-    #
-    # SAVIGP_test.test1()
-    # a = 2.3
-    # b = 3.2
-    # c = 8.1
-    # L = np.array([[a,0], [b,c]])
-    # print math.log(det(mdot(L, L.T)))
-    # print pddet(L)
-    # # print L
-    # # dL_da = np.array([[2 * a,b], [b,0]])
-    # dL_da = np.array([[0,0], [0, 2* c]])
-    # # # print dL_da
-    # # # dLL_ds = np.eye(2)
-    # dLL_ds = np.array([[4.2, 5.3], [5.3,3.2]])
-    # print chol_grad(L, dLL_ds)
-    # # dLL_ds.chol_grad()
-    # print (dLL_ds * dL_da).sum()
-    # # print 1. / chol_grad(L.T,dLL_ds)
-    # print CholeskyGrad(L)
+    pr = cProfile.Profile()
+    pr.enable()
+    try:
+        SAVIGP_test.prediction()
+        # SAVIGP_test.test_gp()
+        # SAVIGP_test.test_grad()
+    finally:
+        # print pr.print_stats(sort='cumtime')
+        pass

@@ -55,13 +55,16 @@ def inv_chol(L):
     return Ai
 
 def chol_grad(L, dM_dx):
+    return mdot(dM_dx+dM_dx.T, L)
+
+def chol_grad_with_for(L, dM_dx):
     d = L.shape[0]
     J = np.zeros((d,d))
     dM_dL = np.empty((d,d))
     for i in range(d):
         for j in range(i + 1):
-            J[j,i] = (i == j) * L[i,i] + (i != j)
-            # J[j,i] = 1.0
+            # J[j,i] = (i == j) * L[i,i] + (i != j)
+            J[j,i] = 1.0
             tmp = mdot(L, J)
             dM_dL[i,j] = ((tmp + tmp.T) * (dM_dx)).sum()
             J[j,i] = 0.0
