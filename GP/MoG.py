@@ -102,6 +102,10 @@ class MoG:
         """ :return  dAS dS  """
         raise NotImplementedError
 
+    def Sa(self, a, k, j):
+        """ :return  S_kj a  """
+        raise NotImplementedError
+
     def _update(self):
         """ updates internal variables of the class """
         pass

@@ -96,6 +96,10 @@ class MoG_Full(MoG):
     def dAS_dS(self, A):
         return A
 
+    def Sa(self, a, k, j):
+        return mdot(self.s[k,j], a)
+
+
     def transform_S_grad(self, g):
         grad = np.empty((self.num_comp, self.num_process, self.get_sjk_size()))
         for k in range(self.num_comp):

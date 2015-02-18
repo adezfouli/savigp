@@ -40,6 +40,7 @@ class SAVIGP(Model):
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
+        self.num_hyper_params = kernels[0].gradient.shape[0]
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -106,15 +107,15 @@ class SAVIGP(Model):
         #calculating ll and gradients for future uses
         pX, pY = self._get_data_partition()
 
-        xell, xdell_dm, xdell_dS, xdell_dpi = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
+        xell, xdell_dm, xdell_dS, xdell_dpi, xdell_hyper = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
         xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
         self.ll = xell + xcross + self._l_ent()
 
         self.grad_ll = np.hstack([xdell_dm.flatten() + self._dcorss_dm().flatten() + self._d_ent_d_m().flatten(),
                                  self.MoG.transform_S_grad(xdell_dS + self._dcross_dS() + self._d_ent_d_S()),
                                  # self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
-                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi())
-                                   ])
+                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
+                                   xdell_hyper.flatten()])
 
     def _set_params(self, p):
         """
@@ -183,6 +184,7 @@ class SAVIGP(Model):
         d_ell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
         d_ell_dPi = np.zeros(self.num_MoG_comp)
+        d_ell_d_hyper = np.zeros((self.num_latent_proc, self.num_hyper_params))
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
         for j in range(self.num_latent_proc):
@@ -194,7 +196,6 @@ class SAVIGP(Model):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
 
-            k_ell = np.zeros(self.num_MoG_comp)
             s_dell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc))
             s_dell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc))
 
@@ -207,33 +208,61 @@ class SAVIGP(Model):
 
             for k in range(self.num_MoG_comp):
                 cond_ll = cond_log_likelihood(f[:,k,:], p_Y[n, :])
-                k_ell[k] += sum(cond_ll)
                 d_ell_dPi[k] += sum(cond_ll)
+                total_ell += sum(cond_ll) * self.MoG.pi[k]
                 for j in range(self.num_latent_proc):
                     s_dell_dm[k,j] += np.dot(f[:,k,j] - mean_kj[k,j], cond_ll)
                     s_dell_dS[k,j] += np.dot(sigma_kj[k,j] ** -2 * (f[:,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1, cond_ll)
 
-                total_ell += k_ell[k] * self.MoG.pi[k]
+                    # for calculating hyper parameters
+                    xn = p_X[np.newaxis, n, :]
+                    K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
+                    d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn) - self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], K_xn_Zj.T) \
+                                    - self.d_K_zjxn_d_hyper_mult_x(j, xn, Aj[j,n]) + \
+                                      2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
+
+                    # repeats f to aling it with the number of hyper params
+                    fr = np.repeat(f[:,k,j, np.newaxis], 3, axis=1)
+
+                    tmp = 1. / sigma_kj[k,j] * d_sigma_d_hyper  \
+                         - 2 * (fr - mean_kj[k,j]) \
+                           / sigma_kj[k,j] * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.m[k,j]) \
+                        - (fr - mean_kj[k,j]) ** 2 * sigma_kj[k,j] ** (-2) * d_sigma_d_hyper
+
+                    d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array([np.dot(tmp[:,hp], cond_ll) for hp in range(self.num_hyper_params)]).T
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * self.kernels[j].K(p_X[np.newaxis, n, :], self.Z[j,:,:])[0,:]
-
-            for k in range(self.num_MoG_comp):
-                for j in range(self.num_latent_proc):
+                    xn = p_X[np.newaxis, n, :]
+                    K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
+                    d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * K_xn_Zj
                     d_ell_dS[k,j] += self.mdot_Aj(Aj[j,n, np.newaxis])* s_dell_dS[k,j]
+
 
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
                 d_ell_dm[k,j,:] = self.MoG.pi[k]/n_sample * mdot(self.invZ[j,:,:], d_ell_dm[k,j,:])
-
-        for k in range(self.num_MoG_comp):
-            for j in range(self.num_latent_proc):
                 d_ell_dS[k,j,:] = self.MoG.pi[k]/n_sample / 2. * d_ell_dS[k,j,:]
 
         d_ell_dPi = d_ell_dPi/n_sample
 
-        return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi
+        return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi, d_ell_d_hyper/ n_sample
+
+    def d_K_zjxn_d_hyper_mult_x(self, j, x_n, x):
+        self.kernels[j].update_gradients_full(x[:,np.newaxis], self.Z[j], x_n)
+        return self.kernels[j].gradient
+
+    def d_K_xn_d_hyper(self, j, x_n):
+        self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
+        return self.kernels[j].gradient
+
+    def d_Ajn_d_hyper_mult_x(self, x_n, j, Ajn, x):
+        w = mdot(self.invZ[j], x)[:,np.newaxis]
+        self.kernels[j].update_gradients_full(w, x_n, self.Z[j])
+        g1 = self.kernels[j].gradient
+        self.kernels[j].update_gradients_full(mdot(Ajn[:,np.newaxis], w.T), self.Z[j])
+        g2 = self.kernels[j].gradient
+        return g1 - g2
 
 
     def mdot_Aj(self,Ajn):

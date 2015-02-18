@@ -1,4 +1,6 @@
 import math
+from GPy.util.linalg import mdot
+from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b
 import numpy as np
 
@@ -9,6 +11,35 @@ class Optimizer:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def O_BFGS(model, x0, c, lambda_, epsilon, max_iter):
+        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
+        dim = x0.shape[0]
+        theta = x0
+        B = epsilon * np.eye(dim)
+        iter = 0
+        eta = 0.1
+        g = f_grad(theta)
+        while(iter < max_iter):
+            P = -mdot(B, g)
+            s = eta / c * P
+            theta = theta + s
+            # theta = theta - 0.0001 * g
+            g_n = f_grad(theta)
+            y = g_n - g + lambda_ * s
+            g = g_n
+            if iter == 0:
+                B = np.dot(s, y) / np.dot(y,y) * np.eye(dim)
+            rho = 1 / np.dot(s, y)
+            B = mdot((np.eye(dim) - rho * mdot(s[np.newaxis], y[np.newaxis].T)),
+                     B,
+                     (np.eye(dim) - rho * mdot(y[np.newaxis], s[np.newaxis].T))
+            ) + c * rho * mdot(s[np.newaxis], s[np.newaxis].T)
+
+            print f(theta)
+            iter += 1
+
 
     @staticmethod
     def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True, factor = 1.0):
@@ -23,8 +54,8 @@ class Optimizer:
                 print 'iter:' , iter, 'objective fun:', new_f, 'alpha:', alpha
             grad = model.objective_function_gradients()
 
-            if alpha > factor / (new_f):
-                alpha = factor / (new_f)
+            # if alpha > factor / (new_f):
+            #     alpha = factor / (new_f)
 
             x -= grad * alpha
             if math.fabs(new_f - last_f) < ftol:
@@ -37,24 +68,26 @@ class Optimizer:
 
         return x
 
-
     @staticmethod
-    def loopy_opt(model):
-        x_old = [model._get_params()]
-
+    def get_f_f_grad_from_model(model):
         def f(x):
             model._set_params(x)
             if np.isnan(model.objective_function()):
-                model._set_params(x_old[0])
                 print 'restart'
                 raise Exception('restart')
-            x_old[0] = x
             print model.objective_function()
             return model.objective_function()
 
         def f_grad(x):
             model._set_params(x)
             return model.objective_function_gradients()
+        return f, f_grad
+
+
+    @staticmethod
+    def loopy_opt(model):
+        x_old = [model._get_params()]
+
 
         restart = True
         while restart:

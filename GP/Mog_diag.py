@@ -80,6 +80,9 @@ class MoG_Diag(object, MoG):
     def dAS_dS(self, A):
         return np.diag(A)
 
+    def Sa(self, a, k, j):
+        return a * self.s[k,j]
+
     def _update(self):
         for k in range(self.num_comp):
             for l in range(self.num_comp):
