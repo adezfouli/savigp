@@ -38,11 +38,11 @@ class SAVIGP_test:
     @staticmethod
     def test_grad():
         # number of input data points
-        num_input_samples = 50
+        num_input_samples = 5
         input_dim = 4
         num_inducing = num_input_samples
-        num_MoG_comp = 10
-        num_latent_proc = 10
+        num_MoG_comp = 1
+        num_latent_proc = 1
         # number of samples
         num_samples = 10000
         gaussian_sigma = np.diag(np.ones(num_latent_proc))

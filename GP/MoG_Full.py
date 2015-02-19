@@ -24,9 +24,13 @@ class MoG_Full(MoG):
         self._random_init()
         self._update()
         self.parameters = self.get_parameters()
+        self.num_free_params = self.parameters.shape[0]
 
     def get_parameters(self):
         return np.hstack([self.m.flatten(), self.L_flatten.flatten(), self.pi])
+
+    def num_parameters(self):
+        return self.num_free_params
 
     def _random_init(self):
         self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))

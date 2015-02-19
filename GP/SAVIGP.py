@@ -72,7 +72,8 @@ class SAVIGP(Model):
         return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
 
     def _get_param_names(self):
-        return ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp
+        return ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp \
+                + ['k'] * self.num_latent_proc * self.num_hyper_params
 
     def _update(self):
         """
@@ -113,9 +114,9 @@ class SAVIGP(Model):
 
         self.grad_ll = np.hstack([xdell_dm.flatten() + self._dcorss_dm().flatten() + self._d_ent_d_m().flatten(),
                                  self.MoG.transform_S_grad(xdell_dS + self._dcross_dS() + self._d_ent_d_S()),
-                                 # self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
-                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
-                                   xdell_hyper.flatten()])
+                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi())
+                                   ,xdell_hyper.flatten()
+        ])
 
     def _set_params(self, p):
         """
@@ -124,14 +125,20 @@ class SAVIGP(Model):
         """
         # print 'set', p
         self.last_param = p
-        self.MoG.update_parameters(p)
+        self.MoG.update_parameters(p[:self.MoG.num_parameters()])
+        self.hyper_params = p[self.MoG.num_parameters():].reshape((self.num_latent_proc, self.num_hyper_params))
+        for j in range(self.num_latent_proc):
+            self.kernels[j].param_array[:] = self.hyper_params[j]
         self._update()
 
     def _get_params(self):
         """
         exposes parameters to the optimizer
         """
-        return self.MoG.parameters
+        hyper = np.empty((self.num_latent_proc, self.num_hyper_params))
+        for j in range(self.num_latent_proc):
+            hyper[j] = self.kernels[j].param_array
+        return np.hstack([self.MoG.parameters, hyper.flatten()])
 
     def log_likelihood(self):
         # print 'll', self.ll
@@ -222,7 +229,7 @@ class SAVIGP(Model):
                                       2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
 
                     # repeats f to aling it with the number of hyper params
-                    fr = np.repeat(f[:,k,j, np.newaxis], 3, axis=1)
+                    fr = np.repeat(f[:,k,j, np.newaxis], self.num_hyper_params, axis=1)
 
                     tmp = 1. / sigma_kj[k,j] * d_sigma_d_hyper  \
                          - 2 * (fr - mean_kj[k,j]) \
@@ -238,7 +245,6 @@ class SAVIGP(Model):
                     d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * K_xn_Zj
                     d_ell_dS[k,j] += self.mdot_Aj(Aj[j,n, np.newaxis])* s_dell_dS[k,j]
 
-
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
                 d_ell_dm[k,j,:] = self.MoG.pi[k]/n_sample * mdot(self.invZ[j,:,:], d_ell_dm[k,j,:])
@@ -250,23 +256,23 @@ class SAVIGP(Model):
 
     def d_K_zjxn_d_hyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:,np.newaxis], self.Z[j], x_n)
-        return self.kernels[j].gradient
+        return self.kernels[j].gradient.copy()
 
     def d_K_xn_d_hyper(self, j, x_n):
         self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
-        return self.kernels[j].gradient
+        return self.kernels[j].gradient.copy()
 
     def d_Ajn_d_hyper_mult_x(self, x_n, j, Ajn, x):
         w = mdot(self.invZ[j], x)[:,np.newaxis]
         self.kernels[j].update_gradients_full(w, x_n, self.Z[j])
-        g1 = self.kernels[j].gradient
+        g1 = self.kernels[j].gradient.copy()
         self.kernels[j].update_gradients_full(mdot(Ajn[:,np.newaxis], w.T), self.Z[j])
-        g2 = self.kernels[j].gradient
+        g2 = self.kernels[j].gradient.copy()
         return g1 - g2
 
 
     def mdot_Aj(self,Ajn):
-        return (Ajn[0] * Ajn.T[0])
+        return (Ajn[0] * Ajn[0])
 
     def _dcorss_dm(self):
         """

@@ -15,9 +15,13 @@ class MoG_Diag(object, MoG):
         self._random_init()
         self.parameters = self.get_parameters()
         self._update()
+        self.num_free_params = self.parameters.shape[0]
 
     def get_parameters(self):
         return np.hstack([self.m.flatten(), self.s.flatten(), self.pi])
+
+    def num_parameters(self):
+        return self.num_free_params
 
     def _random_init(self):
         super(MoG_Diag, self)._random_init()

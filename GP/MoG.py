@@ -50,6 +50,10 @@ class MoG:
     def get_m_size(self):
         return self.num_comp * self.num_process * self.num_dim
 
+    def num_parameters(self):
+        """ return number of free parameters of a model """
+        raise NotImplementedError
+
     def get_s_size(self):
         """ return size of s when flattened """
         raise NotImplementedError
