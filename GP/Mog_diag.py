@@ -18,14 +18,14 @@ class MoG_Diag(object, MoG):
         self.num_free_params = self.parameters.shape[0]
 
     def get_parameters(self):
-        return np.hstack([self.m.flatten(), self.s.flatten(), self.pi])
+        return np.hstack([self.m.flatten(), np.log(self.s.flatten()), self.pi])
 
     def num_parameters(self):
         return self.num_free_params
 
     def _random_init(self):
         super(MoG_Diag, self)._random_init()
-        self.s = np.random.uniform(low=0.1, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.s = np.random.uniform(low=0.01, high=0.02, size=(self.num_comp, self.num_process, self.num_dim))
 
     def fixed_init(self):
         super(MoG_Diag, self).fixed_init()
@@ -79,7 +79,7 @@ class MoG_Diag(object, MoG):
         return mdot(self.s[:,j,:], (a ** 2))
 
     def mmTS(self, k, j):
-        return mdot(self.m[k,j], self.m[k,j].T) + np.diag(self.s[k,j])
+        return mdot(self.m[k,j, np.newaxis].T, self.m[k,j, np.newaxis]) + np.diag(self.s[k,j])
 
     def dAS_dS(self, A):
         return np.diag(A)

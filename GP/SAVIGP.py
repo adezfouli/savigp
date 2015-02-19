@@ -56,15 +56,10 @@ class SAVIGP(Model):
         # Z is Q * M * D
         self.Z = Z
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
-
-
         self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
-        self.log_detZ = np.array([0] * self.num_latent_proc)
+        self.log_detZ = np.zeros(self.num_latent_proc)
 
-        for j in range(self.num_latent_proc):
-            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
-            self.invZ[j, :, :], self.log_detZ[j] = (inv_chol(L), pddet(L))
 
         self._update()
 
@@ -79,6 +74,11 @@ class SAVIGP(Model):
         """
         updating internal variables for later use
         """
+        for j in range(self.num_latent_proc):
+            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
+            self.invZ[j, :, :] = inv_chol(L)
+            self.log_detZ[j] = pddet(L)
+
         #updating N_lk, and z_k used for updating d_ent
         self.N_kll = np.ones((self.num_MoG_comp, self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
@@ -115,7 +115,7 @@ class SAVIGP(Model):
         self.grad_ll = np.hstack([xdell_dm.flatten() + self._dcorss_dm().flatten() + self._d_ent_d_m().flatten(),
                                  self.MoG.transform_S_grad(xdell_dS + self._dcross_dS() + self._d_ent_d_S()),
                                  self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi())
-                                   ,xdell_hyper.flatten()
+                                 ,xdell_hyper.flatten() + self._dcross_d_hyper().flatten()
         ])
 
     def _set_params(self, p):
@@ -137,7 +137,7 @@ class SAVIGP(Model):
         """
         hyper = np.empty((self.num_latent_proc, self.num_hyper_params))
         for j in range(self.num_latent_proc):
-            hyper[j] = self.kernels[j].param_array
+            hyper[j] = self.kernels[j].param_array.copy()
         return np.hstack([self.MoG.parameters, hyper.flatten()])
 
     def log_likelihood(self):
@@ -232,9 +232,8 @@ class SAVIGP(Model):
                     fr = np.repeat(f[:,k,j, np.newaxis], self.num_hyper_params, axis=1)
 
                     tmp = 1. / sigma_kj[k,j] * d_sigma_d_hyper  \
-                         - 2 * (fr - mean_kj[k,j]) \
-                           / sigma_kj[k,j] * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.m[k,j]) \
-                        - (fr - mean_kj[k,j]) ** 2 * sigma_kj[k,j] ** (-2) * d_sigma_d_hyper
+                         - 2. * (fr - mean_kj[k,j])  / sigma_kj[k,j] * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.m[k,j]) \
+                        - ((fr - mean_kj[k,j]) ** 2) * sigma_kj[k,j] ** (-2) * d_sigma_d_hyper
 
                     d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array([np.dot(tmp[:,hp], cond_ll) for hp in range(self.num_hyper_params)]).T
 
@@ -252,7 +251,7 @@ class SAVIGP(Model):
 
         d_ell_dPi = d_ell_dPi/n_sample
 
-        return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi, d_ell_d_hyper/ n_sample
+        return total_ell / n_sample, d_ell_dm, d_ell_dS, d_ell_dPi, d_ell_d_hyper/n_sample
 
     def d_K_zjxn_d_hyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:,np.newaxis], self.Z[j], x_n)
@@ -264,7 +263,7 @@ class SAVIGP(Model):
 
     def d_Ajn_d_hyper_mult_x(self, x_n, j, Ajn, x):
         w = mdot(self.invZ[j], x)[:,np.newaxis]
-        self.kernels[j].update_gradients_full(w, x_n, self.Z[j])
+        self.kernels[j].update_gradients_full(w.T, x_n, self.Z[j])
         g1 = self.kernels[j].gradient.copy()
         self.kernels[j].update_gradients_full(mdot(Ajn[:,np.newaxis], w.T), self.Z[j])
         g2 = self.kernels[j].gradient.copy()
@@ -310,6 +309,14 @@ class SAVIGP(Model):
             cross += self.MoG.pi[k] * d_pi[k]
         d_pi *= -1. / 2
         cross *= -1. / 2
+        a = 0
+        # for j in range(self.num_latent_proc):
+        #     v = self.kernels[j].variance
+        #     m = self.MoG.m[0,j]
+        #     s = self.MoG.s[0,j]
+        #     a +=  -.5 * (N * math.log(2 * math.pi) + math.log(v) + m * m / v + s / v)
+        # print 'cross', cross, a
+
         return cross, d_pi
 
     def _dcross_K_j(self, j):
@@ -318,13 +325,21 @@ class SAVIGP(Model):
             dc_dK += -0.5 * self.MoG.pi[k] * (self.invZ[j]
                      -mdot(self.invZ[j], self.MoG.mmTS(k,j), self.invZ[j])
             )
-
         return dc_dK
 
-    def _dcross_dtheta(self):
+    def _dcross_d_hyper(self):
+        dc_dh = np.empty((self.num_latent_proc, self.num_hyper_params))
         for j in range(self.num_latent_proc):
             self.kernels[j].update_gradients_full(self._dcross_K_j(j), self.Z[j])
-            print self.kernels[j].gradient
+            dc_dh[j] = self.kernels[j].gradient.copy()
+
+        # for j in range(self.num_latent_proc):
+        #     v = self.kernels[j].variance
+        #     m = self.MoG.m[0,j]
+        #     s = self.MoG.s[0,j]
+        #     print (1. / v - m * m / v**2 - s / v**2) * .5, dc_dh[j]
+        #
+        return dc_dh
 
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)

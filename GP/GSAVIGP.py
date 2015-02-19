@@ -29,6 +29,7 @@ class GSAVIGP(SAVIGP):
         for j in range(self.num_latent_proc):
             Aj[j] = self._A(p_X, j)
             Kj[j] = self._Kdiag(p_X, Aj[j], j)
+            # print 'mean', Aj[j], Kj[j]
 
         for n in  range(len(p_X)):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))

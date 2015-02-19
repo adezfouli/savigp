@@ -43,20 +43,23 @@ class Optimizer:
 
     @staticmethod
     def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True, factor = 1.0):
+        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
         iter = 0
         x = start
         last_f = float('Inf')
         k = 0
         while iter < max_iter:
             model._set_params(x)
-            new_f = model.objective_function()
+            new_f = f(x)
             if verbose:
                 print 'iter:' , iter, 'objective fun:', new_f, 'alpha:', alpha
-            grad = model.objective_function_gradients()
+            grad = f_grad(x)
 
-            # if alpha > factor / (new_f):
-            #     alpha = factor / (new_f)
+            if alpha > factor / (new_f):
+                alpha = factor / (new_f)
 
+            if alpha < factor / (10 * new_f):
+                alpha = factor / (10 * new_f)
             x -= grad * alpha
             if math.fabs(new_f - last_f) < ftol:
                 return x, new_f
@@ -75,7 +78,6 @@ class Optimizer:
             if np.isnan(model.objective_function()):
                 print 'restart'
                 raise Exception('restart')
-            print model.objective_function()
             return model.objective_function()
 
         def f_grad(x):
@@ -85,15 +87,6 @@ class Optimizer:
 
 
     @staticmethod
-    def loopy_opt(model):
-        x_old = [model._get_params()]
-
-
-        restart = True
-        while restart:
-            # try:
-                fmin_l_bfgs_b(f, model._get_params(), f_grad, factr=100, epsilon=1e-3)
-                restart = False
-            # except Exception as e:
-            #     print e
-            #     restart = True
+    def BFGS(model):
+        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
+        fmin_l_bfgs_b(f, model._get_params(), f_grad, factr=100, epsilon=1e-3)

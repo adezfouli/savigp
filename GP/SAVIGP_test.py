@@ -1,4 +1,5 @@
 import cProfile
+from copy import deepcopy
 from DerApproximator import get_d1
 from GPy.inference.optimization.conjugate_gradient_descent import CGD
 from GPy.util.linalg import mdot
@@ -27,28 +28,35 @@ class SAVIGP_test:
     def generate_samples(num_samples, input_dim, y_dim):
         np.random.seed()
         noise=0.02
-        X = np.random.uniform(low=-1000.0, high=1000.0, size=(num_samples, input_dim))
+        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, input_dim))
         X.sort(axis=0)
-        rbf = GPy.kern.RBF(input_dim, variance=1., lengthscale=np.array((0.25,)))
+        rbf = GPy.kern.RBF(input_dim, variance=1.0, lengthscale=np.array((0.2,)))
         white = GPy.kern.White(input_dim, variance=noise)
         kernel = rbf + white
         Y = np.sin([X.sum(axis=1).T]).T + np.random.randn(num_samples, y_dim) * 0.05
-        return X, Y, kernel, noise
+        return X, Y, rbf, noise
 
     @staticmethod
     def test_grad():
         # number of input data points
-        num_input_samples = 5
-        input_dim = 4
-        num_inducing = num_input_samples
-        num_MoG_comp = 1
-        num_latent_proc = 1
-        # number of samples
+        # num_input_samples = 10
+        # input_dim = 1
+        # num_inducing = 10
+        # num_MoG_comp = 1
+        # num_latent_proc = 1
+        # # number of samples
+        # num_samples = 10000
+        # gaussian_sigma = np.diag(np.ones(num_latent_proc))
+        # X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
+        # s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
+        #             [deepcopy(kernel) for j in range(num_latent_proc)], num_samples)
+
+        num_input_samples = 3
         num_samples = 10000
-        gaussian_sigma = np.diag(np.ones(num_latent_proc))
-        X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
-        s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
-                    [kernel] * num_latent_proc, num_samples)
+        gaussian_sigma = 0.02
+        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        s1 = GSAVIGP(X, Y, num_input_samples, 1,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+                    [kernel], num_samples)
 
         def f(x):
             s1._set_params(x)
@@ -111,7 +119,21 @@ class SAVIGP_test:
         s1 = GSAVIGP(X, Y, num_input_samples, 1,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                     [kernel], num_samples)
 
-        Optimizer.loopy_opt(s1)
+        # num_input_samples = 10
+        # input_dim = 1
+        # num_inducing = 10
+        # num_MoG_comp = 1
+        # num_latent_proc = 1
+        # # number of samples
+        # num_samples = 10000
+        # gaussian_sigma = np.diag(np.ones(num_latent_proc))
+        # X, Y, kernel, noise = SAVIGP_test.generate_samples(num_input_samples, input_dim, num_latent_proc)
+        # s1 = GSAVIGP(X, Y, num_inducing, num_MoG_comp, multivariate_likelihood(gaussian_sigma), gaussian_sigma,
+        #             [deepcopy(kernel) for j in range(num_latent_proc)], num_samples)
+
+        # Optimizer.BFGS(s1)
+        Optimizer.SGD(s1, 1e-4,  s1._get_params(), 20000, 1e-3, 1e-3)
+        print s1._get_params()
         plot_fit(s1, plot_raw= True)
 
         # Optimizer.SGD(s1, 1e-3,  s1._get_params(), 100, 1e-6, 1e-6)
@@ -132,6 +154,7 @@ class SAVIGP_test:
         # Optimizer.loopy_opt(s1)
         # Optimizer.SGD(s1, 0.0000001, s1._get_params(), 20000)
         Optimizer.O_BFGS(s1, s1._get_params(), 0.1, 0.1, 1e-7, 100)
+        print s1._get_params()
         plot_fit(s1, plot_raw= True)
         # Optimizer.SGD(s1, 1e-3,  s1._get_params(), 100, 1e-6, 1e-6)
         # gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
@@ -170,8 +193,8 @@ if __name__ == '__main__':
         # print mdot(a,c,b)
         # print (c * mdot(a[:,np.newaxis],b[:,np.newaxis].T)).sum()
         # SAVIGP_test.test_gp()
-        SAVIGP_test.test_grad()
-        # SAVIGP_test.prediction()
+        # SAVIGP_test.test_grad()
+        SAVIGP_test.prediction()
     finally:
         # print pr.print_stats(sort='cumtime')
         pass
