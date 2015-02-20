@@ -9,7 +9,7 @@ from scipy.linalg import inv, det
 from scipy.optimize import check_grad, minimize, lbfgsb, fmin_l_bfgs_b, basinhopping
 from GSAVIGP import GSAVIGP
 from GSAVIGP_full import GSAVIGP_Full
-from Optimizer import Optimizer
+from optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
 import numpy as np
 import GPy
@@ -112,7 +112,7 @@ class SAVIGP_test:
 
     @staticmethod
     def prediction():
-        num_input_samples = 10
+        num_input_samples = 20
         num_samples = 10000
         gaussian_sigma = 0.02
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -132,7 +132,10 @@ class SAVIGP_test:
         #             [deepcopy(kernel) for j in range(num_latent_proc)], num_samples)
 
         # Optimizer.BFGS(s1)
-        Optimizer.SGD(s1, 1e-4,  s1._get_params(), 20000, 1e-3, 1e-3)
+        try:
+            Optimizer.SGD(s1, 1e-3,  s1._get_params(), 20000, 1e-2, 1e-2)
+        except KeyboardInterrupt:
+            pass
         print s1._get_params()
         plot_fit(s1, plot_raw= True)
 
@@ -144,7 +147,7 @@ class SAVIGP_test:
 
     @staticmethod
     def prediction_full_gp():
-        num_input_samples = 2
+        num_input_samples = 100
         num_samples = 10000
         gaussian_sigma = 0.02
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -183,8 +186,8 @@ class SAVIGP_test:
 
 
 if __name__ == '__main__':
-    pr = cProfile.Profile()
-    pr.enable()
+    # pr = cProfile.Profile()
+    # pr.enable()
     try:
         # # SAVIGP_test.prediction_full_gp()
         # a = np.random.uniform(low=0.1, high=1.0, size=(5))
@@ -193,8 +196,8 @@ if __name__ == '__main__':
         # print mdot(a,c,b)
         # print (c * mdot(a[:,np.newaxis],b[:,np.newaxis].T)).sum()
         # SAVIGP_test.test_gp()
-        # SAVIGP_test.test_grad()
-        SAVIGP_test.prediction()
+        SAVIGP_test.test_grad()
+        # SAVIGP_test.prediction()
     finally:
         # print pr.print_stats(sort='cumtime')
         pass

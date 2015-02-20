@@ -47,25 +47,24 @@ class Optimizer:
         iter = 0
         x = start
         last_f = float('Inf')
-        k = 0
+        alpha = 1. / max(f_grad(x))
+        delta = 1. / max(f_grad(x))
+        delta_LR = 0.01
+        avg_ftol = 100.
         while iter < max_iter:
+            alpha = min(1. / max(f_grad(x)), 0.001)
             model._set_params(x)
             new_f = f(x)
-            if verbose:
-                print 'iter:' , iter, 'objective fun:', new_f, 'alpha:', alpha
             grad = f_grad(x)
 
-            if alpha > factor / (new_f):
-                alpha = factor / (new_f)
-
-            if alpha < factor / (10 * new_f):
-                alpha = factor / (10 * new_f)
+            print 'alpha', alpha
             x -= grad * alpha
-            if math.fabs(new_f - last_f) < ftol:
+            if avg_ftol < ftol:
                 return x, new_f
 
-            # if new_f < last_f:
-            #     alpha = (last_f - new_f) * 10
+            if iter > 1 and new_f < last_f:
+                delta = (1 - delta_LR) * delta + delta_LR * math.fabs(last_f - new_f) / last_f / 1000
+            avg_ftol = (1 - delta_LR) * avg_ftol + delta_LR * math.fabs(last_f - new_f)
             last_f = new_f
             iter += 1
 
@@ -75,13 +74,12 @@ class Optimizer:
     def get_f_f_grad_from_model(model):
         def f(x):
             model._set_params(x)
-            if np.isnan(model.objective_function()):
-                print 'restart'
-                raise Exception('restart')
+            print 'objective:', model.objective_function()
             return model.objective_function()
 
         def f_grad(x):
             model._set_params(x)
+            # print 'gradient:', model.objective_function_gradients()
             return model.objective_function_gradients()
         return f, f_grad
 

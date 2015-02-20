@@ -27,6 +27,10 @@ class MoG_Diag(object, MoG):
         super(MoG_Diag, self)._random_init()
         self.s = np.random.uniform(low=0.01, high=0.02, size=(self.num_comp, self.num_process, self.num_dim))
 
+    def update_covariance(self, j, Sj):
+        for k in range(self.num_comp):
+            self.s[k,j,:] = np.diagonal(Sj)
+
     def fixed_init(self):
         super(MoG_Diag, self).fixed_init()
         self.s = np.ones((self.num_comp, self.num_process, self.num_dim))
