@@ -1,7 +1,8 @@
 import math
 from GPy.util.linalg import mdot
+from numpy.ma import concatenate
 from scipy.linalg import inv
-from scipy.optimize import fmin_l_bfgs_b
+from scipy.optimize import fmin_l_bfgs_b, minimize
 import numpy as np
 
 __author__ = 'AT'
@@ -13,78 +14,85 @@ class Optimizer:
         pass
 
     @staticmethod
-    def O_BFGS(model, x0, c, lambda_, epsilon, max_iter):
-        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
-        dim = x0.shape[0]
-        theta = x0
-        B = epsilon * np.eye(dim)
-        iter = 0
-        eta = 0.1
-        g = f_grad(theta)
-        while(iter < max_iter):
-            P = -mdot(B, g)
-            s = eta / c * P
-            theta = theta + s
-            # theta = theta - 0.0001 * g
-            g_n = f_grad(theta)
-            y = g_n - g + lambda_ * s
-            g = g_n
-            if iter == 0:
-                B = np.dot(s, y) / np.dot(y,y) * np.eye(dim)
-            rho = 1 / np.dot(s, y)
-            B = mdot((np.eye(dim) - rho * mdot(s[np.newaxis], y[np.newaxis].T)),
-                     B,
-                     (np.eye(dim) - rho * mdot(y[np.newaxis], s[np.newaxis].T))
-            ) + c * rho * mdot(s[np.newaxis], s[np.newaxis].T)
-
-            print f(theta)
-            iter += 1
-
-
-    @staticmethod
-    def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True, factor = 1.0):
-        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
+    def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True,
+            factor = 1.0, opt_indices=None, adaptive_alpha=True):
+        if opt_indices is None:
+            opt_indices = range(0, len(start))
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, start, opt_indices)
         iter = 0
         x = start
         last_f = float('Inf')
-        alpha = 1. / max(f_grad(x))
-        delta = 1. / max(f_grad(x))
-        delta_LR = 0.01
+        delta_LR = 0.1
         avg_ftol = 100.
         while iter < max_iter:
-            alpha = min(1. / max(f_grad(x)), 0.001)
-            model._set_params(x)
-            new_f = f(x)
-            grad = f_grad(x)
+            update(x)
+            new_f = f()
+            grad = f_grad()
 
-            print 'alpha', alpha
+            if adaptive_alpha and alpha > 1./ max(grad) * alpha:
+                alpha = 1./ max(grad) * alpha
+            if adaptive_alpha and new_f < last_f:
+                alpha = min(1. / max(grad) / 10, 0.001)
+            print 'alpha', alpha,
             x -= grad * alpha
             if avg_ftol < ftol:
                 return x, new_f
-
             if iter > 1 and new_f < last_f:
-                delta = (1 - delta_LR) * delta + delta_LR * math.fabs(last_f - new_f) / last_f / 1000
-            avg_ftol = (1 - delta_LR) * avg_ftol + delta_LR * math.fabs(last_f - new_f)
+                avg_ftol = (1 - delta_LR) * avg_ftol + delta_LR * math.fabs(last_f - new_f)
             last_f = new_f
             iter += 1
-
         return x
 
     @staticmethod
-    def get_f_f_grad_from_model(model):
-        def f(x):
+    def get_f_f_grad_from_model(model, x0, opt_indices):
+        last_x = np.empty((1, x0.shape[0]))
+        def update(x):
+            if np.array_equal(x, last_x[0]):
+                return
+            last_x[0] = x
+            p = x0.copy()
+            p[opt_indices] = x[opt_indices]
             model._set_params(x)
-            print 'objective:', model.objective_function()
+
+        def f(X=None):
+            if X is not None:
+                update(X)
             return model.objective_function()
 
-        def f_grad(x):
-            model._set_params(x)
-            # print 'gradient:', model.objective_function_gradients()
-            return model.objective_function_gradients()
-        return f, f_grad
+        def f_grad(X=None):
+            if X is not None:
+                update(X)
+
+            g = np.zeros(len(x0))
+            g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
+            print 'grad:', Optimizer.print_short(g)
+            print 'obje:', "%.4f" % model.objective_function()
+            return g
+        update(x0)
+        return f, f_grad, update
 
 
     @staticmethod
-    def BFGS(model):
-        f, f_grad = Optimizer.get_f_f_grad_from_model(model)
-        fmin_l_bfgs_b(f, model._get_params(), f_grad, factr=100, epsilon=1e-3)
+    def BFGS(model, opt_indices=None):
+        start = model._get_params()
+        if opt_indices is None:
+            opt_indices = range(0, len(start))
+
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3,
+                      callback=lambda x: update(x))
+
+
+    @staticmethod
+    def general(model, opt_indices=None):
+        start = model._get_params()
+        if opt_indices is None:
+            opt_indices = range(0, len(start))
+
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        minimize(f, start, jac=f_grad, method='Newton-CG',
+                      callback=lambda x: update(x))
+
+    @staticmethod
+    def print_short(a):
+        return ["%.2f" % a[j] for j in range(len(a))]

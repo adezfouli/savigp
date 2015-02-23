@@ -5,15 +5,13 @@ from GPy.util.linalg import mdot
 from MoG import MoG
 import numpy as np
 
-
-class MoG_Diag(object, MoG):
+class MoG_Diag(MoG):
 
     def __init__(self, num_comp, num_process, num_dim):
         MoG.__init__(self, num_comp, num_process, num_dim)
         self.invC_klj = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
         self.s = []
         self._random_init()
-        self.parameters = self.get_parameters()
         self._update()
         self.num_free_params = self.parameters.shape[0]
 
@@ -24,12 +22,15 @@ class MoG_Diag(object, MoG):
         return self.num_free_params
 
     def _random_init(self):
-        super(MoG_Diag, self)._random_init()
-        self.s = np.random.uniform(low=0.01, high=0.02, size=(self.num_comp, self.num_process, self.num_dim))
+        MoG._random_init(self)
+        self.s = np.random.uniform(low=0.3, high=0.3, size=(self.num_comp, self.num_process, self.num_dim))
 
     def update_covariance(self, j, Sj):
         for k in range(self.num_comp):
-            self.s[k,j,:] = np.diagonal(Sj)
+            self.s[k,j,:] = np.diagonal(Sj).copy()
+            if min(self.s[k,j,:]) < 0:
+                self.s[k,j,:] = self.s[k,j,:] - 2 * min(self.s[k,j,:])
+        self._update()
 
     def fixed_init(self):
         super(MoG_Diag, self).fixed_init()
@@ -40,6 +41,9 @@ class MoG_Diag(object, MoG):
 
     def get_s_size(self):
         return self.num_comp * self.num_process * self.num_dim
+
+    def full_s_dim(self):
+        return (self.num_comp, self.num_process, self.num_dim,)
 
     def S_dim(self):
         return (self.num_dim,)
@@ -62,7 +66,7 @@ class MoG_Diag(object, MoG):
         return -0.5 * np.dot(
             (self.m[k, j, :] - self.m[l, j, :]) * (1.0 / (self.s[l, j, :] + self.s[k, j, :])),
             (self.m[k, j, :] - self.m[l, j, :])) - \
-               math.log(math.sqrt(np.product(2 * math.pi * (self.s[l, j, :] + self.s[k, j, :]))))
+            self.s[l,j,:].shape[0] * .5 * math.log(2 * math.pi) - (0.5 * (np.log((self.s[l, j, :] + self.s[k, j, :]))).sum())
 
     def inv_cov(self, j, k, l):
         return 1. / (self.s[l, j, :] + self.s[k, j, :])
@@ -92,6 +96,7 @@ class MoG_Diag(object, MoG):
         return a * self.s[k,j]
 
     def _update(self):
+        self.parameters = self.get_parameters()
         for k in range(self.num_comp):
             for l in range(self.num_comp):
                 for j in range(self.num_process):

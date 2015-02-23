@@ -18,9 +18,9 @@ class GSAVIGP(SAVIGP):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, normal_sigma, kernels, n_samples):
+    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, normal_sigma, kernels, n_samples, config_list):
         self.normal_sigma = normal_sigma
-        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples)
+        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
 
     def _gaussian_ell(self, p_X, p_Y):
         normal_ell = 0
@@ -82,3 +82,6 @@ class GSAVIGP(SAVIGP):
         if self.num_MoG_comp > 1 or self.num_latent_proc > 1:
             raise Exception('unable to plot')
         return np.sum(mu, (1,2))[:, np.newaxis], np.sum(var, (1,2,3))[:, np.newaxis]
+
+    # def _get_MoG(self):
+    #     return MoG_Diag_Squared(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)

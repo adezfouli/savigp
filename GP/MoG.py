@@ -1,7 +1,6 @@
-from GPy.util.linalg import mdot
-
 __author__ = 'AT'
 
+from GPy.util.linalg import mdot
 import numpy as np
 
 class MoG:
@@ -23,8 +22,14 @@ class MoG:
         self.pi_from_array(params[(self.get_m_size() + self.get_s_size()):])
         self._update()
 
+    def pi_dim(self):
+        return (self.num_comp)
+
+    def m_dim(self):
+        return (self.num_comp, self.num_process, self.num_dim)
+
     def _random_init(self):
-        self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.m = np.random.uniform(low=0.0, high=0.0, size=(self.num_comp, self.num_process, self.num_dim))
         self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
         self.pi = self.pi / sum(self.pi)
 
@@ -49,6 +54,10 @@ class MoG:
 
     def get_m_size(self):
         return self.num_comp * self.num_process * self.num_dim
+
+    def update_covariance(self, j, Sj):
+        """ updates covariance matrix j using Sj """
+        raise NotImplementedError
 
     def num_parameters(self):
         """ return number of free parameters of a model """

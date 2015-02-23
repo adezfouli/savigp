@@ -1,13 +1,22 @@
+from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD
+from aetypes import Enum
 import math
 from GPy.util.linalg import mdot
 import numpy as np
 from numpy.ma import trace, vstack
+from scipy.linalg import logm, det
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
-from GPy.core.gp import GP
 from MoG_Diag import MoG_Diag
-from util import mdiag_dot, jitchol, pddet, inv_chol
+
+
+class Configuration(Enum):
+    ETNROPY = 1
+    CROSS = 2
+    ELL = 3
+    HYPER = 4
+    MoG = 5
 
 
 class SAVIGP(Model):
@@ -26,9 +35,13 @@ class SAVIGP(Model):
     :rtype: model object
     """
 
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples):
+    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list = None):
 
         super(SAVIGP, self).__init__("SAVIGP")
+        if config_list is None:
+            self.config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ETNROPY, Configuration.HYPER]
+        else:
+            self.config_list = config_list
         self.num_latent_proc = len(kernels)
         self.num_MoG_comp = num_MoG_comp
         self.num_inducing = num_inducing
@@ -40,7 +53,10 @@ class SAVIGP(Model):
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
-        self.num_hyper_params = kernels[0].gradient.shape[0]
+        if Configuration.HYPER in self.config_list:
+            self.num_hyper_params = kernels[0].gradient.shape[0]
+            self.hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
+
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -51,8 +67,6 @@ class SAVIGP(Model):
                 i = np.random.permutation(X.shape[0])[:self.num_inducing]
             Z[j, :, :] = X[i].copy()
 
-
-
         # Z is Q * M * D
         self.Z = Z
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
@@ -60,8 +74,18 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
+        self.param_names = []
+        if Configuration.MoG in self.config_list:
+            self.param_names += ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp
+
+        if Configuration.HYPER in self.config_list:
+            self.param_names += ['k'] * self.num_latent_proc * self.num_hyper_params
+
+        self._update_inverses()
+
         for j in range(self.num_latent_proc):
-            self.MoG.update_covariance(j, self.kernels[j].K(self.Z[j]))
+            K = self.kernels[j].K(self.Z[j], self.Z[j])
+            self.MoG.update_covariance(j, (-mdot(K, np.real(logm(K)))))
 
         self._update()
 
@@ -69,17 +93,19 @@ class SAVIGP(Model):
         return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
 
     def _get_param_names(self):
-        return ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp \
-                + ['k'] * self.num_latent_proc * self.num_hyper_params
+        return self.param_names
+
+    def _update_inverses(self):
+        for j in range(self.num_latent_proc):
+            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
+            self.invZ[j, :, :] = inv_chol(L)
+            self.log_detZ[j] = pddet(L)
 
     def _update(self):
         """
         updating internal variables for later use
         """
-        for j in range(self.num_latent_proc):
-            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
-            self.invZ[j, :, :] = inv_chol(L)
-            self.log_detZ[j] = pddet(L)
+        self._update_inverses()
 
         #updating N_lk, and z_k used for updating d_ent
         self.N_kll = np.ones((self.num_MoG_comp, self.num_MoG_comp, self.num_MoG_comp))
@@ -107,22 +133,58 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
                 self.log_z[k] = -math.log(self.N_kl_z_k[k,0]) + self.N_k0[k]
 
-        #calculating ll and gradients for future uses
-        pX, pY = self._get_data_partition()
+        self.ll = 0
 
-        xell, xdell_dm, xdell_dS, xdell_dpi, xdell_hyper = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
-        xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
-        self.ll = xell + xcross + self._l_ent()
+        if Configuration.MoG in self.config_list:
+            grad_m = np.zeros((self.MoG.m_dim()))
+            grad_s = np.zeros((self.MoG.full_s_dim()))
+            grad_pi= np.zeros((self.MoG.pi_dim()))
 
-        self.hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
-        for j in range(self.num_latent_proc):
-            self.hyper_params[j] = self.kernels[j].param_array[:].copy()
+        if Configuration.HYPER in self.config_list:
+            grad_hyper = np.zeros(self.hyper_params.shape)
+            for j in range(self.num_latent_proc):
+                self.hyper_params[j] = self.kernels[j].param_array[:].copy()
 
-        self.grad_ll = np.hstack([xdell_dm.flatten() + self._dcorss_dm().flatten() + self._d_ent_d_m().flatten(),
-                                 self.MoG.transform_S_grad(xdell_dS + self._dcross_dS() + self._d_ent_d_S()),
-                                 self.MoG.transform_pi_grad(xdell_dpi + xdcorss_dpi + self._d_ent_d_pi()),
-                                 (xdell_hyper.flatten() + self._dcross_d_hyper().flatten()) * self.hyper_params.flatten()
-        ])
+        if Configuration.ETNROPY in self.config_list:
+            self.ll += self._l_ent()
+            if Configuration.MoG in self.config_list:
+                grad_m += self._d_ent_d_m()
+                grad_s += self._d_ent_d_S()
+                grad_pi += self._d_ent_d_pi()
+
+        if Configuration.CROSS in self.config_list:
+            xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
+            self.ll += xcross
+            if Configuration.MoG in self.config_list:
+                grad_m += self._dcorss_dm()
+                grad_s += self._dcross_dS()
+                grad_pi += xdcorss_dpi
+            if Configuration.HYPER in self.config_list:
+                grad_hyper += self._dcross_d_hyper().flatten()
+
+        if Configuration.ELL in self.config_list:
+            pX, pY = self._get_data_partition()
+            xell, xdell_dm, xdell_dS, xdell_dpi, xdell_hyper = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
+            self.ll += xell
+            if Configuration.MoG in self.config_list:
+                grad_m += xdell_dm
+                grad_s += xdell_dS
+                grad_pi += xdell_dpi
+            if Configuration.HYPER in self.config_list:
+                grad_hyper += xdell_hyper
+
+        self.grad_ll = np.array([])
+        if Configuration.MoG in self.config_list:
+            self.grad_ll = np.hstack([grad_m.flatten(),
+                                     self.MoG.transform_S_grad(grad_s),
+                                     self.MoG.transform_pi_grad(grad_pi),
+            ])
+
+        if Configuration.HYPER in self.config_list:
+            self.grad_ll = np.hstack([self.grad_ll,
+                                     (grad_hyper.flatten()) * self.hyper_params.flatten()
+            ])
+
 
     def _set_params(self, p):
         """
@@ -131,19 +193,26 @@ class SAVIGP(Model):
         """
         # print 'set', p
         self.last_param = p
-        self.MoG.update_parameters(p[:self.MoG.num_parameters()])
-        self.hyper_params = np.exp(p[self.MoG.num_parameters():].reshape((self.num_latent_proc, self.num_hyper_params)))
-        for j in range(self.num_latent_proc):
-            self.kernels[j].param_array[:] = self.hyper_params[j]
+        index = 0
+        if Configuration.MoG in self.config_list:
+            self.MoG.update_parameters(p[:self.MoG.num_parameters()])
+            index = self.MoG.num_parameters()
+        if Configuration.HYPER in self.config_list:
+            self.hyper_params = np.exp(p[index:].reshape((self.num_latent_proc, self.num_hyper_params)))
+            for j in range(self.num_latent_proc):
+                self.kernels[j].param_array[:] = self.hyper_params[j]
         self._update()
 
     def _get_params(self):
         """
         exposes parameters to the optimizer
         """
-        return np.hstack([self.MoG.parameters,
-                          np.log(self.hyper_params.flatten())
-        ])
+        params = np.array([])
+        if Configuration.MoG in self.config_list:
+            params = self.MoG.parameters
+        if Configuration.HYPER in self.config_list:
+            params = np.hstack([params, np.log(self.hyper_params.flatten())])
+        return params
 
     def log_likelihood(self):
         return self.ll
@@ -194,7 +263,10 @@ class SAVIGP(Model):
         d_ell_dm = np.zeros((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         d_ell_dS = np.zeros((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
         d_ell_dPi = np.zeros(self.num_MoG_comp)
-        d_ell_d_hyper = np.zeros((self.num_latent_proc, self.num_hyper_params))
+        if Configuration.HYPER in self.config_list:
+            d_ell_d_hyper = np.zeros((self.num_latent_proc, self.num_hyper_params))
+        else:
+            d_ell_d_hyper = 0
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
         for j in range(self.num_latent_proc):
@@ -225,20 +297,21 @@ class SAVIGP(Model):
                     s_dell_dS[k,j] += np.dot(sigma_kj[k,j] ** -2 * (f[:,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1, cond_ll)
 
                     # for calculating hyper parameters
-                    xn = p_X[np.newaxis, n, :]
-                    K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
-                    d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn) - self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], K_xn_Zj.T) \
-                                    - self.d_K_zjxn_d_hyper_mult_x(j, xn, Aj[j,n]) + \
-                                      2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
+                    if Configuration.HYPER in self.config_list:
+                        xn = p_X[np.newaxis, n, :]
+                        K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
+                        d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn) - self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], K_xn_Zj.T) \
+                                        - self.d_K_zjxn_d_hyper_mult_x(j, xn, Aj[j,n]) + \
+                                          2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
 
-                    # repeats f to aling it with the number of hyper params
-                    fr = np.repeat(f[:,k,j, np.newaxis], self.num_hyper_params, axis=1)
+                        # repeats f to aling it with the number of hyper params
+                        fr = np.repeat(f[:,k,j, np.newaxis], self.num_hyper_params, axis=1)
 
-                    tmp = 1. / sigma_kj[k,j] * d_sigma_d_hyper  \
-                         - 2. * (fr - mean_kj[k,j])  / sigma_kj[k,j] * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.m[k,j]) \
-                        - ((fr - mean_kj[k,j]) ** 2) * sigma_kj[k,j] ** (-2) * d_sigma_d_hyper
+                        tmp = 1. / sigma_kj[k,j] * d_sigma_d_hyper  \
+                             - 2. * (fr - mean_kj[k,j])  / sigma_kj[k,j] * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.m[k,j]) \
+                            - ((fr - mean_kj[k,j]) ** 2) * sigma_kj[k,j] ** (-2) * d_sigma_d_hyper
 
-                    d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array([np.dot(tmp[:,hp], cond_ll) for hp in range(self.num_hyper_params)]).T
+                        d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array([np.dot(tmp[:,hp], cond_ll) for hp in range(self.num_hyper_params)]).T
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
@@ -310,6 +383,7 @@ class SAVIGP(Model):
                         self.MoG.tr_A_mult_S(self.invZ[j,:,:], k, j)
         for k in range(self.num_MoG_comp):
             cross += self.MoG.pi[k] * d_pi[k]
+
         d_pi *= -1. / 2
         cross *= -1. / 2
         return cross, d_pi
@@ -368,9 +442,3 @@ class SAVIGP(Model):
 
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  self.log_z)
-
-
-
-
-
-

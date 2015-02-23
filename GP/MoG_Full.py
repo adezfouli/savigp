@@ -1,10 +1,10 @@
 from numpy.ma import trace
-from util import chol_grad, pddet, inv_chol
+from util import chol_grad, pddet, inv_chol, jitchol
 
 __author__ = 'AT'
 
 import math
-from GPy.util.linalg import mdot, symmetrify, dtrtrs
+from GPy.util.linalg import mdot, dtrtrs
 from numpy.linalg import inv, det
 from MoG import MoG
 import numpy as np
@@ -23,22 +23,29 @@ class MoG_Full(MoG):
         self.log_det = np.empty((self.num_comp, self.num_comp, self.num_process))
         self._random_init()
         self._update()
-        self.parameters = self.get_parameters()
         self.num_free_params = self.parameters.shape[0]
 
     def get_parameters(self):
         return np.hstack([self.m.flatten(), self.L_flatten.flatten(), self.pi])
 
+    def update_covariance(self, j, Sj):
+        Sj = Sj.copy()
+        for k in range(self.num_comp):
+            self.s[k,j] = Sj.copy()
+            self.L[k,j] = jitchol(Sj,10)
+            tmp = self.L[k,j].copy()
+            tmp[np.diag_indices_from(tmp)] = np.log(tmp[np.diag_indices_from(tmp)])
+            self.L_flatten[k,j] = tmp[np.tril_indices_from(tmp)]
+        self._update()
+
     def num_parameters(self):
         return self.num_free_params
 
     def _random_init(self):
-        self.m = np.random.uniform(low=-1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        MoG._random_init(self)
         for k in range(self.num_comp):
             for j in range(self.num_process):
                 self.L_flatten[k,j,:] = np.random.uniform(low=1.0, high=1.0, size=self.get_sjk_size())
-        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
-        self.pi = self.pi / sum(self.pi)
 
     def fixed_init(self):
         self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
@@ -56,6 +63,9 @@ class MoG_Full(MoG):
 
     def S_dim(self):
         return self.num_dim, self.num_dim
+
+    def full_s_dim(self):
+        return (self.num_comp, self.num_process, self.num_dim, self.num_dim)
 
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
@@ -117,7 +127,7 @@ class MoG_Full(MoG):
         for k in range(self.num_comp):
             for j in range(self.num_process):
                 temp = np.zeros((self.num_dim, self.num_dim))
-                temp[np.tril_indices_from(temp)] = self.L_flatten[k,j,:]
+                temp[np.tril_indices_from(temp)] = self.L_flatten[k,j,:].copy()
                 temp[np.diag_indices_from(temp)] = np.exp(temp[np.diag_indices_from(temp)])
                 self.L[k,j,:,:] = temp
                 self.s[k,j] = mdot(self.L[k,j,:,:], self.L[k,j,:,:].T)
