@@ -1,9 +1,16 @@
+__author__ = 'AT'
+
+from SAVIGP_SingleComponent import SAVIGP_SingleComponent
+from GSAVIGP_full import GSAVIGP_Full
+from MoG_single_comp import MoG_SingleComponent
+from MoG_Diag import MoG_Diag
 from SAVIGP import SAVIGP
+from SAVIGP_full import SAVIGP_Full
 from util import cross_ent_normal
 import numpy as np
 
 
-class GSAVIGP(SAVIGP):
+class GSAVIGP_SignleComponenet(SAVIGP_SingleComponent):
     """
     Scalable Variational Inference Gaussian Process where the conditional likelihood is gaussian
 
@@ -18,9 +25,10 @@ class GSAVIGP(SAVIGP):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, normal_sigma, kernels, n_samples, config_list):
+    def __init__(self, X, Y, num_inducing, likelihood, normal_sigma, kernels, n_samples, config_list):
         self.normal_sigma = normal_sigma
-        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
+        super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood, kernels, n_samples, config_list)
+
 
     def _gaussian_ell(self, p_X, p_Y):
         normal_ell = 0
@@ -29,7 +37,6 @@ class GSAVIGP(SAVIGP):
         for j in range(self.num_latent_proc):
             Aj[j] = self._A(p_X, j)
             Kj[j] = self._Kdiag(p_X, Aj[j], j)
-            # print 'mean', Aj[j], Kj[j]
 
         for n in  range(len(p_X)):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
@@ -45,7 +52,7 @@ class GSAVIGP(SAVIGP):
         return normal_ell
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
+        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP_SignleComponenet, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
         gell = self._gaussian_ell(p_X, p_Y)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 

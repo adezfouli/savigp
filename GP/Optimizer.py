@@ -1,8 +1,9 @@
 import math
 from GPy.util.linalg import mdot
+import nlopt
 from numpy.ma import concatenate
 from scipy.linalg import inv
-from scipy.optimize import fmin_l_bfgs_b, minimize
+from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
 import numpy as np
 
 __author__ = 'AT'
@@ -18,7 +19,7 @@ class Optimizer:
             factor = 1.0, opt_indices=None, adaptive_alpha=True):
         if opt_indices is None:
             opt_indices = range(0, len(start))
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, start, opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, start, opt_indices, verbose=verbose)
         iter = 0
         x = start
         last_f = float('Inf')
@@ -29,11 +30,13 @@ class Optimizer:
             new_f = f()
             grad = f_grad()
 
-            if adaptive_alpha and alpha > 1./ max(grad) * alpha:
-                alpha = 1./ max(grad) * alpha
-            if adaptive_alpha and new_f < last_f:
-                alpha = min(1. / max(grad) / 10, 0.001)
-            print 'alpha', alpha,
+            if adaptive_alpha and alpha > 1./ max(abs(grad)) / 10:
+                alpha = 1./ max(abs(grad))  / 100
+            if adaptive_alpha and new_f < last_f and alpha < 1./ max(abs(grad)) / 1000:
+                alpha = min(1. / max(abs(grad)) / 500, 0.001)
+            print alpha
+            if verbose:
+                print 'alpha', alpha,
             x -= grad * alpha
             if avg_ftol < ftol:
                 return x, new_f
@@ -44,7 +47,7 @@ class Optimizer:
         return x
 
     @staticmethod
-    def get_f_f_grad_from_model(model, x0, opt_indices):
+    def get_f_f_grad_from_model(model, x0, opt_indices, verbose = False):
         last_x = np.empty((1, x0.shape[0]))
         def update(x):
             if np.array_equal(x, last_x[0]):
@@ -65,7 +68,8 @@ class Optimizer:
 
             g = np.zeros(len(x0))
             g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
-            print 'grad:', Optimizer.print_short(g)
+            if verbose:
+                print 'grad:', Optimizer.print_short(g)
             print 'obje:', "%.4f" % model.objective_function()
             return g
         update(x0)
@@ -73,15 +77,43 @@ class Optimizer:
 
 
     @staticmethod
-    def BFGS(model, opt_indices=None):
+    def BFGS(model, opt_indices=None, max_fun=None):
         start = model._get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
-        fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3,
+        fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
 
+    @staticmethod
+    def CG(model, opt_indices=None):
+        start = model._get_params()
+        if opt_indices is None:
+            opt_indices = range(0, len(start))
+
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        fmin_cg(f, start, f_grad, epsilon=1e-6,
+                      callback=lambda x: update(x))
+
+    @staticmethod
+    def NLOPT(model, algorithm, opt_indices=None):
+        start = model._get_params()
+        if opt_indices is None:
+            opt_indices = range(0, len(start))
+
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+
+        def myfunc(x, grad):
+            update(x)
+            if grad.size > 0:
+                grad[:] = f_grad()
+            return f()
+
+        opt = nlopt.opt(algorithm, len(model._get_params()))
+        opt.set_min_objective(myfunc)
+        opt.set_ftol_rel(1e-3)
+        return opt.optimize(model._get_params())
 
     @staticmethod
     def general(model, opt_indices=None):

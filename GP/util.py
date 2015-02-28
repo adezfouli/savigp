@@ -50,7 +50,7 @@ def pddet(L):
 
 
 def inv_chol(L):
-    Ai, _ = dpotri(L, lower=1)
+    Ai, _ = dpotri(np.asfortranarray(L), lower=1)
     return Ai
 
 def chol_grad(L, dM_dx):

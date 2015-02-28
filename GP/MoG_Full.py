@@ -30,6 +30,9 @@ class MoG_Full(MoG):
 
     def update_covariance(self, j, Sj):
         Sj = Sj.copy()
+        mm = min(Sj[np.diag_indices_from(Sj)])
+        if mm < 0:
+            Sj[np.diag_indices_from(Sj)] = Sj[np.diag_indices_from(Sj)] - 1.1 * mm
         for k in range(self.num_comp):
             self.s[k,j] = Sj.copy()
             self.L[k,j] = jitchol(Sj,10)
@@ -124,6 +127,7 @@ class MoG_Full(MoG):
         return grad.flatten()
 
     def _update(self):
+        self.parameters = self.get_parameters()
         for k in range(self.num_comp):
             for j in range(self.num_process):
                 temp = np.zeros((self.num_dim, self.num_dim))

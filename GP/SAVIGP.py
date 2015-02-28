@@ -4,12 +4,12 @@ import math
 from GPy.util.linalg import mdot
 import numpy as np
 from numpy.ma import trace, vstack
-from scipy.linalg import logm, det
+from scipy.linalg import logm, det, cho_solve
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
 from MoG_Diag import MoG_Diag
-
+from line_profiler import *
 
 class Configuration(Enum):
     ETNROPY = 1
@@ -53,10 +53,6 @@ class SAVIGP(Model):
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
-        if Configuration.HYPER in self.config_list:
-            self.num_hyper_params = kernels[0].gradient.shape[0]
-            self.hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
-
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -74,6 +70,19 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
+        self._update_inverses()
+
+        for j in range(self.num_latent_proc):
+            K = self.kernels[j].K(self.Z[j], self.Z[j])
+            self.MoG.update_covariance(j, K)
+
+        self.normal_samples = np.random.normal(0, 1, self.n_samples)
+        self._update()
+
+    def _get_MoG(self):
+        return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
+
+    def _get_param_names(self):
         self.param_names = []
         if Configuration.MoG in self.config_list:
             self.param_names += ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp
@@ -81,59 +90,49 @@ class SAVIGP(Model):
         if Configuration.HYPER in self.config_list:
             self.param_names += ['k'] * self.num_latent_proc * self.num_hyper_params
 
-        self._update_inverses()
-
-        for j in range(self.num_latent_proc):
-            K = self.kernels[j].K(self.Z[j], self.Z[j])
-            self.MoG.update_covariance(j, (-mdot(K, np.real(logm(K)))))
-
-        self._update()
-
-    def _get_MoG(self):
-        return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
-
-    def _get_param_names(self):
         return self.param_names
 
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
-            L = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
-            self.invZ[j, :, :] = inv_chol(L)
-            self.log_detZ[j] = pddet(L)
+            self.chol[j,:,:] = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
+            self.invZ[j, :, :] = inv_chol(self.chol[j,:,:])
+            self.log_detZ[j] = pddet(self.chol[j,:,:])
 
-    def _update(self):
-        """
-        updating internal variables for later use
-        """
-        self._update_inverses()
-
-        #updating N_lk, and z_k used for updating d_ent
+    def update_N_z(self):
+        # updating N_lk, and z_k used for updating d_ent
         self.N_kll = np.ones((self.num_MoG_comp, self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
             for l1 in range(self.num_MoG_comp):
                 for l2 in range(self.num_MoG_comp):
                     for j in range(self.num_latent_proc):
-                        self.N_kll[k,l1, l2] *= self.MoG.ratio(j, k, l1, l2)
-
+                        self.N_kll[k, l1, l2] *= self.MoG.ratio(j, k, l1, l2)
         self.N_kl_z_k = np.zeros((self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
             for l in range(self.num_MoG_comp):
                 for x in range(self.num_MoG_comp):
-                    self.N_kl_z_k[k,l] += self.MoG.pi[x] * self.N_kll[k,x,l]
-                self.N_kl_z_k[k,l] = 1.0 / self.N_kl_z_k[k,l]
-
-
+                    self.N_kl_z_k[k, l] += self.MoG.pi[x] * self.N_kll[k, x, l]
+                self.N_kl_z_k[k, l] = 1.0 / self.N_kl_z_k[k, l]
         self.N_k0 = np.zeros((self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
                 l = 0
                 self.N_k0[k] += self.MoG.log_pdf(j, k, l)
-
         self.log_z = np.zeros((self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
-                self.log_z[k] = -math.log(self.N_kl_z_k[k,0]) + self.N_k0[k]
+            self.log_z[k] = -math.log(self.N_kl_z_k[k, 0]) + self.N_k0[k]
+
+    def _update(self):
+
+        if Configuration.HYPER in self.config_list:
+            self._update_inverses()
+
+        self.update_N_z()
 
         self.ll = 0
+
+        if Configuration.HYPER in self.config_list:
+            self.num_hyper_params = self.kernels[0].gradient.shape[0]
+            self.hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
 
         if Configuration.MoG in self.config_list:
             grad_m = np.zeros((self.MoG.m_dim()))
@@ -185,6 +184,9 @@ class SAVIGP(Model):
                                      (grad_hyper.flatten()) * self.hyper_params.flatten()
             ])
 
+    def set_configuration(self, config_list):
+        self.config_list = config_list
+        self._update()
 
     def _set_params(self, p):
         """
@@ -227,7 +229,8 @@ class SAVIGP(Model):
         """
         calculating A for latent process j (eq 4)
         """
-        return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
+        # return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
+        return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]))
 
     def _Kdiag(self, p_X, A, j):
         """
@@ -251,6 +254,7 @@ class SAVIGP(Model):
     def dK_dtheta(self, j):
         return self.kernels[j].gradient
 
+    # @profile
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
 
         """
@@ -286,12 +290,14 @@ class SAVIGP(Model):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
                 for k in range(self.num_MoG_comp):
-                    f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), n_sample)
+                    f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
+                    # f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), self.n_samples)
 
             for k in range(self.num_MoG_comp):
                 cond_ll = cond_log_likelihood(f[:,k,:], p_Y[n, :])
-                d_ell_dPi[k] += sum(cond_ll)
-                total_ell += sum(cond_ll) * self.MoG.pi[k]
+                sum_cond_ll = cond_ll.sum()
+                d_ell_dPi[k] += sum_cond_ll
+                total_ell += sum_cond_ll * self.MoG.pi[k]
                 for j in range(self.num_latent_proc):
                     s_dell_dm[k,j] += np.dot(f[:,k,j] - mean_kj[k,j], cond_ll)
                     s_dell_dS[k,j] += np.dot(sigma_kj[k,j] ** -2 * (f[:,k,j] - mean_kj[k,j]) ** 2 - sigma_kj[k,j] ** -1, cond_ll)

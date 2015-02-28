@@ -1,6 +1,11 @@
+import cProfile
+import line_profiler
+import math
+import nlopt
 from GSAVIGP import GSAVIGP
 
 from GSAVIGP_full import GSAVIGP_Full
+from GSAVIGP_singel_comp import GSAVIGP_SignleComponenet
 from SAVIGP import Configuration
 from optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
@@ -32,17 +37,19 @@ class SAVIGP_test:
 
     @staticmethod
     def test_grad():
-        num_input_samples = 4
+        num_input_samples = 3
         num_samples = 10000
-        gaussian_sigma = 0.1
+        gaussian_sigma = 0.02
+        num_process = 4
+        cov = np.eye(num_process) * gaussian_sigma
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_input_samples, 1,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    [kernel], num_samples, [
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array(cov)), np.array(cov),
+                    [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
                                                 Configuration.ETNROPY,
                                                 Configuration.CROSS,
                                                 Configuration.ELL,
-                                                Configuration.HYPER
+                                                # Configuration.HYPER
             ])
 
         def f(x):
@@ -64,11 +71,10 @@ class SAVIGP_test:
     def normal_generate_samples(n_samples, var):
         num_samples=n_samples
         noise=var
-        np.random.seed()
         num_in = 1
-        X = np.random.uniform(low=-10.0, high=10.0, size=(num_samples, num_in))
+        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
         X.sort(axis=0)
-        rbf = GPy.kern.RBF(num_in, variance=0.2, lengthscale=np.array((0.2,)))
+        rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
         white = GPy.kern.White(num_in, variance=noise)
         kernel = rbf + white
         K = kernel.K(X)
@@ -98,26 +104,35 @@ class SAVIGP_test:
 
     @staticmethod
     def prediction():
-        num_input_samples = 1000
+        np.random.seed(12000)
+        # np.random.seed()
+        num_input_samples = 20
         num_samples = 10000
         gaussian_sigma = 0.02
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_input_samples, 1,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    [kernel], num_samples, [
-                                                Configuration.MoG,
-                                                Configuration.ETNROPY,
-                                                Configuration.CROSS,
-                                                Configuration.ELL,
-                                                # Configuration.HYPER
-            ])
+
 
         try:
-            Optimizer.SGD(s1, 1e-6, s1._get_params(), 20000, 1e-2, 1e-2, adaptive_alpha=True)
+            s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+                        [kernel], num_samples, [
+                                                    Configuration.MoG,
+                                                    Configuration.ETNROPY,
+                                                    Configuration.CROSS,
+                                                    Configuration.ELL,
+                                                    # Configuration.HYPER
+                ])
+
+            # Optimizer.SGD(s1, 1e-11, s1._get_params(), 20000, 1e-2, 1e-2, adaptive_alpha=False, verbose=False)
             # Optimizer.general(s1)
-            # Optimizer.BFGS(s1)
+            Optimizer.BFGS(s1, max_fun=100000)
+            # Optimizer.NLOPT(s1, nlopt.LD_TNEWTON_PRECOND_RESTART)
         except KeyboardInterrupt:
             pass
         print 'parameters:', s1._get_params()
+        print 'num_input_samples', num_input_samples
+        print 'num_samples', num_samples
+        print 'gaussian sigma', gaussian_sigma
+        print s1.__class__.__name__
         plot_fit(s1, plot_raw= True)
 
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
@@ -167,12 +182,17 @@ class SAVIGP_test:
 
 if __name__ == '__main__':
     # pr = cProfile.Profile()
-    # print 'amir'
+    # pr = line_profiler.LineProfiler()
     # pr.enable()
-    # try:
+    try:
         SAVIGP_test.prediction()
     #     SAVIGP_test.test_grad()
-        # SAVIGP_test.test_gp()
-    # finally:
+    #     SAVIGP_test.test_gp()
+    #     a = np.random.normal(0, 1, 10)
+    #     b = (a + 2.2) * 4
+    #     print b
+
+    finally:
         # print pr.print_stats(sort='cumtime')
-        # pass
+        # print pr.print_stats()
+        pass
