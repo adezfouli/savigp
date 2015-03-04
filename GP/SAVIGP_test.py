@@ -35,7 +35,7 @@ class SAVIGP_test:
 
     @staticmethod
     def test_grad():
-        num_input_samples = 2
+        num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = 0.02
         num_process = 4
@@ -82,16 +82,23 @@ class SAVIGP_test:
 
     @staticmethod
     def test_gp():
-        num_input_samples = 100
+        num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp_mean, gp_var = gp.predict(X)
-        s1 = GSAVIGP(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    [kernel], num_samples)
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+                    [kernel], num_samples, [
+                                                    Configuration.MoG,
+                                                    Configuration.ETNROPY,
+                                                    Configuration.CROSS,
+                                                    Configuration.ELL,
+                                                    # Configuration.HYPER
+                ])
         try:
-            Optimizer.SGD(s1, 1e-6, s1._get_params(), 10000,  ftol=1e-3, adaptive_alpha=False)
+            # Optimizer.SGD(s1, 1e-6, s1._get_params(), 10000,  ftol=1e-3, adaptive_alpha=False)
+            Optimizer.BFGS(s1, max_fun=100000)
         except KeyboardInterrupt:
             pass
         sa_mean, sa_var = s1._predict(X)
@@ -105,7 +112,7 @@ class SAVIGP_test:
     def prediction():
         np.random.seed(12000)
         # np.random.seed()
-        num_input_samples = 2
+        num_input_samples = 1000
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -200,11 +207,11 @@ if __name__ == '__main__':
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
-        # SAVIGP_test.prediction()
+        SAVIGP_test.prediction()
         # SAVIGP_test.sparse_GPY()
         # SAVIGP_test.test_grad()
-    #     SAVIGP_test.test_gp()
-        SAVIGP_test.test1()
+        # SAVIGP_test.test_gp()
+    #     SAVIGP_test.test1()
     #     a = np.random.normal(0, 1, 10)
     #     b = (a + 2.2) * 4
     #     print b

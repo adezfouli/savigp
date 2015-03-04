@@ -141,10 +141,6 @@ class MoG_Full(MoG):
                 for j in range(self.num_process):
                     self.invC_klj[k,l,j] = self.inv_cov(j, k, l)
 
-                    # self.log_det[k,l,j] = pddet(self.L[k,j]) + math.log(det(np.eye(self.num_dim) + mdot(self.L[l,j].T ,
-                    #                         inv_chol(np.asfortranarray(self.L[k,j,:,:])), self.L[l,j] ) ))
-                    #
-
                     self.log_det[k,l,j] = pddet(self.L[k,j]) + math.log(det(np.eye(self.num_dim) +
                                                                             mdot(self.L[l,j].T, dtrtrs(self.L[k,j],
                                                                                                        dtrtrs(self.L[k,j],

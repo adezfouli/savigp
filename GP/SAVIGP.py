@@ -135,7 +135,7 @@ class SAVIGP(Model):
 
         if Configuration.MoG in self.config_list:
             grad_m = np.zeros((self.MoG.m_dim()))
-            grad_s = np.zeros((self.MoG.full_s_dim()))
+            grad_s = np.zeros((self.MoG.get_s_size()))
             grad_pi= np.zeros((self.MoG.pi_dim()))
 
         if Configuration.HYPER in self.config_list:
@@ -147,7 +147,7 @@ class SAVIGP(Model):
             self.ll += self._l_ent()
             if Configuration.MoG in self.config_list:
                 grad_m += self._d_ent_d_m()
-                grad_s += self._d_ent_d_S()
+                grad_s += self._transformed_d_ent_d_S()
                 grad_pi += self._d_ent_d_pi()
 
         if Configuration.CROSS in self.config_list:
@@ -155,7 +155,7 @@ class SAVIGP(Model):
             self.ll += xcross
             if Configuration.MoG in self.config_list:
                 grad_m += self._dcorss_dm()
-                grad_s += self._dcross_dS()
+                grad_s += self.MoG.transform_S_grad(self._dcross_dS())
                 grad_pi += xdcorss_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += self._dcross_d_hyper().flatten()
@@ -166,7 +166,7 @@ class SAVIGP(Model):
             self.ll += xell
             if Configuration.MoG in self.config_list:
                 grad_m += xdell_dm
-                grad_s += xdell_dS
+                grad_s += self.MoG.transform_S_grad(xdell_dS)
                 grad_pi += xdell_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += xdell_hyper
@@ -174,7 +174,7 @@ class SAVIGP(Model):
         self.grad_ll = np.array([])
         if Configuration.MoG in self.config_list:
             self.grad_ll = np.hstack([grad_m.flatten(),
-                                     self.MoG.transform_S_grad(grad_s),
+                                     grad_s,
                                      self.MoG.transform_pi_grad(grad_pi),
             ])
 
@@ -445,6 +445,9 @@ class SAVIGP(Model):
             for j in range(self.num_latent_proc):
                 dent_ds[k,j] = self._d_ent_d_S_kj(k,j)
         return dent_ds
+
+    def _transformed_d_ent_d_S(self):
+        return self.MoG.transform_S_grad(self._d_ent_d_S())
 
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  self.log_z)

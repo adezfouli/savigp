@@ -37,3 +37,6 @@ class SAVIGP_SingleComponent(SAVIGP_Full):
         self.log_z = np.zeros((self.num_MoG_comp))
         for j in range(self.num_latent_proc):
             self.log_z[0] += self.MoG.log_pdf(j, 0, 0)
+
+    def _transformed_d_ent_d_S(self):
+        return self.MoG.transform_eye_grad()
