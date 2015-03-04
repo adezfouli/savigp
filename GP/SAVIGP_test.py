@@ -1,23 +1,21 @@
-import cProfile
-import line_profiler
-import math
-import nlopt
-from GSAVIGP import GSAVIGP
+from scipy.linalg import inv, det
+from sklearn import preprocessing
+import GPy
+from matplotlib.pyplot import show
+from GPy.util.linalg import mdot
+import numpy as np
+from numpy.ma import trace
 
+from GSAVIGP import GSAVIGP
 from GSAVIGP_full import GSAVIGP_Full
 from GSAVIGP_singel_comp import GSAVIGP_SignleComponenet
 from SAVIGP import Configuration
 from optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
-import GPy
-
-from matplotlib.pyplot import show
 from grad_checker import GradChecker
 from plot import plot_fit
 from util import chol_grad
-from GPy.util.linalg import mdot
-import numpy as np
-from numpy.ma import trace
+
 
 class SAVIGP_test:
     def __init__(self):
@@ -37,7 +35,7 @@ class SAVIGP_test:
 
     @staticmethod
     def test_grad():
-        num_input_samples = 3
+        num_input_samples = 2
         num_samples = 10000
         gaussian_sigma = 0.02
         num_process = 4
@@ -47,8 +45,8 @@ class SAVIGP_test:
                     [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
                                                 Configuration.ETNROPY,
-                                                Configuration.CROSS,
-                                                Configuration.ELL,
+                                                # Configuration.CROSS,
+                                                # Configuration.ELL,
                                                 # Configuration.HYPER
             ])
 
@@ -73,6 +71,7 @@ class SAVIGP_test:
         noise=var
         num_in = 1
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
+        X = preprocessing.scale(X)
         X.sort(axis=0)
         rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
         white = GPy.kern.White(num_in, variance=noise)
@@ -106,11 +105,10 @@ class SAVIGP_test:
     def prediction():
         np.random.seed(12000)
         # np.random.seed()
-        num_input_samples = 5
+        num_input_samples = 2
         num_samples = 10000
-        gaussian_sigma = 0.02
+        gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-
 
         try:
             s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
@@ -161,21 +159,38 @@ class SAVIGP_test:
 
     @staticmethod
     def test1():
-        dim =5
+        dim =3
 
         def f(L):
             s = np.zeros((dim, dim))
             s[np.tril_indices_from(s)] = L
             X = mdot(s, s.T)
-            return trace(mdot(X, X.T))
+            return np.log(det(X))
 
         def grad_f(L):
             s = np.zeros((dim, dim))
             s[np.tril_indices_from(s)] = L
-            return chol_grad(s, 2 * (mdot(s, s.T)))[np.tril_indices_from(s)]
+            print (chol_grad(s, inv(mdot(s, s.T)).T) * s)
+            return chol_grad(s, inv(mdot(s, s.T)).T)[np.tril_indices_from(s)]
 
         L_len = (dim) * (dim + 1) / 2
         GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=L_len), ["f"] * L_len)
+
+    @staticmethod
+    def sparse_GPY():
+        """Run a 1D example of a sparse GP regression."""
+        # sample inputs and outputs
+        num_input_samples = 20
+        num_samples = 10000
+        gaussian_sigma = 0.02
+        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        # create simple GP Model
+        m = GPy.models.SparseGPRegression(X, Y, kernel=kernel, num_inducing=num_input_samples)
+
+        m.plot()
+        show(block=True)
+
+        return m
 
 
 
@@ -185,9 +200,11 @@ if __name__ == '__main__':
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
-        SAVIGP_test.prediction()
-    #     SAVIGP_test.test_grad()
+        # SAVIGP_test.prediction()
+        # SAVIGP_test.sparse_GPY()
+        # SAVIGP_test.test_grad()
     #     SAVIGP_test.test_gp()
+        SAVIGP_test.test1()
     #     a = np.random.normal(0, 1, 10)
     #     b = (a + 2.2) * 4
     #     print b
