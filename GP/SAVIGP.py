@@ -488,7 +488,7 @@ class SAVIGP(Model):
             Kj[j] = self._Kdiag(t_X, Aj[j], j)
 
         predicted_mu = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))
-        predicted_var = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc, self.num_latent_proc))
+        predicted_var = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))
         for n in range(len(t_X)):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
@@ -498,12 +498,17 @@ class SAVIGP(Model):
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
 
             predicted_mu[n,:, :] = mean_kj[:,:]
-            predicted_var[n, :, :, :] = normal_sigma + sigma_kj[:,:]
+            predicted_var[n, :, :] = normal_sigma + sigma_kj[:,:]
 
         return predicted_mu, predicted_var
 
     def _raw_predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
-        mu, var = self._predict(Xnew)
-        if self.num_MoG_comp > 1 or self.num_latent_proc > 1:
+        if self.num_latent_proc > 1:
             raise Exception('unable to plot')
-        return np.sum(mu, (1,2))[:, np.newaxis], np.sum(var, (1,2,3))[:, np.newaxis]
+
+        mu, var = self._predict(Xnew)
+        predicted_mu = np.average(mu, axis=1, weights=self.MoG.pi)
+        predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
+            + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2
+
+        return predicted_mu, predicted_var

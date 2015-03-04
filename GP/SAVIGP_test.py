@@ -18,19 +18,6 @@ from util import chol_grad
 class SAVIGP_test:
     def __init__(self):
         pass
-
-    @staticmethod
-    def generate_samples(num_samples, input_dim, y_dim):
-        np.random.seed()
-        noise=0.02
-        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, input_dim))
-        X.sort(axis=0)
-        rbf = GPy.kern.RBF(input_dim, variance=1.0, lengthscale=np.array((0.2,)))
-        white = GPy.kern.White(input_dim, variance=noise)
-        kernel = rbf + white
-        Y = np.sin([X.sum(axis=1).T]).T + np.random.randn(num_samples, y_dim) * 0.05
-        return X, Y, rbf, noise
-
     @staticmethod
     def test_grad():
         num_input_samples = 10
@@ -109,14 +96,13 @@ class SAVIGP_test:
     @staticmethod
     def prediction():
         np.random.seed(12000)
-        # np.random.seed()
-        num_input_samples = 1000
+        num_input_samples = 20
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,
@@ -124,6 +110,15 @@ class SAVIGP_test:
                                                     Configuration.ELL,
                                                     # Configuration.HYPER
                 ])
+
+            # s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            #             [kernel], num_samples, [
+            #                                         Configuration.MoG,
+            #                                         Configuration.ETNROPY,
+            #                                         Configuration.CROSS,
+            #                                         Configuration.ELL,
+            #                                         # Configuration.HYPER
+            #     ])
 
             Optimizer.BFGS(s1, max_fun=100000)
         except KeyboardInterrupt:

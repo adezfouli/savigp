@@ -28,8 +28,5 @@ class GSAVIGP(SAVIGP):
         gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 
-    def _raw_predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
-        mu, var = self._gaussian_predict(Xnew, self.normal_sigma)
-        if self.num_MoG_comp > 1 or self.num_latent_proc > 1:
-            raise Exception('unable to plot')
-        return np.sum(mu, (1,2))[:, np.newaxis], np.sum(var, (1,2,3))[:, np.newaxis]
+    def _predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
+        return self._gaussian_predict(Xnew, self.normal_sigma)
