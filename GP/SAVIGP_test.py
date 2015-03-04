@@ -4,8 +4,6 @@ import GPy
 from matplotlib.pyplot import show
 from GPy.util.linalg import mdot
 import numpy as np
-from numpy.ma import trace
-
 from GSAVIGP import GSAVIGP
 from GSAVIGP_full import GSAVIGP_Full
 from GSAVIGP_singel_comp import GSAVIGP_SignleComponenet
@@ -118,7 +116,7 @@ class SAVIGP_test:
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,
@@ -127,10 +125,7 @@ class SAVIGP_test:
                                                     # Configuration.HYPER
                 ])
 
-            # Optimizer.SGD(s1, 1e-11, s1._get_params(), 20000, 1e-2, 1e-2, adaptive_alpha=False, verbose=False)
-            # Optimizer.general(s1)
             Optimizer.BFGS(s1, max_fun=100000)
-            # Optimizer.NLOPT(s1, nlopt.LD_TNEWTON_PRECOND_RESTART)
         except KeyboardInterrupt:
             pass
         print 'parameters:', s1._get_params()
@@ -143,7 +138,6 @@ class SAVIGP_test:
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp.plot()
         show(block=True)
-
 
     @staticmethod
     def prediction_full_gp():
