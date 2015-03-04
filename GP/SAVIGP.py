@@ -76,7 +76,6 @@ class SAVIGP(Model):
             K = self.kernels[j].K(self.Z[j], self.Z[j])
             self.MoG.update_covariance(j, K)
 
-        self.normal_samples = np.random.normal(0, 1, self.n_samples)
         self._update()
 
     def _get_MoG(self):
@@ -229,8 +228,8 @@ class SAVIGP(Model):
         """
         calculating A for latent process j (eq 4)
         """
-        # return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
-        return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]))
+        return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
+        # return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]))
 
     def _Kdiag(self, p_X, A, j):
         """
@@ -290,6 +289,7 @@ class SAVIGP(Model):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
                 for k in range(self.num_MoG_comp):
+                    self.normal_samples = np.random.normal(0, 1, self.n_samples)
                     f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
                     # f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), self.n_samples)
 
