@@ -25,7 +25,7 @@ class GSAVIGP_Full(SAVIGP_Full):
         super(GSAVIGP_Full, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
+        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP_Full, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
         gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 

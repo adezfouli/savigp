@@ -31,7 +31,7 @@ class GSAVIGP_SignleComponenet(SAVIGP_SingleComponent):
 
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
+        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP_SignleComponenet, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
         gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 
