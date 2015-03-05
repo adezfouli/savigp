@@ -97,17 +97,17 @@ class MoG_Diag(MoG):
         return a * self.s[k,j]
 
     def _update(self):
+        print self.log_s
         self.parameters = self.get_parameters()
         for k in range(self.num_comp):
             for l in range(self.num_comp):
                 for j in range(self.num_process):
                     self.invC_klj_Sk[k,l,j] = self._s_k_skl(k,l,j)
 
+    def log_sk_sl(self, k, l, j):
+        a = np.maximum(self.log_s[k, j, :], self.log_s[l, j, :])
+        return a + np.log(np.exp(self.log_s[k, j, :] - a) + np.exp(self.log_s[l, j, :] - a))
+
     def _s_k_skl(self, k, l, j):
-        s_k_skl = np.empty((self.num_dim))
-        for n in range(self.num_dim):
-            if self.log_s[k, j, n] > self.log_s[l, j, n]:
-                s_k_skl[n] = 1. / (1. + np.exp((self.log_s[l, j, n] - self.log_s[k, j, n])))
-            else:
-                s_k_skl[n] = np.exp((-self.log_s[l, j, n] + self.log_s[k, j, n])) / (1.  + np.exp((-self.log_s[l, j, n]   +  self.log_s[k, j, n])))
-        return s_k_skl
+        a = np.maximum(self.log_s[k, j, :], self.log_s[l, j, :])
+        return np.exp((-a + self.log_s[k, j, :])) / (np.exp((-a + self.log_s[l, j, :]))  + np.exp((-a + self.log_s[k, j, :])))
