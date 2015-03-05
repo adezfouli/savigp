@@ -24,12 +24,15 @@ class MoG_Diag(MoG):
     def _random_init(self):
         MoG._random_init(self)
         self.s = np.random.uniform(low=1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.log_s = np.log(self.s)
 
     def update_covariance(self, j, Sj):
         for k in range(self.num_comp):
             self.s[k,j,:] = np.diagonal(Sj).copy()
             if min(self.s[k,j,:]) < 0:
                 self.s[k,j,:] = self.s[k,j,:] - 2 * min(self.s[k,j,:])
+
+        self.log_s = np.log(self.s)
         self._update()
 
     def fixed_init(self):
@@ -53,6 +56,7 @@ class MoG_Diag(MoG):
 
     def s_from_array(self, sa):
         self.s = np.exp(sa).reshape((self.num_comp, self.num_process, self.num_dim))
+        self.log_s = sa.reshape((self.num_comp, self.num_process, self.num_dim))
 
     def ratio(self, j, k, l1, l2):
         e = np.dot((self.m[k, j, :] - self.m[l1, j, :]) * (1.0 / (self.s[l1, j, :] + self.s[k, j, :])),
