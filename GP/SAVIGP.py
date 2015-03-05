@@ -447,7 +447,7 @@ class SAVIGP(Model):
         return dent_ds
 
     def _transformed_d_ent_d_S(self):
-        return self.MoG.transform_S_grad(self._d_ent_d_S())
+        return (self._d_ent_d_S()).flatten()
 
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  self.log_z)

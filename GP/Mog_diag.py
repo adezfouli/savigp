@@ -9,7 +9,7 @@ class MoG_Diag(MoG):
 
     def __init__(self, num_comp, num_process, num_dim):
         MoG.__init__(self, num_comp, num_process, num_dim)
-        self.invC_klj = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
+        self.invC_klj_Sk = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
         self.s = []
         self._random_init()
         self._update()
@@ -72,20 +72,17 @@ class MoG_Diag(MoG):
             (self.m[k, j, :] - self.m[l, j, :])) - \
             self.s[l,j,:].shape[0] * .5 * math.log(2 * math.pi) - (0.5 * (np.log((self.s[l, j, :] + self.s[k, j, :]))).sum())
 
-    def inv_cov(self, j, k, l):
-        return 1. / (self.s[l, j, :] + self.s[k, j, :])
-
     def tr_A_mult_S(self, A, k, j):
         return np.dot(np.diagonal(A), self.s[k,j,:])
 
     def C_m(self, j, k, l):
-        return self.invC_klj[k, l, j] * (self.m[k, j, :] - self.m[l, j, :])
+        return (self.m[k, j, :] - self.m[l, j, :]) / (self.s[l, j, :] + self.s[k, j, :])
 
 
     def C_m_C(self, j, k, l):
-        return (self.invC_klj[k, l, j] -
-                self.invC_klj[k, l, j] * (self.m[k, j, :] - self.m[l, j, :]) *
-                (self.m[k, j, :] - self.m[l, j, :]) * self.invC_klj[k, l, j])
+        return (self.invC_klj_Sk[k, l, j] -
+                self.invC_klj_Sk[k, l, j] * (self.m[k, j, :] - self.m[l, j, :]) *
+                (self.m[k, j, :] - self.m[l, j, :]) * self.invC_klj_Sk[k, l, j])
 
     def aSa(self, a, j):
         return mdot(self.s[:,j,:], (a ** 2))
@@ -104,4 +101,4 @@ class MoG_Diag(MoG):
         for k in range(self.num_comp):
             for l in range(self.num_comp):
                 for j in range(self.num_process):
-                    self.invC_klj[k,l,j] = self.inv_cov(j, k, l)
+                    self.invC_klj_Sk[k,l,j] = 1. / (1.  + np.exp((self.log_s[l, j, :]  - self.log_s[k, j, :])))
