@@ -16,7 +16,7 @@ class MoG_Diag(MoG):
         self.num_free_params = self.parameters.shape[0]
 
     def get_parameters(self):
-        return np.hstack([self.m.flatten(), np.log(self.s.flatten()), self.pi])
+        return np.hstack([self.m.flatten(), self.log_s.flatten(), self.pi])
 
     def num_parameters(self):
         return self.num_free_params
