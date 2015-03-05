@@ -1,3 +1,4 @@
+from Mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal
 from aetypes import Enum
 import math
@@ -8,7 +9,6 @@ from scipy.linalg import logm, det, cho_solve
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
-from MoG_Diag import MoG_Diag
 from line_profiler import *
 
 class Configuration(Enum):

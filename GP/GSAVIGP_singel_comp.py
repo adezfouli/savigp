@@ -3,7 +3,6 @@ __author__ = 'AT'
 from SAVIGP_SingleComponent import SAVIGP_SingleComponent
 from GSAVIGP_full import GSAVIGP_Full
 from MoG_single_comp import MoG_SingleComponent
-from MoG_Diag import MoG_Diag
 from SAVIGP import SAVIGP
 from SAVIGP_full import SAVIGP_Full
 from util import cross_ent_normal

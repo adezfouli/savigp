@@ -1,4 +1,3 @@
-from MoG_Diag import MoG_Diag
 from SAVIGP import SAVIGP
 from SAVIGP_full import SAVIGP_Full
 from util import cross_ent_normal
