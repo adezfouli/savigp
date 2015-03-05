@@ -97,7 +97,6 @@ class MoG_Diag(MoG):
         return a * self.s[k,j]
 
     def _update(self):
-        print self.log_s
         self.parameters = self.get_parameters()
         for k in range(self.num_comp):
             for l in range(self.num_comp):
