@@ -25,8 +25,8 @@ class GSAVIGP(SAVIGP):
 
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
         xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
-        gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
-        return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
+        # gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
+        return xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 
     def _predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
         return self._gaussian_predict(Xnew, self.normal_sigma)

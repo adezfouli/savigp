@@ -274,7 +274,9 @@ class SAVIGP(Model):
             f = np.empty((n_sample, self.num_MoG_comp, self.num_latent_proc))
             for j in range(self.num_latent_proc):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
-                sigma_kj[:,j] = self.MoG.s[:,j,n]
+                sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
+
+                # sigma_kj[:,j] = self.MoG.s[:,j,n]
                 for k in range(self.num_MoG_comp):
                     self.normal_samples = np.random.normal(0, 1, self.n_samples)
                     f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
