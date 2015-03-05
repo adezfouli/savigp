@@ -26,7 +26,7 @@ class SAVIGP_test:
         num_process = 4
         cov = np.eye(num_process) * gaussian_sigma
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array(cov)), np.array(cov),
+        s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array(cov)), np.array(cov),
                     [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
                                                 Configuration.ETNROPY,
@@ -102,7 +102,7 @@ class SAVIGP_test:
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,

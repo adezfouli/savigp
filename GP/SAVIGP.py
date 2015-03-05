@@ -1,5 +1,6 @@
+from scipy.misc import logsumexp
 from Mog_diag import MoG_Diag
-from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal
+from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
 from aetypes import Enum
 import math
 from GPy.util.linalg import mdot
@@ -98,27 +99,13 @@ class SAVIGP(Model):
             self.log_detZ[j] = pddet(self.chol[j,:,:])
 
     def update_N_z(self):
-        # updating N_lk, and z_k used for updating d_ent
-        self.N_kll = np.ones((self.num_MoG_comp, self.num_MoG_comp, self.num_MoG_comp))
-        for k in range(self.num_MoG_comp):
-            for l1 in range(self.num_MoG_comp):
-                for l2 in range(self.num_MoG_comp):
-                    for j in range(self.num_latent_proc):
-                        self.N_kll[k, l1, l2] *= self.MoG.ratio(j, k, l1, l2)
-        self.N_kl_z_k = np.zeros((self.num_MoG_comp, self.num_MoG_comp))
+        self.log_z = np.zeros((self.num_MoG_comp))
+        self.log_N_kl = np.zeros((self.num_MoG_comp, self.num_MoG_comp))
         for k in range(self.num_MoG_comp):
             for l in range(self.num_MoG_comp):
-                for x in range(self.num_MoG_comp):
-                    self.N_kl_z_k[k, l] += self.MoG.pi[x] * self.N_kll[k, x, l]
-                self.N_kl_z_k[k, l] = 1.0 / self.N_kl_z_k[k, l]
-        self.N_k0 = np.zeros((self.num_MoG_comp))
-        for k in range(self.num_MoG_comp):
-            for j in range(self.num_latent_proc):
-                l = 0
-                self.N_k0[k] += self.MoG.log_pdf(j, k, l)
-        self.log_z = np.zeros((self.num_MoG_comp))
-        for k in range(self.num_MoG_comp):
-            self.log_z[k] = -math.log(self.N_kl_z_k[k, 0]) + self.N_k0[k]
+                    for j in range(self.num_latent_proc):
+                        self.log_N_kl[k, l] += log_diag_gaussian(self.MoG.m[k,j], self.MoG.m[l,j], self.MoG.s[k,j] + self.MoG.s[l,j])
+            self.log_z[k]=logsumexp(self.log_N_kl[k, :] + np.log(self.MoG.pi))
 
     def _update(self):
 
@@ -287,7 +274,7 @@ class SAVIGP(Model):
             f = np.empty((n_sample, self.num_MoG_comp, self.num_latent_proc))
             for j in range(self.num_latent_proc):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
-                sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
+                sigma_kj[:,j] = self.MoG.s[:,j,n]
                 for k in range(self.num_MoG_comp):
                     self.normal_samples = np.random.normal(0, 1, self.n_samples)
                     f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
@@ -413,7 +400,8 @@ class SAVIGP(Model):
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)
         for l in range(self.num_MoG_comp):
-            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl_z_k[k,l] + self.N_kl_z_k[l, k]) * \
+            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (np.exp(self.log_N_kl[l, k] - self.log_z[k]) +
+                                                      np.exp(self.log_N_kl[l, k] - self.log_z[l])) * \
                     (self.MoG.C_m(j, k, l))
         return m_k
 
@@ -429,13 +417,14 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
             pi[k] = -self.log_z[k]
             for l in range(self.num_MoG_comp):
-                pi[k] -= self.MoG.pi[l] * self.N_kl_z_k[l,k]
+                pi[k] -= self.MoG.pi[l] * (np.exp(self.log_N_kl[l, k] - self.log_z[k]))
         return pi
 
     def _d_ent_d_S_kj(self, k, j):
         s_k = np.zeros(self.MoG.S_dim())
         for l in range(self.num_MoG_comp):
-            s_k += self.MoG.pi[k] * self.MoG.pi[l] * (self.N_kl_z_k[k,l] + self.N_kl_z_k[l, k]) * \
+            s_k += self.MoG.pi[k] * self.MoG.pi[l] * (np.exp(self.log_N_kl[l, k] - self.log_z[k]) +
+                                                      np.exp(self.log_N_kl[l, k] - self.log_z[l])) * \
                    self.MoG.C_m_C(j, k, l)
         return 1./2 * s_k
 

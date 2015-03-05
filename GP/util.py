@@ -99,3 +99,8 @@ def nearPD(A, nit=10):
         deltaS = Xk - Rk
         Yk = _getPu(Xk, W=W)
     return Yk
+
+def log_diag_gaussian(m1, m2, s):
+    const = -1.0 / 2 * np.log(s).sum() - float(len(s)) / 2 * np.log(2 * math.pi)
+    return const + -1.0 / 2 * np.dot((m1 - m2) / s, (m1-m2).T)
+
