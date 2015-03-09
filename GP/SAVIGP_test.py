@@ -56,7 +56,7 @@ class SAVIGP_test:
         noise=var
         num_in = 1
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
-        X = preprocessing.scale(X)
+        # X = preprocessing.scale(X)
         X.sort(axis=0)
         rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
         white = GPy.kern.White(num_in, variance=noise)
@@ -102,7 +102,7 @@ class SAVIGP_test:
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,
