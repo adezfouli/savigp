@@ -11,7 +11,7 @@ class MoG_Diag(MoG):
         MoG.__init__(self, num_comp, num_process, num_dim)
         self.invC_klj_Sk = np.empty((self.num_comp, self.num_comp, self.num_process, self.num_dim))
         self.s = []
-        self._random_init()
+        self._fixed_init()
         self._update()
         self.num_free_params = self.parameters.shape[0]
 
@@ -21,9 +21,14 @@ class MoG_Diag(MoG):
     def num_parameters(self):
         return self.num_free_params
 
-    def _random_init(self):
-        MoG._random_init(self)
+    def _fixed_init(self):
+        MoG._fixed_init(self)
         self.s = np.random.uniform(low=1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.log_s = np.log(self.s)
+
+    def _random_init(self):
+        MoG_Diag._random_init(self)
+        self.s = np.random.uniform(low=1.0, high=3.0, size=(self.num_comp, self.num_process, self.num_dim))
         self.log_s = np.log(self.s)
 
     def update_covariance(self, j, Sj):
@@ -34,10 +39,6 @@ class MoG_Diag(MoG):
 
         self.log_s = np.log(self.s)
         self._update()
-
-    def fixed_init(self):
-        super(MoG_Diag, self).fixed_init()
-        self.s = np.ones((self.num_comp, self.num_process, self.num_dim))
 
     def transform_S_grad(self, g):
         return g.flatten() * self.s.flatten()

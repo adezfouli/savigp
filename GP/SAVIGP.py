@@ -79,6 +79,9 @@ class SAVIGP(Model):
 
         self._update()
 
+    def rand_init_MoG(self):
+        self.MoG.random_init()
+
     def _get_MoG(self):
         return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
 

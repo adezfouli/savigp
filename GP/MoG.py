@@ -28,18 +28,23 @@ class MoG:
     def m_dim(self):
         return (self.num_comp, self.num_process, self.num_dim)
 
-    def _random_init(self):
+    def _fixed_init(self):
         self.m = np.random.uniform(low=0.0, high=0.0, size=(self.num_comp, self.num_process, self.num_dim))
-        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
+        self.pi = np.random.uniform(low=1.0, high=1.0, size=self.num_comp)
         self.pi = self.pi / sum(self.pi)
 
     def transform_S_grad(self, g):
         """ transforms gradients to expose to the optimizer  """
         raise NotImplementedError
 
-    def fixed_init(self):
-        self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
-        self.pi = [1./self.num_comp] * self.num_comp
+    def _random_init(self):
+        self.m = np.random.uniform(low=-0.1, high=0.1, size=(self.num_comp, self.num_process, self.num_dim))
+        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
+        self.pi = self.pi / sum(self.pi)
+
+    def random_init(self):
+        self._random_init()
+        self._update()
 
     def pi_from_array(self, p):
         pis = np.exp(p)

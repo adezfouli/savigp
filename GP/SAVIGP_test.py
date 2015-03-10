@@ -26,14 +26,16 @@ class SAVIGP_test:
         num_process = 4
         cov = np.eye(num_process) * gaussian_sigma
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array(cov)), np.array(cov),
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples,  multivariate_likelihood(np.array(cov)), np.array(cov),
                     [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
-                                                Configuration.ETNROPY,
-                                                # Configuration.CROSS,
+                                                # Configuration.ETNROPY,
+                                                Configuration.CROSS,
                                                 # Configuration.ELL,
                                                 # Configuration.HYPER
             ])
+        
+        s1.rand_init_MoG()
 
         def f(x):
             s1._set_params(x)
@@ -197,9 +199,9 @@ if __name__ == '__main__':
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
-        SAVIGP_test.prediction()
+        # SAVIGP_test.prediction()
         # SAVIGP_test.sparse_GPY()
-        # SAVIGP_test.test_grad()
+        SAVIGP_test.test_grad()
         # SAVIGP_test.test_gp()
     #     SAVIGP_test.test1()
     #     a = np.random.normal(0, 1, 10)

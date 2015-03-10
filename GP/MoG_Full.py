@@ -22,7 +22,7 @@ class MoG_Full(MoG):
         self.s = np.empty((self.num_comp, self.num_process, self.num_dim, self.num_dim))
         self.L = np.empty((self.num_comp, self.num_process, self.num_dim, self.num_dim))
         self.log_det = np.empty((self.num_comp, self.num_comp, self.num_process))
-        self._random_init()
+        self._fixed_init()
         self._update()
         self.num_free_params = self.parameters.shape[0]
 
@@ -45,18 +45,18 @@ class MoG_Full(MoG):
     def num_parameters(self):
         return self.num_free_params
 
-    def _random_init(self):
-        MoG._random_init(self)
+    def _fixed_init(self):
+        MoG._fixed_init(self)
         for k in range(self.num_comp):
             for j in range(self.num_process):
                 self.L_flatten[k,j,:] = np.random.uniform(low=1.0, high=1.0, size=self.get_sjk_size())
 
-    def fixed_init(self):
+    def _random_init(self):
+        MoG._random_init(self)
         self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
         for k in range(self.num_comp):
             for j in range(self.num_process):
                 self.L_flatten[k,j,:] = np.random.uniform(low=0.1, high=1.0, size=self.get_sjk_size())
-        self.pi = [1./self.num_comp] * self.num_comp
 
     def get_sjk_size(self):
         # return self.num_dim
