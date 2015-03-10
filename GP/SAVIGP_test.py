@@ -8,8 +8,8 @@ import numpy as np
 from GSAVIGP import GSAVIGP
 from GSAVIGP_full import GSAVIGP_Full
 from GSAVIGP_singel_comp import GSAVIGP_SignleComponenet
+from Optimizer import *
 from SAVIGP import Configuration
-from optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
 from grad_checker import GradChecker
 from plot import plot_fit
@@ -99,13 +99,13 @@ class SAVIGP_test:
     @staticmethod
     def prediction():
         np.random.seed(12000)
-        num_input_samples = 20
+        num_input_samples = 100
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP(X, Y, num_input_samples, 5, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,
@@ -197,18 +197,8 @@ if __name__ == '__main__':
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
-        # A = np.random.uniform(low=3.0, high=10.0, size=16).reshape(4,4)
-        # print np.diagonal(A)
-        # A = mdot(np.tril(A), np.tril(A).T)
-        # print np.diagonal(inv(A))
-        # SAVIGP_test.prediction()
-        # SAVIGP_test.sparse_GPY()
-        SAVIGP_test.test_grad()
-        # SAVIGP_test.test_gp()
-        # SAVIGP_test.test1()
-    #     a = np.random.normal(0, 1, 10)
-    #     b = (a + 2.2) * 4
-    #     print b
+        SAVIGP_test.prediction()
+        # SAVIGP_test.test_grad()
 
     finally:
         # print pr.print_stats(sort='cumtime')
