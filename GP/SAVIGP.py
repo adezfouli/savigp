@@ -351,7 +351,7 @@ class SAVIGP(Model):
         """
         dcdm = np.empty((self.num_MoG_comp, self.num_latent_proc, self.num_inducing))
         for j in range(self.num_latent_proc):
-            dcdm[:,j,:] = -mdot(self.MoG.m[:,j,:], self.invZ[j,:,:]) * self.MoG.pi[:, np.newaxis]
+            dcdm[:,j,:] = -cho_solve((self.chol[j,:,:], True), self.MoG.m[:,j,:].T).T * self.MoG.pi[:, np.newaxis]
         return dcdm
 
     def _dcross_dS(self):
