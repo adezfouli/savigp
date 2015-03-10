@@ -80,6 +80,10 @@ class MoG:
         """ initializes the mean from ma"""
         raise NotImplementedError
 
+    def get_sjk_size(self):
+        """ returns number of elements in each skj """
+        raise NotImplementedError
+
     def s_from_array(self, sa):
         """ initializes the covariance matrix from sa"""
         raise NotImplementedError
@@ -116,7 +120,7 @@ class MoG:
         """ :return  m_kj m_kj^T s_kj  """
         raise NotImplementedError
 
-    def dAS_dS(self, A):
+    def dAS_dS(self, L, k, j):
         """ :return  dAS dS  """
         raise NotImplementedError
 

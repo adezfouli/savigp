@@ -111,8 +111,10 @@ class MoG_Full(MoG):
     def mmTS(self, k, j):
         return mdot(self.m[k,j,:,np.newaxis], self.m[k,j,:,np.newaxis].T) + self.s[k,j]
 
-    def dAS_dS(self, A):
-        return A
+    def dAS_dS(self, L, k, j):
+        tmp = 2 * cho_solve((L, True), self.L[k,j])
+        tmp[np.diag_indices_from(tmp)] *= self.L[k,j][np.diag_indices_from(tmp)]
+        return tmp[np.tril_indices_from(self.L[k,j])]
 
     def Sa(self, a, k, j):
         return mdot(self.s[k,j], a)

@@ -1,3 +1,4 @@
+from numpy.ma import trace
 from scipy.linalg import inv, det
 from sklearn import preprocessing
 import GPy
@@ -12,7 +13,7 @@ from optimizer import Optimizer
 from cond_likelihood import multivariate_likelihood
 from grad_checker import GradChecker
 from plot import plot_fit
-from util import chol_grad
+from util import chol_grad, jitchol
 
 
 class SAVIGP_test:
@@ -20,21 +21,21 @@ class SAVIGP_test:
         pass
     @staticmethod
     def test_grad():
-        num_input_samples = 10
+        num_input_samples = 4
         num_samples = 10000
         gaussian_sigma = 0.02
         num_process = 4
         cov = np.eye(num_process) * gaussian_sigma
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples,  multivariate_likelihood(np.array(cov)), np.array(cov),
+        s1 = GSAVIGP(X, Y, num_input_samples, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
                     [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
-                                                # Configuration.ETNROPY,
-                                                Configuration.CROSS,
+                                                Configuration.ETNROPY,
+                                                # Configuration.CROSS,
                                                 # Configuration.ELL,
                                                 # Configuration.HYPER
             ])
-        
+
         s1.rand_init_MoG()
 
         def f(x):
@@ -159,21 +160,18 @@ class SAVIGP_test:
     @staticmethod
     def test1():
         dim =3
+        A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim,dim)
+        print np.diagonal(A)
+        A = mdot(np.tril(A), np.tril(A).T)
 
         def f(L):
-            s = np.zeros((dim, dim))
-            s[np.tril_indices_from(s)] = L
-            X = mdot(s, s.T)
-            return np.log(det(X))
+            return trace(mdot(inv(A), np.diag(L)))
 
         def grad_f(L):
-            s = np.zeros((dim, dim))
-            s[np.tril_indices_from(s)] = L
-            print (chol_grad(s, inv(mdot(s, s.T)).T) * s)
-            return chol_grad(s, inv(mdot(s, s.T)).T)[np.tril_indices_from(s)]
+            return np.diagonal(inv(A))
 
         L_len = (dim) * (dim + 1) / 2
-        GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=L_len), ["f"] * L_len)
+        GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=dim), ["f"] * L_len)
 
     @staticmethod
     def sparse_GPY():
@@ -199,11 +197,15 @@ if __name__ == '__main__':
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
+        # A = np.random.uniform(low=3.0, high=10.0, size=16).reshape(4,4)
+        # print np.diagonal(A)
+        # A = mdot(np.tril(A), np.tril(A).T)
+        # print np.diagonal(inv(A))
         # SAVIGP_test.prediction()
         # SAVIGP_test.sparse_GPY()
         SAVIGP_test.test_grad()
         # SAVIGP_test.test_gp()
-    #     SAVIGP_test.test1()
+        # SAVIGP_test.test1()
     #     a = np.random.normal(0, 1, 10)
     #     b = (a + 2.2) * 4
     #     print b

@@ -1,3 +1,5 @@
+from util import inv_chol
+
 __author__ = 'AT'
 
 import math
@@ -27,7 +29,7 @@ class MoG_Diag(MoG):
         self.log_s = np.log(self.s)
 
     def _random_init(self):
-        MoG_Diag._random_init(self)
+        MoG._random_init(self)
         self.s = np.random.uniform(low=1.0, high=3.0, size=(self.num_comp, self.num_process, self.num_dim))
         self.log_s = np.log(self.s)
 
@@ -48,6 +50,9 @@ class MoG_Diag(MoG):
 
     def full_s_dim(self):
         return (self.num_comp, self.num_process, self.num_dim,)
+
+    def get_sjk_size(self):
+        return self.num_dim
 
     def S_dim(self):
         return (self.num_dim,)
@@ -74,7 +79,7 @@ class MoG_Diag(MoG):
             self.s[l,j,:].shape[0] * .5 * math.log(2 * math.pi) - (0.5 * (np.log((self.s[l, j, :] + self.s[k, j, :]))).sum())
 
     def tr_A_mult_S(self, A, k, j):
-        return np.dot(np.diagonal(A), self.s[k,j,:])
+        return np.dot(np.diagonal(inv_chol(A)), self.s[k,j,:])
 
     def C_m(self, j, k, l):
         return (self.m[k, j, :] - self.m[l, j, :]) / (self.s[l, j, :] + self.s[k, j, :])
@@ -91,11 +96,11 @@ class MoG_Diag(MoG):
     def mmTS(self, k, j):
         return mdot(self.m[k,j, np.newaxis].T, self.m[k,j, np.newaxis]) + np.diag(self.s[k,j])
 
-    def dAS_dS(self, A):
-        return np.diag(A)
+    def dAS_dS(self, L, k, j):
+        return np.diagonal(inv_chol(L)) * self.s[k,j,:].flatten()
 
     def Sa(self, a, k, j):
-        return a * self.s[k,j]
+        return a * self.s[k,j,:]
 
     def _update(self):
         self.parameters = self.get_parameters()

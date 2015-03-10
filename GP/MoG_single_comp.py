@@ -27,9 +27,6 @@ class MoG_SingleComponent(MoG_Full):
     def mmTS(self, k, j):
         return mdot(self.m[k,j,:,np.newaxis], self.m[k,j,:,np.newaxis].T) + self.s[k,j]
 
-    def dAS_dS(self, A):
-        return A
-
     def Sa(self, a, k, j):
         return mdot(self.s[k,j], a)
 

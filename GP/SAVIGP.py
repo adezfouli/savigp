@@ -145,7 +145,7 @@ class SAVIGP(Model):
             self.ll += xcross
             if Configuration.MoG in self.config_list:
                 grad_m += self._dcorss_dm()
-                grad_s += self.MoG.transform_S_grad(self._dcross_dS())
+                grad_s += self.transform_dcorss_dS()
                 grad_pi += xdcorss_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += self._dcross_d_hyper().flatten()
@@ -361,10 +361,13 @@ class SAVIGP(Model):
         """
         calculating L_corss by s_k for all k's
         """
-        dc_ds = np.empty((self.num_MoG_comp, self.num_latent_proc) + self.MoG.S_dim())
+        dc_ds = np.empty((self.num_MoG_comp, self.num_latent_proc, self.MoG.get_sjk_size()))
         for j in range(self.num_latent_proc):
-            dc_ds[:,j] = -1. /2 * np.array([self.MoG.dAS_dS(self.invZ[j,:,:]) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
+            dc_ds[:,j] = -1. /2 * np.array([self.MoG.dAS_dS(self.chol[j,:,:], k, j) * self.MoG.pi[k] for k in range(self.num_MoG_comp)])
         return dc_ds
+
+    def transform_dcorss_dS(self):
+        return self._dcross_dS().flatten()
 
     def _cross_dcorss_dpi(self, N):
         """
@@ -378,7 +381,7 @@ class SAVIGP(Model):
                 d_pi[k] +=  \
                         N * math.log(2 * math.pi) + \
                         self.log_detZ[j] + \
-                        mdot(self.MoG.m[k, j, :].T, self.invZ[j,:,:], self.MoG.m[k, j, :]) + \
+                        mdot(self.MoG.m[k, j, :].T, cho_solve((self.chol[j,:,:], True), self.MoG.m[k, j, :])) + \
                         self.MoG.tr_A_mult_S(self.chol[j,:,:], k, j)
         for k in range(self.num_MoG_comp):
             cross += self.MoG.pi[k] * d_pi[k]
