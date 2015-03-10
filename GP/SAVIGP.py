@@ -235,7 +235,7 @@ class SAVIGP(Model):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
-        print Kj[n], self.MoG.aSa(Aj[n, :], j)
+        # print Kj[n], self.MoG.aSa(Aj[n, :], j)
         return Kj[n] + self.MoG.aSa(Aj[n, :], j)
 
     def dK_dtheta(self, j):
