@@ -215,8 +215,8 @@ class SAVIGP(Model):
         """
         calculating A for latent process j (eq 4)
         """
-        return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
-        # return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]))
+        # return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
+        return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]).T).T
 
     def _Kdiag(self, p_X, A, j):
         """

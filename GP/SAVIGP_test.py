@@ -96,7 +96,7 @@ class SAVIGP_test:
     @staticmethod
     def prediction():
         np.random.seed(12000)
-        num_input_samples = 20
+        num_input_samples = 100
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
