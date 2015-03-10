@@ -1,4 +1,5 @@
 from numpy.ma import trace
+from scipy.linalg import cho_solve
 from util import chol_grad, pddet, inv_chol, jitchol
 
 __author__ = 'AT'
@@ -94,7 +95,7 @@ class MoG_Full(MoG):
         return inv(self.s[l, j, :] + self.s[k, j, :])
 
     def tr_A_mult_S(self, A, k, j):
-        return trace(mdot(A.T, self.s[k,j]))
+        return trace(cho_solve((A, True), self.s[k,j]))
 
     def C_m(self, j, k, l):
         return mdot(self.invC_klj[k, l, j], (self.m[k, j, :] - self.m[l, j, :]))

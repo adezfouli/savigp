@@ -376,7 +376,7 @@ class SAVIGP(Model):
                         N * math.log(2 * math.pi) + \
                         self.log_detZ[j] + \
                         mdot(self.MoG.m[k, j, :].T, self.invZ[j,:,:], self.MoG.m[k, j, :]) + \
-                        self.MoG.tr_A_mult_S(self.invZ[j,:,:], k, j)
+                        self.MoG.tr_A_mult_S(self.chol[j,:,:], k, j)
         for k in range(self.num_MoG_comp):
             cross += self.MoG.pi[k] * d_pi[k]
 

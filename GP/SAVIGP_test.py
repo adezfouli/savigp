@@ -96,7 +96,7 @@ class SAVIGP_test:
     @staticmethod
     def prediction():
         np.random.seed(12000)
-        num_input_samples = 100
+        num_input_samples = 50
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -120,6 +120,7 @@ class SAVIGP_test:
             #                                         # Configuration.HYPER
             #     ])
 
+            # Optimizer.SGD(s1, 1e-16,  s1._get_params(), 2000, verbose=False, adaptive_alpha=False)
             Optimizer.BFGS(s1, max_fun=100000)
         except KeyboardInterrupt:
             pass

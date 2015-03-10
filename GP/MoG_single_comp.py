@@ -21,9 +21,6 @@ class MoG_SingleComponent(MoG_Full):
         return -((self.s[0, j, :, :].shape[0])/2) * (math.log(2 * math.pi) + math.log(2.0)) - \
                0.5 * pddet(self.L[0,j,:])
 
-    def tr_A_mult_S(self, A, k, j):
-        return trace(mdot(A.T, self.s[k,j]))
-
     def aSa(self, a, j):
         return mdot(a.T, self.s[:,j,:,:], a)
 
