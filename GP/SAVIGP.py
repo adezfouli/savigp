@@ -318,7 +318,7 @@ class SAVIGP(Model):
 
         for k in range(self.num_MoG_comp):
             for j in range(self.num_latent_proc):
-                d_ell_dm[k,j,:] = self.MoG.pi[k]/n_sample * mdot(self.invZ[j,:,:], d_ell_dm[k,j,:])
+                d_ell_dm[k,j,:] = self.MoG.pi[k]/n_sample * cho_solve((self.chol[j,:,:], True), d_ell_dm[k,j,:])
                 d_ell_dS[k,j,:] = self.MoG.pi[k]/n_sample / 2. * d_ell_dS[k,j,:]
 
         d_ell_dPi = d_ell_dPi/n_sample
