@@ -31,7 +31,7 @@ class SAVIGP_test:
                     [kernel] * num_process, num_samples, [
                                                 Configuration.MoG,
                                                 Configuration.ETNROPY,
-                                                # Configuration.CROSS,
+                                                Configuration.CROSS,
                                                 # Configuration.ELL,
                                                 # Configuration.HYPER
             ])
@@ -99,13 +99,13 @@ class SAVIGP_test:
     @staticmethod
     def prediction():
         np.random.seed(12000)
-        num_input_samples = 50
+        num_input_samples = 20
         num_samples = 10000
         gaussian_sigma = 0.2
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
-            s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples,  multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP(X, Y, num_input_samples, 5, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
                         [kernel], num_samples, [
                                                     Configuration.MoG,
                                                     Configuration.ETNROPY,

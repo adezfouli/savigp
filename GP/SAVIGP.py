@@ -107,7 +107,8 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
             for l in range(self.num_MoG_comp):
                     for j in range(self.num_latent_proc):
-                        self.log_N_kl[k, l] += log_diag_gaussian(self.MoG.m[k,j], self.MoG.m[l,j], self.MoG.s[k,j] + self.MoG.s[l,j])
+                        self.log_N_kl[k, l] += log_diag_gaussian(self.MoG.m[k,j], self.MoG.m[l,j],
+                                                 logsumexp([self.MoG.log_s[k,j,:],self.MoG.log_s[l,j,:]], axis=0))
             self.log_z[k]=logsumexp(self.log_N_kl[k, :] + np.log(self.MoG.pi))
 
     def _update(self):
@@ -238,7 +239,8 @@ class SAVIGP(Model):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
-        # print Kj[n], self.MoG.aSa(Aj[n, :], j)
+        if Kj[n] < 0:
+            Kj[n] = 0
         return Kj[n] + self.MoG.aSa(Aj[n, :], j)
 
     def dK_dtheta(self, j):
