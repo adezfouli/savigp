@@ -1,5 +1,5 @@
 from GPy.util.linalg import mdot
-from MoG_Full import MoG_Full
+from MoG_full import MoG_Full
 
 __author__ = 'AT'
 

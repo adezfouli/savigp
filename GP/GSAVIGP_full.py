@@ -1,5 +1,5 @@
 from SAVIGP import SAVIGP
-from SAVIGP_full import SAVIGP_Full
+from SAVIGP_Full import SAVIGP_Full
 from util import cross_ent_normal
 import numpy as np
 

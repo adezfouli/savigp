@@ -3,7 +3,7 @@ from util import jitchol
 
 __author__ = 'AT'
 
-from SAVIGP_full import SAVIGP_Full
+from SAVIGP_Full import SAVIGP_Full
 import numpy as np
 
 class SAVIGP_SingleComponent(SAVIGP_Full):
