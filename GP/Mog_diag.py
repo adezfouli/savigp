@@ -64,20 +64,6 @@ class MoG_Diag(MoG):
         self.s = np.exp(sa).reshape((self.num_comp, self.num_process, self.num_dim))
         self.log_s = sa.reshape((self.num_comp, self.num_process, self.num_dim))
 
-    def ratio(self, j, k, l1, l2):
-        e = np.dot((self.m[k, j, :] - self.m[l1, j, :]) * (1.0 / (self.s[l1, j, :] + self.s[k, j, :])),
-                   (self.m[k, j, :] - self.m[l1, j, :]))
-        e -= np.dot((self.m[k, j, :] - self.m[l2, j, :]) * (1.0 / (self.s[l2, j, :] + self.s[k, j, :])),
-                    (self.m[k, j, :] - self.m[l2, j, :]))
-        dets = np.product((self.s[l2, j, :] + self.s[k, j, :]) / (self.s[l1, j, :] + self.s[k, j, :]))
-        return math.exp(-0.5 * e) * math.sqrt(dets)
-
-    def log_pdf(self, j, k, l):
-        return -0.5 * np.dot(
-            (self.m[k, j, :] - self.m[l, j, :]) * (1.0 / (self.s[l, j, :] + self.s[k, j, :])),
-            (self.m[k, j, :] - self.m[l, j, :])) - \
-            self.s[l,j,:].shape[0] * .5 * math.log(2 * math.pi) - (0.5 * (np.log((self.s[l, j, :] + self.s[k, j, :]))).sum())
-
     def tr_A_mult_S(self, A, k, j):
         return np.dot(np.diagonal(inv_chol(A)), self.s[k,j,:])
 

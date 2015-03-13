@@ -23,10 +23,10 @@ class MoG:
         self._update()
 
     def pi_dim(self):
-        return (self.num_comp)
+        return self.num_comp
 
     def m_dim(self):
-        return (self.num_comp, self.num_process, self.num_dim)
+        return self.num_comp, self.num_process, self.num_dim
 
     def _fixed_init(self):
         self.m = np.random.uniform(low=0.0, high=0.0, size=(self.num_comp, self.num_process, self.num_dim))
@@ -92,20 +92,12 @@ class MoG:
         """ :return N_j(m_k|m_l, S_l + S_k)"""
         raise NotImplementedError
 
-    def inv_cov(self, j, k, l):
-        """ :return  (S_l + S_k)^-1 """
-        raise NotImplementedError
-
     def tr_A_mult_S(self, A, k, j):
         """ :return  trace(A S_kj) """
         raise NotImplementedError
 
     def C_m(self, j, k, l):
         """ :return  C_kl^-1 (m_kj - m_lj) """
-        raise NotImplementedError
-
-    def ratio(self, j, k, l1, l2):
-        """ :return N_j(m_k|m_l1, S_l1 + S_k) / N_j(m_k|m_l2, S_l2 + S_k) """
         raise NotImplementedError
 
     def C_m_C(self, j, k, l):

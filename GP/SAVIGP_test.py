@@ -8,7 +8,6 @@ from matplotlib.pyplot import show
 from GPy.util.linalg import mdot
 import numpy as np
 from gsavigp import GSAVIGP
-from gsavigp_full import GSAVIGP_Full
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import *
 from savigp import Configuration

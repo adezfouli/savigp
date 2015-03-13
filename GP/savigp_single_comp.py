@@ -1,14 +1,18 @@
-from mog_single_comp import MoG_SingleComponent
-from util import jitchol
+from savigp import SAVIGP
 
 __author__ = 'AT'
 
-from savigp_full import SAVIGP_Full
+from GPy.util.linalg import mdot
+from mog_single_comp import MoG_SingleComponent
 import numpy as np
 
-class SAVIGP_SingleComponent(SAVIGP_Full):
+
+class SAVIGP_SingleComponent(SAVIGP):
     def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list):
-        super(SAVIGP_Full, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
+        super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
+
+    def mdot_Aj(self,Ajn):
+        return mdot(Ajn.T, Ajn)
 
     def _get_MoG(self):
         return MoG_SingleComponent(self.num_latent_proc, self.num_inducing)
