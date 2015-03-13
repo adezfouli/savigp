@@ -243,26 +243,6 @@ class SAVIGP_test:
         show(block=True)
 
     @staticmethod
-    def prediction_full_gp():
-        num_input_samples = 100
-        num_samples = 10000
-        gaussian_sigma = 0.02
-        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_Full(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])),
-                          np.array([[gaussian_sigma]]),
-                          [kernel], num_samples)
-
-        # Optimizer.loopy_opt(s1)
-        # Optimizer.SGD(s1, 0.0000001, s1._get_params(), 20000)
-        Optimizer.O_BFGS(s1, s1._get_params(), 0.1, 0.1, 1e-7, 100)
-        print s1._get_params()
-        plot_fit(s1, plot_raw=True)
-        # Optimizer.SGD(s1, 1e-3,  s1._get_params(), 100, 1e-6, 1e-6)
-        # gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
-        # gp.plot()
-        show(block=True)
-
-    @staticmethod
     def test1():
         dim = 3
         A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim, dim)
@@ -277,23 +257,6 @@ class SAVIGP_test:
 
         L_len = (dim) * (dim + 1) / 2
         GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=dim), ["f"] * L_len)
-
-    @staticmethod
-    def sparse_GPY():
-        """Run a 1D example of a sparse GP regression."""
-        # sample inputs and outputs
-        num_input_samples = 20
-        num_samples = 10000
-        gaussian_sigma = 0.02
-        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        # create simple GP Model
-        m = GPy.models.SparseGPRegression(X, Y, kernel=kernel, num_inducing=num_input_samples)
-
-        m.plot()
-        show(block=True)
-
-        return m
-
 
 if __name__ == '__main__':
     # pr = cProfile.Profile()
