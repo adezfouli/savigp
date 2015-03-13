@@ -149,7 +149,7 @@ class SAVIGP(Model):
                 grad_s += self.transform_dcorss_dS()
                 grad_pi += xdcorss_dpi
             if Configuration.HYPER in self.config_list:
-                grad_hyper += self._dcross_d_hyper().flatten()
+                grad_hyper += self._dcross_d_hyper()
 
         if Configuration.ELL in self.config_list:
             pX, pY = self._get_data_partition()
