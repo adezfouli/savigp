@@ -1,9 +1,9 @@
-from MoG_single_comp import MoG_SingleComponent
+from mog_single_comp import MoG_SingleComponent
 from util import jitchol
 
 __author__ = 'AT'
 
-from SAVIGP_Full import SAVIGP_Full
+from savigp_full import SAVIGP_Full
 import numpy as np
 
 class SAVIGP_SingleComponent(SAVIGP_Full):

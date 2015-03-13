@@ -6,7 +6,7 @@ import math
 from numpy.ma import trace
 import numpy as np
 from util import chol_grad, pddet, inv_chol, jitchol
-from MoG_full import MoG_Full
+from mog_full import MoG_Full
 
 
 class MoG_SingleComponent(MoG_Full):

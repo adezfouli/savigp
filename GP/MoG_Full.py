@@ -7,7 +7,7 @@ __author__ = 'AT'
 import math
 from GPy.util.linalg import mdot, dtrtrs
 from numpy.linalg import inv, det
-from MoG import MoG
+from mog import MoG
 import numpy as np
 
 

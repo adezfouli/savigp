@@ -7,11 +7,11 @@ import GPy
 from matplotlib.pyplot import show
 from GPy.util.linalg import mdot
 import numpy as np
-from GSAVIGP import GSAVIGP
-from GSAVIGP_full import GSAVIGP_Full
-from GSAVIGP_singel_comp import GSAVIGP_SignleComponenet
-from Optimizer import *
-from SAVIGP import Configuration
+from gsavigp import GSAVIGP
+from gsavigp_full import GSAVIGP_Full
+from gsavigp_single_comp import GSAVIGP_SignleComponenet
+from optimizer import *
+from savigp import Configuration
 from cond_likelihood import multivariate_likelihood
 from grad_checker import GradChecker
 from plot import plot_fit

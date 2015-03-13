@@ -1,9 +1,9 @@
 from GPy.util.linalg import mdot
-from MoG_full import MoG_Full
+from mog_full import MoG_Full
 
 __author__ = 'AT'
 
-from SAVIGP import SAVIGP
+from savigp import SAVIGP
 
 
 class SAVIGP_Full(SAVIGP):

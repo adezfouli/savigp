@@ -1,4 +1,4 @@
-from SAVIGP import SAVIGP
+from savigp import SAVIGP
 from util import cross_ent_normal
 import numpy as np
 

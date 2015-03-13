@@ -1,5 +1,5 @@
 from scipy.misc import logsumexp
-from Mog_diag import MoG_Diag
+from mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
 from aetypes import Enum
 import math

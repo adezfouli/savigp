@@ -4,7 +4,7 @@ __author__ = 'AT'
 
 import math
 from GPy.util.linalg import mdot
-from MoG import MoG
+from mog import MoG
 import numpy as np
 
 class MoG_Diag(MoG):

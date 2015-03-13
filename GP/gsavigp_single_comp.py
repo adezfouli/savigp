@@ -1,10 +1,10 @@
 __author__ = 'AT'
 
-from SAVIGP_SingleComponent import SAVIGP_SingleComponent
-from GSAVIGP_full import GSAVIGP_Full
-from MoG_single_comp import MoG_SingleComponent
-from SAVIGP import SAVIGP
-from SAVIGP_Full import SAVIGP_Full
+from savigp_single_comp import SAVIGP_SingleComponent
+from gsavigp_full import GSAVIGP_Full
+from mog_single_comp import MoG_SingleComponent
+from savigp import SAVIGP
+from savigp_full import SAVIGP_Full
 from util import cross_ent_normal
 import numpy as np
 
