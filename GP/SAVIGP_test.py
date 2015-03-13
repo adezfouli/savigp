@@ -25,7 +25,7 @@ class SAVIGP_test:
     @staticmethod
     def test_grad_diag(config, verbose):
         num_input_samples = 4
-        num_samples = 10000
+        num_samples = 100000
         gaussian_sigma = 0.02
         num_process = 1
         cov = np.eye(num_process) * gaussian_sigma

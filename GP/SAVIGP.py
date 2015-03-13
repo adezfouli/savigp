@@ -411,8 +411,8 @@ class SAVIGP(Model):
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)
         for l in range(self.num_MoG_comp):
-            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (np.exp(self.log_N_kl[l, k] - self.log_z[k]) +
-                                                      np.exp(self.log_N_kl[l, k] - self.log_z[l])) * \
+            m_k += self.MoG.pi[k] * self.MoG.pi[l] * (np.exp(self.log_N_kl[k, l] - self.log_z[k]) +
+                                                      np.exp(self.log_N_kl[k, l] - self.log_z[l])) * \
                     (self.MoG.C_m(j, k, l))
         return m_k
 
@@ -428,7 +428,7 @@ class SAVIGP(Model):
         for k in range(self.num_MoG_comp):
             pi[k] = -self.log_z[k]
             for l in range(self.num_MoG_comp):
-                pi[k] -= self.MoG.pi[l] * (np.exp(self.log_N_kl[l, k] - self.log_z[k]))
+                pi[k] -= self.MoG.pi[l] * (np.exp(self.log_N_kl[k, l] - self.log_z[l]))
         return pi
 
     def _d_ent_d_S_kj(self, k, j):
