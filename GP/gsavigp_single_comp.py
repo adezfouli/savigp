@@ -14,11 +14,9 @@ class GSAVIGP_SignleComponenet(SAVIGP_SingleComponent):
     :param X: input observations
     :param Y: outputs
     :param num_inducing: number of inducing variables
-    :param num_MoG_comp: number of components of the MoG
-    :param num_latent_proc: number of latent processes
     :param likelihood: conditional likelihood function
     :param normal_sigma: covariance matrix of the conditional likelihood function
-    :param kernel: of the GP
+    :param kernels: of the GP
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
