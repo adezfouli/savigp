@@ -1,9 +1,10 @@
 from savigp import SAVIGP
+from savigp_diag import SAVIGP_Diag
 from util import cross_ent_normal
 import numpy as np
 
 
-class GSAVIGP(SAVIGP):
+class GSAVIGP(SAVIGP_Diag):
     """
     Scalable Variational Inference Gaussian Process where the conditional likelihood is gaussian
 

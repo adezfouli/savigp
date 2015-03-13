@@ -11,6 +11,10 @@ class SAVIGP_SingleComponent(SAVIGP):
     def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
 
+    def _update(self):
+        self.update_N_z()
+        SAVIGP._update(self)
+
     def mdot_Aj(self,Ajn):
         return mdot(Ajn.T, Ajn)
 
@@ -35,7 +39,6 @@ class SAVIGP_SingleComponent(SAVIGP):
 
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  self.log_z)
-
 
     def update_N_z(self):
         self.log_z = np.zeros((self.num_MoG_comp))
