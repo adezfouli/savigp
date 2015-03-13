@@ -117,6 +117,38 @@ class SAVIGP_test:
             print bcolors.ENDC
 
     @staticmethod
+    def init_test():
+        np.random.seed(12000)
+        num_input_samples = 3
+        num_samples = 100
+        gaussian_sigma = 0.2
+
+        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
+
+        s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
+                     np.array([[gaussian_sigma]]),
+                     [kernel], num_samples, [
+                Configuration.MoG,
+                Configuration.ETNROPY,
+                Configuration.CROSS,
+                Configuration.ELL,
+                Configuration.HYPER
+        ])
+        Optimizer.BFGS(s1, max_fun=3)
+
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])),
+                     np.array([[gaussian_sigma]]),
+                     [kernel], num_samples, [
+                Configuration.MoG,
+                Configuration.ETNROPY,
+                Configuration.CROSS,
+                Configuration.ELL,
+                Configuration.HYPER
+        ])
+        Optimizer.BFGS(s1, max_fun=3)
+
+
+    @staticmethod
     def gpy_prediction(X, Y, vairiance, kernel):
         m = GPy.core.GP(X, Y, kernel=kernel, likelihood=GPy.likelihoods.Gaussian(None, vairiance))
         return m
@@ -270,6 +302,7 @@ if __name__ == '__main__':
     # pr.enable()
     try:
         # SAVIGP_test.prediction()
+        SAVIGP_test.init_test()
         SAVIGP_test.test_grad()
 
     finally:
