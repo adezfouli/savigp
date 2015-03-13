@@ -27,7 +27,7 @@ class SAVIGP_test:
         num_input_samples = 4
         num_samples = 100000
         gaussian_sigma = 0.02
-        num_process = 1
+        num_process = 4
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(1111)
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
