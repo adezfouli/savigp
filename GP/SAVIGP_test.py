@@ -1,3 +1,5 @@
+from copy import deepcopy, copy
+import warnings
 from numpy.ma import trace
 from scipy.linalg import inv, det
 from sklearn import preprocessing
@@ -13,28 +15,24 @@ from SAVIGP import Configuration
 from cond_likelihood import multivariate_likelihood
 from grad_checker import GradChecker
 from plot import plot_fit
-from util import chol_grad, jitchol
+from util import chol_grad, jitchol, bcolors
 
 
 class SAVIGP_test:
     def __init__(self):
         pass
+
     @staticmethod
-    def test_grad():
+    def test_grad_diag(config, verbose):
         num_input_samples = 4
         num_samples = 10000
         gaussian_sigma = 0.02
-        num_process = 4
+        num_process = 1
         cov = np.eye(num_process) * gaussian_sigma
+        np.random.seed(1111)
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_input_samples, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
-                    [kernel] * num_process, num_samples, [
-                                                Configuration.MoG,
-                                                Configuration.ETNROPY,
-                                                Configuration.CROSS,
-                                                # Configuration.ELL,
-                                                # Configuration.HYPER
-            ])
+        s1 = GSAVIGP(X, Y, num_input_samples-1, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
+                     [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
         s1.rand_init_MoG()
 
@@ -46,7 +44,77 @@ class SAVIGP_test:
             s1._set_params(x)
             return s1.objective_function_gradients()
 
-        GradChecker.check(f, f_grad, s1._get_params(), s1._get_param_names())
+        return GradChecker.check(f, f_grad, s1._get_params(), s1._get_param_names(), verbose=verbose)
+
+
+    @staticmethod
+    def test_grad_single(config, verbose):
+        num_input_samples = 4
+        num_samples = 100000
+        gaussian_sigma = 0.02
+        num_process = 4
+        cov = np.eye(num_process) * gaussian_sigma
+        np.random.seed(111)
+        X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples-1, multivariate_likelihood(np.array(cov)), np.array(cov),
+                                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
+
+        s1.rand_init_MoG()
+
+        def f(x):
+            s1._set_params(x)
+            return s1.objective_function()
+
+        def f_grad(x):
+            s1._set_params(x)
+            return s1.objective_function_gradients()
+
+        return GradChecker.check(f, f_grad, s1._get_params(), s1._get_param_names(), verbose=verbose)
+
+    @staticmethod
+    def test_grad():
+        configs = [
+            [
+                Configuration.MoG,
+                Configuration.ETNROPY,
+            ],
+            [
+                Configuration.MoG,
+                Configuration.CROSS,
+            ],
+            [
+                Configuration.MoG,
+                Configuration.ELL,
+            ],
+            [
+                Configuration.HYPER,
+                Configuration.ETNROPY,
+            ],
+            [
+                Configuration.HYPER,
+                Configuration.CROSS,
+            ],
+            [
+                Configuration.HYPER,
+                Configuration.ELL,
+            ]
+        ]
+        verbose = False
+        for c in configs:
+            e1 = SAVIGP_test.test_grad_diag(c, verbose)
+            if e1 < 0.1:
+                print bcolors.OKBLUE, 'passed: diag', c, e1
+            else:
+                print bcolors.WARNING, 'failed: diag', c, e1
+            print bcolors.ENDC
+
+        for c in configs:
+            e1 = SAVIGP_test.test_grad_single(c, verbose)
+            if e1 < 0.1:
+                print bcolors.OKBLUE, 'passed: full', c, e1
+            else:
+                print bcolors.WARNING, 'failed: full', c, e1
+            print bcolors.ENDC
 
     @staticmethod
     def gpy_prediction(X, Y, vairiance, kernel):
@@ -55,8 +123,8 @@ class SAVIGP_test:
 
     @staticmethod
     def normal_generate_samples(n_samples, var):
-        num_samples=n_samples
-        noise=var
+        num_samples = n_samples
+        noise = var
         num_in = 1
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
         # X = preprocessing.scale(X)
@@ -76,14 +144,15 @@ class SAVIGP_test:
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp_mean, gp_var = gp.predict(X)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    [kernel], num_samples, [
-                                                    Configuration.MoG,
-                                                    Configuration.ETNROPY,
-                                                    Configuration.CROSS,
-                                                    Configuration.ELL,
-                                                    # Configuration.HYPER
-                ])
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])),
+                                      np.array([[gaussian_sigma]]),
+                                      [kernel], num_samples, [
+                Configuration.MoG,
+                Configuration.ETNROPY,
+                Configuration.CROSS,
+                Configuration.ELL,
+                # Configuration.HYPER
+            ])
         try:
             # Optimizer.SGD(s1, 1e-6, s1._get_params(), 10000,  ftol=1e-3, adaptive_alpha=False)
             Optimizer.BFGS(s1, max_fun=100000)
@@ -91,9 +160,9 @@ class SAVIGP_test:
             pass
         sa_mean, sa_var = s1._predict(X)
         print 'asvig mean:', sa_mean
-        print 'gp_mean:' , gp_mean.T
+        print 'gp_mean:', gp_mean.T
         print 'asvig var:', sa_var
-        print 'gp_var:' , gp_var.T
+        print 'gp_var:', gp_var.T
 
 
     @staticmethod
@@ -107,18 +176,19 @@ class SAVIGP_test:
 
         try:
             # for diagonal covariance
-            s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                        [kernel], num_samples, [
-                                                    Configuration.MoG,
-                                                    Configuration.ETNROPY,
-                                                    Configuration.CROSS,
-                                                    Configuration.ELL,
-                                                    # Configuration.HYPER
+            s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
+                         np.array([[gaussian_sigma]]),
+                         [kernel], num_samples, [
+                    Configuration.MoG,
+                    Configuration.ETNROPY,
+                    Configuration.CROSS,
+                    Configuration.ELL,
+                    # Configuration.HYPER
                 ])
 
             # for full gaussian with single component
             # s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-            #             [kernel], num_samples, [
+            # [kernel], num_samples, [
             #                                         Configuration.MoG,
             #                                         Configuration.ETNROPY,
             #                                         Configuration.CROSS,
@@ -135,7 +205,7 @@ class SAVIGP_test:
         print 'num_samples', num_samples
         print 'gaussian sigma', gaussian_sigma
         print s1.__class__.__name__
-        plot_fit(s1, plot_raw= True)
+        plot_fit(s1, plot_raw=True)
 
         gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp.plot()
@@ -147,14 +217,15 @@ class SAVIGP_test:
         num_samples = 10000
         gaussian_sigma = 0.02
         X, Y, kernel = SAVIGP_test.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_Full(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])), np.array([[gaussian_sigma]]),
-                    [kernel], num_samples)
+        s1 = GSAVIGP_Full(X, Y, num_input_samples, 1, multivariate_likelihood(np.array([[gaussian_sigma]])),
+                          np.array([[gaussian_sigma]]),
+                          [kernel], num_samples)
 
         # Optimizer.loopy_opt(s1)
         # Optimizer.SGD(s1, 0.0000001, s1._get_params(), 20000)
         Optimizer.O_BFGS(s1, s1._get_params(), 0.1, 0.1, 1e-7, 100)
         print s1._get_params()
-        plot_fit(s1, plot_raw= True)
+        plot_fit(s1, plot_raw=True)
         # Optimizer.SGD(s1, 1e-3,  s1._get_params(), 100, 1e-6, 1e-6)
         # gp = SAVIGP_test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         # gp.plot()
@@ -162,8 +233,8 @@ class SAVIGP_test:
 
     @staticmethod
     def test1():
-        dim =3
-        A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim,dim)
+        dim = 3
+        A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim, dim)
         print np.diagonal(A)
         A = mdot(np.tril(A), np.tril(A).T)
 
@@ -193,15 +264,13 @@ class SAVIGP_test:
         return m
 
 
-
-
 if __name__ == '__main__':
     # pr = cProfile.Profile()
     # pr = line_profiler.LineProfiler()
     # pr.enable()
     try:
-        SAVIGP_test.prediction()
-        # SAVIGP_test.test_grad()
+        # SAVIGP_test.prediction()
+        SAVIGP_test.test_grad()
 
     finally:
         # print pr.print_stats(sort='cumtime')

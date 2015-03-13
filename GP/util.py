@@ -104,3 +104,13 @@ def log_diag_gaussian(m1, m2, s_log):
     const = -1.0 / 2 * s_log.sum() - float(len(s_log)) / 2 * np.log(2 * math.pi)
     return const + -1.0 / 2 * np.dot((m1 - m2) / np.exp(s_log), (m1-m2).T)
 
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
