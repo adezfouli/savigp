@@ -23,7 +23,10 @@ class GradChecker:
             def f_i(x):
                 return f((concatenate((x0[:i], x, x0[(i+1):]))))
             t = get_d1(f_i, [x0[i]])
-            rows += [[name[i], g[i], t, abs(t-g[i]), abs(t-g[i]) / abs(g[i])]]
+            p_errro=None
+            if g[i] != 0:
+                p_errro = abs(t-g[i]) / abs(g[i])
+            rows += [[name[i], g[i], t, abs(t-g[i]), p_errro]]
             if g[i] != 0:
                 aver_error += abs(t-g[i]) / abs(g[i])
             if verbose:
