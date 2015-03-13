@@ -13,11 +13,11 @@ from GPy.core import Model
 from line_profiler import *
 
 class Configuration(Enum):
-    ETNROPY = 1
-    CROSS = 2
-    ELL = 3
-    HYPER = 4
-    MoG = 5
+    ETNROPY = 'ENT'
+    CROSS = 'CRO'
+    ELL = 'ELL'
+    HYPER = 'HYP'
+    MoG = 'MOG'
 
 
 class SAVIGP(Model):
