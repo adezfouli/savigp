@@ -27,7 +27,9 @@ class GradChecker:
             if g[i] != 0:
                 p_errro = abs(t-g[i]) / abs(g[i])
             rows += [[name[i], g[i], t, abs(t-g[i]), p_errro]]
-            if g[i] != 0:
+            if abs(g[i]) <1e-4 and abs(t) < 1e-4:
+                pass
+            else:
                 aver_error += abs(t-g[i]) / abs(g[i])
             if verbose:
                 print 'element:', i

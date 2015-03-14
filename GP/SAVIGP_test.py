@@ -25,10 +25,10 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_grad_diag(config, verbose):
-        num_input_samples = 4
+        num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
-        num_process = 4
+        num_process = 2
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(1111)
         X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -50,10 +50,10 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_grad_single(config, verbose):
-        num_input_samples = 4
+        num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
-        num_process = 4
+        num_process = 2
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(111)
         X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
