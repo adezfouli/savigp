@@ -38,14 +38,14 @@ class SAVIGP_Test:
         s1.rand_init_MoG()
 
         def f(x):
-            s1._set_params(x)
+            s1.set_params(x)
             return s1.objective_function()
 
         def f_grad(x):
-            s1._set_params(x)
+            s1.set_params(x)
             return s1.objective_function_gradients()
 
-        return GradChecker.check(f, f_grad, s1._get_params(), s1._get_param_names(), verbose=verbose)
+        return GradChecker.check(f, f_grad, s1.get_params(), s1.get_param_names(), verbose=verbose)
 
 
     @staticmethod
@@ -64,14 +64,14 @@ class SAVIGP_Test:
         s1.rand_init_MoG()
 
         def f(x):
-            s1._set_params(x)
+            s1.set_params(x)
             return s1.objective_function()
 
         def f_grad(x):
-            s1._set_params(x)
+            s1.set_params(x)
             return s1.objective_function_gradients()
 
-        return GradChecker.check(f, f_grad, s1._get_params(), s1._get_param_names(), verbose=verbose)
+        return GradChecker.check(f, f_grad, s1.get_params(), s1._get_param_names(), verbose=verbose)
 
     @staticmethod
     def test_grad():

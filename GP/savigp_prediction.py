@@ -53,7 +53,7 @@ class SAVIGP_Prediction:
 
         try:
             # for diagonal covariance
-            s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
+            s1 = GSAVIGP(X, Y, num_input_samples, 5, multivariate_likelihood(np.array([[gaussian_sigma]])),
                          np.array([[gaussian_sigma]]),
                          [kernel], num_samples, [
                     Configuration.MoG,
@@ -77,7 +77,7 @@ class SAVIGP_Prediction:
             Optimizer.BFGS(s1, max_fun=100000)
         except KeyboardInterrupt:
             pass
-        print 'parameters:', s1._get_params()
+        print 'parameters:', s1.get_params()
         print 'num_input_samples', num_input_samples
         print 'num_samples', num_samples
         print 'gaussian sigma', gaussian_sigma

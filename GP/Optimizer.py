@@ -55,7 +55,7 @@ class Optimizer:
             last_x[0] = x
             p = x0.copy()
             p[opt_indices] = x[opt_indices]
-            model._set_params(x)
+            model.set_params(x)
 
         def f(X=None):
             if X is not None:
@@ -78,31 +78,31 @@ class Optimizer:
 
     @staticmethod
     def BFGS(model, opt_indices=None, max_fun=None):
-        start = model._get_params()
+        start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
         fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
 
     @staticmethod
     def CG(model, opt_indices=None):
-        start = model._get_params()
+        start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
         fmin_cg(f, start, f_grad, epsilon=1e-6,
                       callback=lambda x: update(x))
 
     @staticmethod
     def NLOPT(model, algorithm, opt_indices=None):
-        start = model._get_params()
+        start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
 
         def myfunc(x, grad):
             update(x)
@@ -110,18 +110,18 @@ class Optimizer:
                 grad[:] = f_grad()
             return f()
 
-        opt = nlopt.opt(algorithm, len(model._get_params()))
+        opt = nlopt.opt(algorithm, len(model.get_params()))
         opt.set_min_objective(myfunc)
         opt.set_ftol_rel(1e-3)
-        return opt.optimize(model._get_params())
+        return opt.optimize(model.get_params())
 
     @staticmethod
     def general(model, opt_indices=None):
-        start = model._get_params()
+        start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model._get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
         minimize(f, start, jac=f_grad, method='Newton-CG',
                       callback=lambda x: update(x))
 

@@ -84,7 +84,7 @@ class SAVIGP(Model):
     def _get_MoG(self):
         return MoG_Diag(self.num_MoG_comp, self.num_latent_proc, self.num_inducing)
 
-    def _get_param_names(self):
+    def get_param_names(self):
         self.param_names = []
         if Configuration.MoG in self.config_list:
             self.param_names += ['m'] * self.MoG.get_m_size() + ['s'] * self.MoG.get_s_size() + ['pi'] * self.num_MoG_comp
@@ -94,12 +94,13 @@ class SAVIGP(Model):
 
         return self.param_names
 
+
+
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
             self.chol[j,:,:] = jitchol(self.kernels[j].K(self.Z[j,:,:], self.Z[j,:,:]))
             self.invZ[j, :, :] = inv_chol(self.chol[j,:,:])
             self.log_detZ[j] = pddet(self.chol[j,:,:])
-
 
     def _update(self):
 
@@ -166,7 +167,7 @@ class SAVIGP(Model):
         self.config_list = config_list
         self._update()
 
-    def _set_params(self, p):
+    def set_params(self, p):
         """
         receives parameter from optimizer and transforms them
         :param p: input parameters
@@ -183,7 +184,7 @@ class SAVIGP(Model):
                 self.kernels[j].param_array[:] = self.hyper_params[j]
         self._update()
 
-    def _get_params(self):
+    def get_params(self):
         """
         exposes parameters to the optimizer
         """
@@ -269,12 +270,9 @@ class SAVIGP(Model):
             for j in range(self.num_latent_proc):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
-
-                # sigma_kj[:,j] = self.MoG.s[:,j,n]
                 for k in range(self.num_MoG_comp):
                     self.normal_samples = np.random.normal(0, 1, self.n_samples)
                     f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
-                    # f[:,k, j] = np.random.normal(mean_kj[k,j], math.sqrt(sigma_kj[k,j]), self.n_samples)
 
             for k in range(self.num_MoG_comp):
                 cond_ll = cond_log_likelihood(f[:,k,:], p_Y[n, :])
