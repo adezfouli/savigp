@@ -88,23 +88,6 @@ class SAVIGP_Prediction:
         gp.plot()
         show(block=True)
 
-    @staticmethod
-    def test1():
-        dim = 3
-        A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim, dim)
-        print np.diagonal(A)
-        A = mdot(np.tril(A), np.tril(A).T)
-
-        def f(L):
-            return trace(mdot(inv(A), np.diag(L)))
-
-        def grad_f(L):
-            return np.diagonal(inv(A))
-
-        L_len = (dim) * (dim + 1) / 2
-        GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=dim), ["f"] * L_len)
-
-
 if __name__ == '__main__':
     try:
         SAVIGP_Prediction.prediction()

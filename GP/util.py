@@ -4,6 +4,7 @@ from numpy.ma import trace
 from scipy import linalg
 from scipy.linalg import det, inv, lapack
 from GPy.util.linalg import mdot, dpotri
+from grad_checker import GradChecker
 
 
 def mdiag_dot(A, B):
@@ -114,3 +115,19 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def test_grad():
+    dim = 3
+    A = np.random.uniform(low=3.0, high=10.0, size=dim * dim).reshape(dim, dim)
+    print np.diagonal(A)
+    A = mdot(np.tril(A), np.tril(A).T)
+
+    def f(L):
+        return trace(mdot(inv(A), np.diag(L)))
+
+    def grad_f(L):
+        return np.diagonal(inv(A))
+
+    L_len = (dim) * (dim + 1) / 2
+    GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=dim), ["f"] * L_len)
