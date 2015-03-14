@@ -1,3 +1,5 @@
+from data_source import DataSource
+
 __author__ = 'AT'
 
 from copy import deepcopy, copy
@@ -31,7 +33,7 @@ class SAVIGP_Test:
         num_process = 4
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(1111)
-        X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = GSAVIGP(X, Y, num_input_samples - 1, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
@@ -124,7 +126,7 @@ class SAVIGP_Test:
         num_samples = 100
         gaussian_sigma = 0.2
 
-        X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
                      np.array([[gaussian_sigma]]),
@@ -153,21 +155,6 @@ class SAVIGP_Test:
     def gpy_prediction(X, Y, vairiance, kernel):
         m = GPy.core.GP(X, Y, kernel=kernel, likelihood=GPy.likelihoods.Gaussian(None, vairiance))
         return m
-
-    @staticmethod
-    def normal_generate_samples(n_samples, var):
-        num_samples = n_samples
-        noise = var
-        num_in = 1
-        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
-        # X = preprocessing.scale(X)
-        X.sort(axis=0)
-        rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
-        white = GPy.kern.White(num_in, variance=noise)
-        kernel = rbf + white
-        K = kernel.K(X)
-        y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
-        return X, y, rbf
 
     @staticmethod
     def test_gp():

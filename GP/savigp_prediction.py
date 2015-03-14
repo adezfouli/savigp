@@ -7,6 +7,7 @@ import GPy
 from matplotlib.pyplot import show
 from GPy.util.linalg import mdot
 import numpy as np
+from data_source import DataSource
 from gsavigp import GSAVIGP
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import *
@@ -27,29 +28,13 @@ class SAVIGP_Prediction:
         return m
 
     @staticmethod
-    def normal_generate_samples(n_samples, var):
-        num_samples = n_samples
-        noise = var
-        num_in = 1
-        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
-        # X = preprocessing.scale(X)
-        X.sort(axis=0)
-        rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
-        white = GPy.kern.White(num_in, variance=noise)
-        kernel = rbf + white
-        K = kernel.K(X)
-        y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
-        return X, y, rbf
-
-
-    @staticmethod
     def prediction():
         np.random.seed(12000)
         num_input_samples = 100
         num_samples = 10000
         gaussian_sigma = 0.2
 
-        X, Y, kernel = SAVIGP_Prediction.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
 
         try:
             # for diagonal covariance
