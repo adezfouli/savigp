@@ -74,7 +74,7 @@ class SAVIGP_Test:
         return GradChecker.check(f, f_grad, s1.get_params(), s1.get_param_names(), verbose=verbose)
 
     @staticmethod
-    def test_grad():
+    def test_grad(verbose = False):
         configs = [
             [
                 Configuration.MoG,
@@ -101,7 +101,6 @@ class SAVIGP_Test:
                 Configuration.ELL,
             ]
         ]
-        verbose = False
         for c in configs:
             e1 = SAVIGP_Test.test_grad_diag(c, verbose)
             if e1 < 0.1:
