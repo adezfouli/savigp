@@ -258,6 +258,7 @@ class SAVIGP(Model):
             Aj[j] = self._A(p_X, j)
             Kj[j] = self._Kdiag(p_X, Aj[j], j)
 
+        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc)
         for n in  range(len(p_X)):
             # print 'ell for point #', n
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
@@ -271,8 +272,7 @@ class SAVIGP(Model):
                 mean_kj[:,j] = self._b(n, j, Aj[j])
                 sigma_kj[:,j] = self._sigma(n, j, Kj[j], Aj[j])
                 for k in range(self.num_MoG_comp):
-                    self.normal_samples = np.random.normal(0, 1, self.n_samples)
-                    f[:,k, j] = self.normal_samples * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
+                    f[:,k, j] = self.normal_samples[j*self.n_samples:(j+1)*self.n_samples] * math.sqrt(sigma_kj[k,j]) + mean_kj[k,j]
 
             for k in range(self.num_MoG_comp):
                 cond_ll = cond_log_likelihood(f[:,k,:], p_Y[n, :])
