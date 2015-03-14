@@ -71,7 +71,7 @@ class SAVIGP_Test:
             s1.set_params(x)
             return s1.objective_function_gradients()
 
-        return GradChecker.check(f, f_grad, s1.get_params(), s1._get_param_names(), verbose=verbose)
+        return GradChecker.check(f, f_grad, s1.get_params(), s1.get_param_names(), verbose=verbose)
 
     @staticmethod
     def test_grad():
