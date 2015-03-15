@@ -204,18 +204,18 @@ class SAVIGP(Model):
     def _get_data_partition(self):
         return self.X, self.Y
 
-    def _A(self, p_X, j):
+    def _A(self, j, K):
         """
         calculating A for latent process j (eq 4)
         """
         # return mdot(self.kernels[j].K(p_X, self.Z[j,:,:]), self.invZ[j,:,:])
-        return cho_solve((self.chol[j,:,:], True), self.kernels[j].K(p_X, self.Z[j,:,:]).T).T
+        return cho_solve((self.chol[j,:,:], True), K).T
 
-    def _Kdiag(self, p_X, A, j):
+    def _Kdiag(self, p_X, K, A, j):
         """
         calculating diagonal terms of K_tilda for latent process j (eq 4)
         """
-        return self.kernels[j].Kdiag(p_X) - mdiag_dot(A, self.kernels[j].K(self.Z[j,:,:], p_X))
+        return self.kernels[j].Kdiag(p_X) - mdiag_dot(A, K)
 
     def _b(self, n, j, Aj):
         """
@@ -254,9 +254,11 @@ class SAVIGP(Model):
             d_ell_d_hyper = 0
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
+        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
         for j in range(self.num_latent_proc):
-            Aj[j] = self._A(p_X, j)
-            Kj[j] = self._Kdiag(p_X, Aj[j], j)
+            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], p_X)
+            Aj[j] = self._A(j, K_Z_X[j, :, :])
+            Kj[j] = self._Kdiag(p_X, K_Z_X[j, :, :], Aj[j], j)
 
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc)\
             .reshape((self.num_latent_proc, self.n_samples))
@@ -287,7 +289,7 @@ class SAVIGP(Model):
                     # for calculating hyper parameters
                     if Configuration.HYPER in self.config_list:
                         xn = p_X[np.newaxis, n, :]
-                        K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
+                        K_xn_Zj = K_Z_X[j, :, n]
                         d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn) - self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], K_xn_Zj.T) \
                                         - self.d_K_zjxn_d_hyper_mult_x(j, xn, Aj[j,n]) + \
                                           2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
@@ -303,8 +305,7 @@ class SAVIGP(Model):
 
             for k in range(self.num_MoG_comp):
                 for j in range(self.num_latent_proc):
-                    xn = p_X[np.newaxis, n, :]
-                    K_xn_Zj = self.kernels[j].K(xn, self.Z[j,:,:])[0,:]
+                    K_xn_Zj = K_Z_X[j, :, n]
                     d_ell_dm[k,j] += 1./sigma_kj[k,j] * s_dell_dm[k,j] * K_xn_Zj
                     d_ell_dS[k,j] += self.mdot_Aj(Aj[j,n, np.newaxis])* s_dell_dS[k,j]
 
@@ -433,9 +434,11 @@ class SAVIGP(Model):
         normal_ell = 0
         Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(p_X)))
+        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
         for j in range(self.num_latent_proc):
-            Aj[j] = self._A(p_X, j)
-            Kj[j] = self._Kdiag(p_X, Aj[j], j)
+            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], p_X)
+            Aj[j] = self._A(j, K_Z_X[j, :, :])
+            Kj[j] = self._Kdiag(p_X, K_Z_X[j, :, :], Aj[j], j)
 
         for n in  range(len(p_X)):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
