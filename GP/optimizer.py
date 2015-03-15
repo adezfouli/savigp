@@ -69,22 +69,23 @@ class Optimizer:
             g = np.zeros(len(x0))
             g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
             if verbose:
-                print 'grad:', Optimizer.print_short(g)
-            print 'obje:', "%.4f" % model.objective_function()
+                # print 'grad:', Optimizer.print_short(g)
+                print 'objective:', "%.4f" % model.objective_function()
             return g
         update(x0)
         return f, f_grad, update
 
 
     @staticmethod
-    def BFGS(model, opt_indices=None, max_fun=None):
+    def BFGS(model, opt_indices=None, max_fun=None, verbose=False):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
-        fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
+        x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
+        return d
 
     @staticmethod
     def CG(model, opt_indices=None):
