@@ -27,12 +27,12 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_grad_diag(config, verbose):
-        num_input_samples = 4
+        num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
-        num_process = 4
+        num_process = 3
         cov = np.eye(num_process) * gaussian_sigma
-        np.random.seed(1111)
+        np.random.seed(1212)
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = GSAVIGP(X, Y, num_input_samples - 1, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
@@ -52,13 +52,13 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_grad_single(config, verbose):
-        num_input_samples = 4
+        num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
-        num_process = 4
+        num_process = 3
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(111)
-        X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples - 1, multivariate_likelihood(np.array(cov)),
                                       np.array(cov),
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config)
