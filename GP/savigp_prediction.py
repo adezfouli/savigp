@@ -78,8 +78,8 @@ class SAVIGP_Prediction:
     @staticmethod
     def performance_test():
         models = ['diag', 'full']
-        num_input = 500
-        num_inducting = num_input
+        num_input = 3000
+        num_inducting = num_input / 10
         for m in models:
             m, t, tt = SAVIGP_Prediction.prediction_normal(m, False, num_input, num_inducting, 10)
             print 'performance for ', m, ':', t, tt
