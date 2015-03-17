@@ -37,7 +37,7 @@ class SAVIGP_Test:
         s1 = GSAVIGP(X, Y, num_input_samples - 1, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
-        s1.rand_init_MoG()
+        s1.rand_init_mog()
 
         def f(x):
             s1.set_params(x)
@@ -63,7 +63,7 @@ class SAVIGP_Test:
                                       np.array(cov),
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
-        s1.rand_init_MoG()
+        s1.rand_init_mog()
 
         def f(x):
             s1.set_params(x)
@@ -80,7 +80,7 @@ class SAVIGP_Test:
         configs = [
             [
                 Configuration.MoG,
-                Configuration.ETNROPY,
+                Configuration.ENTROPY,
             ],
             [
                 Configuration.MoG,
@@ -92,7 +92,7 @@ class SAVIGP_Test:
             ],
             [
                 Configuration.HYPER,
-                Configuration.ETNROPY,
+                Configuration.ENTROPY,
             ],
             [
                 Configuration.HYPER,
@@ -132,7 +132,7 @@ class SAVIGP_Test:
                      np.array([[gaussian_sigma]]),
                      [kernel], num_samples, [
                 Configuration.MoG,
-                Configuration.ETNROPY,
+                Configuration.ENTROPY,
                 Configuration.CROSS,
                 Configuration.ELL,
                 Configuration.HYPER
@@ -143,7 +143,7 @@ class SAVIGP_Test:
                                       np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
-                Configuration.ETNROPY,
+                Configuration.ENTROPY,
                 Configuration.CROSS,
                 Configuration.ELL,
                 Configuration.HYPER
@@ -168,7 +168,7 @@ class SAVIGP_Test:
                                       np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
-                Configuration.ETNROPY,
+                Configuration.ENTROPY,
                 Configuration.CROSS,
                 Configuration.ELL,
                 # Configuration.HYPER

@@ -25,9 +25,9 @@ class GSAVIGP_SignleComponenet(SAVIGP_SingleComponent):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood, kernels, n_samples, config_list)
 
 
-    def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP_SignleComponenet, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
-        gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
+    def _ell(self, n_sample, X, Y, cond_log_likelihood):
+        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP_SignleComponenet, self)._ell(n_sample, X, Y, cond_log_likelihood)
+        gell = self._gaussian_ell(X, Y, self.normal_sigma)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 
     def _predict(self, Xnew, which_parts='all', full_cov=False, stop=False):

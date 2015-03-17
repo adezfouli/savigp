@@ -37,7 +37,7 @@ class SAVIGP_Prediction:
                              np.array([[gaussian_sigma]]),
                              [kernel], num_samples, [
                                  Configuration.MoG,
-                                 Configuration.ETNROPY,
+                                 Configuration.ENTROPY,
                                  Configuration.CROSS,
                                  Configuration.ELL,
                                  # Configuration.HYPER
@@ -49,7 +49,7 @@ class SAVIGP_Prediction:
                                               np.array([[gaussian_sigma]]),
                                               [kernel], num_samples, [
                                                   Configuration.MoG,
-                                                  Configuration.ETNROPY,
+                                                  Configuration.ENTROPY,
                                                   Configuration.CROSS,
                                                   Configuration.ELL,
                                                   # Configuration.HYPER

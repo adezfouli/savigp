@@ -18,14 +18,14 @@ class GSAVIGP(SAVIGP_Diag):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_MoG_comp, likelihood, normal_sigma, kernels, n_samples, config_list):
+    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, normal_sigma, kernels, n_samples, config_list):
         self.normal_sigma = normal_sigma
-        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_MoG_comp, likelihood, kernels, n_samples, config_list)
+        super(GSAVIGP, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list)
 
 
-    def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
-        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, p_X, p_Y, cond_log_likelihood)
-        gell = self._gaussian_ell(p_X, p_Y, self.normal_sigma)
+    def _ell(self, n_sample, X, Y, cond_log_likelihood):
+        xell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper = super(GSAVIGP, self)._ell(n_sample, X, Y, cond_log_likelihood)
+        gell = self._gaussian_ell(X, Y, self.normal_sigma)
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper
 
     def _predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
