@@ -417,7 +417,7 @@ class SAVIGP(Model):
         """
 
         # print 'ell started'
-        Aj, K_Z_X, Kj = self._get_A_K(t_X)
+        A, Kzx, K = self._get_A_K(t_X)
 
         predicted_mu = np.empty((t_X.shape[0], self.num_mog_comp, self.num_latent_proc))
         predicted_var = np.empty((t_X.shape[0], self.num_mog_comp, self.num_latent_proc))
@@ -426,8 +426,8 @@ class SAVIGP(Model):
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
 
             for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b(n, j, Aj[j])
-                sigma_kj[:, j] = self._sigma(n, j, Kj[j], Aj[j])
+                mean_kj[:, j] = self._b(n, j, A[j])
+                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
 
             predicted_mu[n, :, :] = mean_kj[:, :]
             predicted_var[n, :, :] = normal_sigma + sigma_kj[:, :]
@@ -436,14 +436,14 @@ class SAVIGP(Model):
 
     def _gaussian_ell(self, p_X, p_Y, normal_sigma):
         normal_ell = 0
-        Aj, K_Z_X, Kj = self._get_A_K(p_X)
+        A, Kzx, K = self._get_A_K(p_X)
 
         for n in range(len(p_X)):
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
             for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b(n, j, Aj[j])
-                sigma_kj[:, j] = self._sigma(n, j, Kj[j], Aj[j])
+                mean_kj[:, j] = self._b(n, j, A[j])
+                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
 
             for k in range(self.num_mog_comp):
                 if normal_sigma is not None:
