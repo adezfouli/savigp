@@ -411,9 +411,11 @@ class SAVIGP(Model):
         # print 'ell started'
         Aj = np.empty((self.num_latent_proc, len(t_X), self.num_inducing))
         Kj = np.empty((self.num_latent_proc, len(t_X)))
+        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, t_X.shape[0]))
         for j in range(self.num_latent_proc):
-            Aj[j] = self._A(t_X, j)
-            Kj[j] = self._Kdiag(t_X, Aj[j], j)
+            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], t_X)
+            Aj[j] = self._A(j, K_Z_X[j, :, :])
+            Kj[j] = self._Kdiag(t_X, K_Z_X[j, :, :], Aj[j], j)
 
         predicted_mu = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))
         predicted_var = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))

@@ -95,7 +95,7 @@ class SAVIGP_Prediction:
 
 if __name__ == '__main__':
     try:
-        SAVIGP_Prediction.performance_test()
-        # SAVIGP_Prediction.prediction_test()
+        # SAVIGP_Prediction.performance_test()
+        SAVIGP_Prediction.prediction_test()
     finally:
         pass
