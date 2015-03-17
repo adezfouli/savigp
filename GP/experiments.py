@@ -25,7 +25,7 @@ class Experiments:
         gaussian_sigma = 0.2
         m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
                                  np.array([[gaussian_sigma]]), kernel, 10000, None)
-        Optimizer.optimize_model(m, 10, True, ['mog'])
+        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         mu, var = m._predict(Xtest)
 
     @staticmethod

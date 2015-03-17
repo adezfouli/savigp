@@ -26,7 +26,6 @@ class Optimizer:
         last_f = float('Inf')
         delta_LR = 0.1
         avg_ftol = 100.
-        print 'new one!!!'
         while iter < max_iter:
             update(x)
             new_f = f()
@@ -87,7 +86,6 @@ class Optimizer:
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        print 'new one!!!'
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
@@ -137,12 +135,14 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun, verbose, method=None):
+    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-7):
         if not method:
             method=['hyp', 'mog']
         converged=False
         start=time.time()
         total_evals = 0
+        fun_iteration = 2
+        last_param = None
         try:
             while not converged:
                 if 'mog' in method:
@@ -152,9 +152,18 @@ class Optimizer:
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d = Optimizer.BFGS(model, max_fun=max_fun, verbose=verbose)
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     total_evals += d['funcalls']
+
+                # check for convergence
+                new_params = model.get_params()
+                if last_param is not None:
+                    if np.mean(np.absolute(new_params - last_param)) < epsilon:
+                        break
+                    print 'diff:', np.mean(np.absolute(new_params - last_param))
+                last_param = new_params
+
                 if 'hyp' in method:
                     model.set_configuration([
                         Configuration.ENTROPY,
@@ -162,8 +171,10 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d = Optimizer.BFGS(model, max_fun=max_fun, verbose=verbose)
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
                     total_evals += d['funcalls']
+                if total_evals > max_fun:
+                    break
 
         except KeyboardInterrupt:
             if total_evals == 0:
