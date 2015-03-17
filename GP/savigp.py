@@ -290,9 +290,9 @@ class SAVIGP(Model):
                     if Configuration.HYPER in self.config_list:
                         xn = p_X[np.newaxis, n, :]
                         K_xn_Zj = K_Z_X[j, :, n]
-                        d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn) - self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], K_xn_Zj.T) \
+                        d_sigma_d_hyper = self.d_K_xn_d_hyper(j, xn)  \
                                         - self.d_K_zjxn_d_hyper_mult_x(j, xn, Aj[j,n]) + \
-                                          2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j))
+                                          2 * self.d_Ajn_d_hyper_mult_x(xn, j, Aj[j,n], self.MoG.Sa(Aj[j,n], k, j) - K_xn_Zj.T / 2)
 
                         # repeats f to aling it with the number of hyper params
                         fr = np.repeat(f[:,k,j, np.newaxis], self.num_hyper_params, axis=1)
