@@ -236,6 +236,16 @@ class SAVIGP(Model):
         return self.kernels[j].gradient
 
     # @profile
+    def get_A_K(self, p_X):
+        Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
+        Kj = np.empty((self.num_latent_proc, len(p_X)))
+        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
+        for j in range(self.num_latent_proc):
+            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j, :, :], p_X)
+            Aj[j] = self._A(j, K_Z_X[j, :, :])
+            Kj[j] = self._Kdiag(p_X, K_Z_X[j, :, :], Aj[j], j)
+        return Aj, K_Z_X, Kj
+
     def _ell(self, n_sample, p_X, p_Y, cond_log_likelihood):
 
         """
@@ -252,13 +262,8 @@ class SAVIGP(Model):
             d_ell_d_hyper = np.zeros((self.num_latent_proc, self.num_hyper_params))
         else:
             d_ell_d_hyper = 0
-        Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
-        Kj = np.empty((self.num_latent_proc, len(p_X)))
-        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
-        for j in range(self.num_latent_proc):
-            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], p_X)
-            Aj[j] = self._A(j, K_Z_X[j, :, :])
-            Kj[j] = self._Kdiag(p_X, K_Z_X[j, :, :], Aj[j], j)
+
+        Aj, K_Z_X, Kj = self.get_A_K(p_X)
 
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc)\
             .reshape((self.num_latent_proc, self.n_samples))
@@ -409,13 +414,7 @@ class SAVIGP(Model):
         """
 
         # print 'ell started'
-        Aj = np.empty((self.num_latent_proc, len(t_X), self.num_inducing))
-        Kj = np.empty((self.num_latent_proc, len(t_X)))
-        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, t_X.shape[0]))
-        for j in range(self.num_latent_proc):
-            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], t_X)
-            Aj[j] = self._A(j, K_Z_X[j, :, :])
-            Kj[j] = self._Kdiag(t_X, K_Z_X[j, :, :], Aj[j], j)
+        Aj, K_Z_X, Kj = self.get_A_K(t_X)
 
         predicted_mu = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))
         predicted_var = np.empty((t_X.shape[0], self.num_MoG_comp, self.num_latent_proc))
@@ -434,13 +433,7 @@ class SAVIGP(Model):
 
     def _gaussian_ell(self, p_X, p_Y, normal_sigma):
         normal_ell = 0
-        Aj = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
-        Kj = np.empty((self.num_latent_proc, len(p_X)))
-        K_Z_X = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
-        for j in range(self.num_latent_proc):
-            K_Z_X[j, :, :] = self.kernels[j].K(self.Z[j,:,:], p_X)
-            Aj[j] = self._A(j, K_Z_X[j, :, :])
-            Kj[j] = self._Kdiag(p_X, K_Z_X[j, :, :], Aj[j], j)
+        Aj, K_Z_X, Kj = self.get_A_K(p_X)
 
         for n in  range(len(p_X)):
             mean_kj = np.empty((self.num_MoG_comp, self.num_latent_proc))
