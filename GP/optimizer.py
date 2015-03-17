@@ -141,7 +141,7 @@ class Optimizer:
         converged=False
         start=time.time()
         total_evals = 0
-        fun_iteration = 2
+        fun_iteration = 100
         last_param = None
         try:
             while not converged:
