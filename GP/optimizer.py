@@ -17,7 +17,7 @@ class Optimizer:
 
     @staticmethod
     def SGD(model, alpha, start, max_iter, ftol=0.0001, xtol=0.0001, verbose=True,
-            factor=1.0, opt_indices=None, adaptive_alpha=True):
+            factor=1.0, opt_indices=None, adaptive_alpha=True, show_alpha= False):
         if opt_indices is None:
             opt_indices = range(0, len(start))
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, start, opt_indices, verbose=verbose)
@@ -26,6 +26,7 @@ class Optimizer:
         last_f = float('Inf')
         delta_LR = 0.1
         avg_ftol = 100.
+        print 'new one!!!'
         while iter < max_iter:
             update(x)
             new_f = f()
@@ -35,8 +36,7 @@ class Optimizer:
                 alpha = 1. / max(abs(grad)) / 100
             if adaptive_alpha and new_f < last_f and alpha < 1. / max(abs(grad)) / 1000:
                 alpha = min(1. / max(abs(grad)) / 500, 0.001)
-            print alpha
-            if verbose:
+            if show_alpha:
                 print 'alpha', alpha,
             x -= grad * alpha
             if avg_ftol < ftol:
@@ -45,7 +45,9 @@ class Optimizer:
                 avg_ftol = (1 - delta_LR) * avg_ftol + delta_LR * math.fabs(last_f - new_f)
             last_f = new_f
             iter += 1
-        return x
+        d = {}
+        d['funcalls'] = iter
+        return d
 
     @staticmethod
     def get_f_f_grad_from_model(model, x0, opt_indices, verbose=False):
@@ -85,6 +87,7 @@ class Optimizer:
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
+        print 'new one!!!'
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
@@ -150,6 +153,7 @@ class Optimizer:
                         Configuration.ELL,
                     ])
                     d = Optimizer.BFGS(model, max_fun=max_fun, verbose=verbose)
+                    # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     total_evals += d['funcalls']
                 if 'hyp' in method:
                     model.set_configuration([
