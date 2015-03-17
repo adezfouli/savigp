@@ -20,16 +20,21 @@ class Experiments:
         X, Y = DataSource.boston_data()
         X = preprocessing.scale(X)
         Y = preprocessing.scale(Y)
+        Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         gaussian_sigma = 0.2
-        m = GSAVIGP_SignleComponenet(X, Y, X.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
+        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
                                  np.array([[gaussian_sigma]]), kernel, 10000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog'])
-        plot_fit(m, plot_raw=True)
-        gp = SAVIGP_Prediction.gpy_prediction(X, Y, gaussian_sigma, kernel)
-        gp.plot()
-        show(block=True)
+        Optimizer.optimize_model(m, 10, True, ['mog'])
+        mu, var = m._predict(Xtest)
 
+    @staticmethod
+    def get_train_test(X, Y, n_train):
+        data = np.hstack((X, Y))
+        np.random.shuffle(data)
+        Xn = data[:,:X.shape[1]]
+        Yn = data[:,X.shape[1]:]
+        return Xn[:n_train], Yn[:n_train], Xn[n_train:], Yn[n_train:]
 
 if __name__ == '__main__':
     Experiments.boston_data()
