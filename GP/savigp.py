@@ -39,7 +39,7 @@ class SAVIGP(Model):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
-            self.config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ENTROPY, Configuration.HYPER]
+            self.config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ENTROPY]
         else:
             self.config_list = config_list
         self.num_latent_proc = len(kernels)
