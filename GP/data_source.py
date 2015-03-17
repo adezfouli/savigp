@@ -1,3 +1,5 @@
+from GPy.util import datasets
+
 __author__ = 'AT'
 
 import GPy
@@ -23,3 +25,11 @@ class DataSource:
         K = kernel.K(X)
         y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
         return X, y, rbf
+
+
+    @staticmethod
+    def boston_data():
+        data = datasets.boston_housing()
+        X = data['X'].copy()
+        Y = data['Y'].copy()
+        return X, Y
