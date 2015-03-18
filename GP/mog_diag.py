@@ -25,7 +25,7 @@ class MoG_Diag(MoG):
 
     def _fixed_init(self):
         MoG._fixed_init(self)
-        self.s = np.random.uniform(low=1.0, high=1.0, size=(self.num_comp, self.num_process, self.num_dim))
+        self.s = np.random.uniform(low=0.5, high=0.5, size=(self.num_comp, self.num_process, self.num_dim))
         self.log_s = np.log(self.s)
 
     def _random_init(self):

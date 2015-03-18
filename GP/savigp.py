@@ -79,11 +79,12 @@ class SAVIGP(Model):
 
         self._update_inverses()
 
-        for j in range(self.num_latent_proc):
-            K = self.kernels[j].K(self.Z[j], self.Z[j])
-            self.MoG.update_covariance(j, K)
+        self.init_mog()
 
         self._update()
+
+    def init_mog(self):
+        pass
 
     def rand_init_mog(self):
         self.MoG.random_init()

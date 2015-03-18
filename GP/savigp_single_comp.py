@@ -11,6 +11,11 @@ class SAVIGP_SingleComponent(SAVIGP):
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list)
 
+    def init_mog(self):
+        for j in range(self.num_latent_proc):
+            K = self.kernels[j].K(self.Z[j], self.Z[j])
+            self.MoG.update_covariance(j, K)
+
     def _update(self):
         self.update_N_z()
         SAVIGP._update(self)
