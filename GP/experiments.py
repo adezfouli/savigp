@@ -50,18 +50,18 @@ class Experiments:
 
     @staticmethod
     def gaussian_1D_data_diag():
-        gaussian_sigma = 0.2
+        sigma = 0.2
         np.random.seed(12000)
-        X, Y = DataSource.normal_1D_data(20, gaussian_sigma)
+        X, Y = DataSource.normal_1D_data(20, sigma)
         # X = preprocessing.scale(X)
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 20)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = GSAVIGP(Xtrain, Ytrain, Xtrain.shape[0], 1, multivariate_likelihood(np.array([[gaussian_sigma]])),
-                                 np.array([[gaussian_sigma]]), kernel, 10000, None)
+        m = GSAVIGP(Xtrain, Ytrain, Xtrain.shape[0], 1, multivariate_likelihood(np.array([[sigma]])),
+                                 np.array([[sigma]]), kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
-        gp = SAVIGP_Prediction.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
+        gp = SAVIGP_Prediction.gpy_prediction(X, Y, sigma, kernel[0])
         gp.plot()
         show(block=True)
 
