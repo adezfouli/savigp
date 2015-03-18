@@ -64,7 +64,6 @@ class Experiments:
                                     ['var%d,'%(j) for j in range(Ytest.shape[1])])
                                         , delimiter=',')
 
-
     @staticmethod
     def export_model(file_name, model):
         model.set_configuration([Configuration.MoG, Configuration.HYPER])
@@ -78,7 +77,6 @@ class Experiments:
             for j in range(len(params)):
                 f.writerow([param_names[j], params[j]])
 
-
     @staticmethod
     def get_train_test(X, Y, n_train):
         data = np.hstack((X, Y))
@@ -89,3 +87,4 @@ class Experiments:
 
 if __name__ == '__main__':
     Experiments.gaussian_1D_data()
+    Experiments.boston_data()
