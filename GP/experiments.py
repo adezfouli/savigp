@@ -37,6 +37,7 @@ class Experiments:
     @staticmethod
     def gaussian_1D_data():
         gaussian_sigma = 0.2
+        np.random.seed(12000)
         X, Y = DataSource.normal_1D_data(1000, gaussian_sigma)
         X = preprocessing.scale(X)
         Y = preprocessing.scale(Y)
