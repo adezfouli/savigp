@@ -32,6 +32,22 @@ class Experiments:
         Experiments.export_results('boston', Xtrain, Ytrain, Xtest, YTest, mu, var)
         Experiments.export_model('boston_model.csv', m)
 
+
+
+    @staticmethod
+    def gaussian_1D_data():
+        gaussian_sigma = 0.2
+        X, Y = DataSource.normal_1D_data(1000, gaussian_sigma)
+        X = preprocessing.scale(X)
+        Y = preprocessing.scale(Y)
+        Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
+        kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
+        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
+                                 np.array([[gaussian_sigma]]), kernel, 10000, None)
+        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
+        plot_fit(m)
+        show(block=True)
+
     @staticmethod
     def export_results(file_name, Xtrain, Ytrain, Xtest, Ytest, mu, var):
         path = '../../results/'
@@ -72,4 +88,4 @@ class Experiments:
         return Xn[:n_train], Yn[:n_train], Xn[n_train:], Yn[n_train:]
 
 if __name__ == '__main__':
-    Experiments.boston_data()
+    Experiments.gaussian_1D_data()
