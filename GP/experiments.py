@@ -61,6 +61,8 @@ class Experiments:
                                  np.array([[gaussian_sigma]]), kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
+        gp = SAVIGP_Prediction.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
+        gp.plot()
         show(block=True)
 
 
