@@ -5,18 +5,19 @@ from numpy.ma import concatenate
 from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
 import numpy as np
+import time
+from savigp import Configuration
 
 __author__ = 'AT'
 
 
 class Optimizer:
-
     def __init__(self):
         pass
 
     @staticmethod
-    def SGD(model, alpha, start, max_iter, ftol= 0.0001, xtol = 0.0001, verbose= True,
-            factor = 1.0, opt_indices=None, adaptive_alpha=True):
+    def SGD(model, alpha, start, max_iter, ftol=0.0001, xtol=0.0001, verbose=True,
+            factor=1.0, opt_indices=None, adaptive_alpha=True, show_alpha= False):
         if opt_indices is None:
             opt_indices = range(0, len(start))
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, start, opt_indices, verbose=verbose)
@@ -30,12 +31,11 @@ class Optimizer:
             new_f = f()
             grad = f_grad()
 
-            if adaptive_alpha and alpha > 1./ max(abs(grad)) / 10:
-                alpha = 1./ max(abs(grad))  / 100
-            if adaptive_alpha and new_f < last_f and alpha < 1./ max(abs(grad)) / 1000:
+            if adaptive_alpha and alpha > 1. / max(abs(grad)) / 10:
+                alpha = 1. / max(abs(grad)) / 100
+            if adaptive_alpha and new_f < last_f and alpha < 1. / max(abs(grad)) / 1000:
                 alpha = min(1. / max(abs(grad)) / 500, 0.001)
-            print alpha
-            if verbose:
+            if show_alpha:
                 print 'alpha', alpha,
             x -= grad * alpha
             if avg_ftol < ftol:
@@ -44,11 +44,14 @@ class Optimizer:
                 avg_ftol = (1 - delta_LR) * avg_ftol + delta_LR * math.fabs(last_f - new_f)
             last_f = new_f
             iter += 1
-        return x
+        d = {}
+        d['funcalls'] = iter
+        return d
 
     @staticmethod
-    def get_f_f_grad_from_model(model, x0, opt_indices, verbose = False):
+    def get_f_f_grad_from_model(model, x0, opt_indices, verbose=False):
         last_x = np.empty((1, x0.shape[0]))
+
         def update(x):
             if np.array_equal(x, last_x[0]):
                 return
@@ -72,6 +75,7 @@ class Optimizer:
                 # print 'grad:', Optimizer.print_short(g)
                 print 'objective:', "%.4f" % model.objective_function()
             return g
+
         update(x0)
         return f, f_grad, update
 
@@ -95,7 +99,7 @@ class Optimizer:
 
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
         fmin_cg(f, start, f_grad, epsilon=1e-6,
-                      callback=lambda x: update(x))
+                callback=lambda x: update(x))
 
     @staticmethod
     def NLOPT(model, algorithm, opt_indices=None):
@@ -124,8 +128,56 @@ class Optimizer:
 
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
         minimize(f, start, jac=f_grad, method='Newton-CG',
-                      callback=lambda x: update(x))
+                 callback=lambda x: update(x))
 
     @staticmethod
     def print_short(a):
         return ["%.2f" % a[j] for j in range(len(a))]
+
+    @staticmethod
+    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-5):
+        if not method:
+            method=['hyp', 'mog']
+        converged=False
+        start=time.time()
+        total_evals = 0
+        fun_iteration = 100
+        last_param = None
+        try:
+            while not converged:
+                if 'mog' in method:
+                    model.set_configuration([
+                        Configuration.MoG,
+                        Configuration.ENTROPY,
+                        Configuration.CROSS,
+                        Configuration.ELL,
+                    ])
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
+                    total_evals += d['funcalls']
+
+                # check for convergence
+                new_params = model.get_params()
+                if last_param is not None:
+                    if np.mean(np.absolute(new_params - last_param)) < epsilon:
+                        break
+                    print 'diff:', np.mean(np.absolute(new_params - last_param))
+                last_param = new_params
+
+                if 'hyp' in method:
+                    model.set_configuration([
+                        Configuration.ENTROPY,
+                        Configuration.CROSS,
+                        Configuration.ELL,
+                        Configuration.HYPER
+                    ])
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    total_evals += d['funcalls']
+                if total_evals > max_fun:
+                    break
+
+        except KeyboardInterrupt:
+            if total_evals == 0:
+                total_evals = float('Nan')
+        end=time.time()
+        return model, (end - start) / total_evals, (end - start)
