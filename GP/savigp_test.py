@@ -26,15 +26,19 @@ class SAVIGP_Test:
         pass
 
     @staticmethod
-    def test_grad_diag(config, verbose):
+    def test_grad_diag(config, verbose, sparse=True):
         num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
         num_process = 3
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(1212)
+        if sparse:
+            num_inducing = num_input_samples - 1
+        else:
+            num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_input_samples - 1, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
+        s1 = GSAVIGP(X, Y, num_inducing, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
         s1.rand_init_mog()
@@ -51,15 +55,19 @@ class SAVIGP_Test:
 
 
     @staticmethod
-    def test_grad_single(config, verbose):
+    def test_grad_single(config, verbose, sparse=True):
         num_input_samples = 3
         num_samples = 100000
         gaussian_sigma = 0.02
         num_process = 3
         cov = np.eye(num_process) * gaussian_sigma
         np.random.seed(111)
+        if sparse:
+            num_inducing = num_input_samples - 1
+        else:
+            num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples - 1, multivariate_likelihood(np.array(cov)),
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing, multivariate_likelihood(np.array(cov)),
                                       np.array(cov),
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
@@ -104,19 +112,35 @@ class SAVIGP_Test:
             ]
         ]
         for c in configs:
-            e1 = SAVIGP_Test.test_grad_diag(c, verbose)
+            e1 = SAVIGP_Test.test_grad_diag(c, verbose, False)
             if e1 < 0.1:
-                print bcolors.OKBLUE, 'passed: diag', c, e1
+                print bcolors.OKBLUE, 'passed: diag not sparse', c, e1
             else:
-                print bcolors.WARNING, 'failed: diag', c, e1
+                print bcolors.WARNING, 'failed: diag not sparse', c, e1
             print bcolors.ENDC
 
         for c in configs:
-            e1 = SAVIGP_Test.test_grad_single(c, verbose)
+            e1 = SAVIGP_Test.test_grad_single(c, verbose, False)
             if e1 < 0.1:
-                print bcolors.OKBLUE, 'passed: full', c, e1
+                print bcolors.OKBLUE, 'passed: full not sparse', c, e1
             else:
-                print bcolors.WARNING, 'failed: full', c, e1
+                print bcolors.WARNING, 'failed: full not sparse', c, e1
+            print bcolors.ENDC
+
+        for c in configs:
+            e1 = SAVIGP_Test.test_grad_diag(c, verbose, True)
+            if e1 < 0.1:
+                print bcolors.OKBLUE, 'passed: diag sparse', c, e1
+            else:
+                print bcolors.WARNING, 'failed: diag sparse', c, e1
+            print bcolors.ENDC
+
+        for c in configs:
+            e1 = SAVIGP_Test.test_grad_single(c, verbose, True)
+            if e1 < 0.1:
+                print bcolors.OKBLUE, 'passed: full sparse', c, e1
+            else:
+                print bcolors.WARNING, 'failed: full sparse', c, e1
             print bcolors.ENDC
 
     @staticmethod
