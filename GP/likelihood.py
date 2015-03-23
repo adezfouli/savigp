@@ -23,8 +23,9 @@ class Likelihood:
         raise Exception("gradients not supported for multivariate Gaussian")
 
 
-class MultivariateGaussian:
+class MultivariateGaussian(Likelihood):
     def __init__(self, sigma):
+        Likelihood.__init__(self)
         self.sigma = sigma
 
     def get_ll(self):
@@ -39,8 +40,9 @@ class MultivariateGaussian:
         raise Exception("gradients not supported for multivariate Gaussian")
 
 
-class UnivariateGaussian:
+class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):
+        Likelihood.__init__(self)
         self.sigma = sigma
 
     def get_ll(self):
