@@ -173,6 +173,15 @@ class Optimizer:
                     ])
                     d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
                     total_evals += d['funcalls']
+
+                if 'll' in method:
+                    model.set_configuration([
+                        Configuration.ELL,
+                        Configuration.LL
+                    ])
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    total_evals += d['funcalls']
+
                 if total_evals > max_fun:
                     break
 
