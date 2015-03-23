@@ -5,7 +5,7 @@ from matplotlib.pyplot import show
 import numpy as np
 
 from data_source import DataSource
-from gsavigp import GSAVIGP
+from gsavigp_diag import GSAVIGP_Diag
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import Optimizer
 from savigp import Configuration
@@ -30,8 +30,8 @@ class SAVIGP_Prediction:
 
         num_samples = 10000
         if model_type == 'diag':
-            s1 = GSAVIGP(X, Y, num_inducing, 2, UnivariateGaussian(gaussian_sigma),
-                            np.array([[gaussian_sigma]]),
+            s1 = GSAVIGP_Diag(X, Y, num_inducing, 2, UnivariateGaussian(gaussian_sigma),
+
                             [kernel], num_samples,
                                 [
                                     Configuration.MoG,
@@ -44,7 +44,7 @@ class SAVIGP_Prediction:
             # for full gaussian with single component
             s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing,
                                           MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                          np.array([[gaussian_sigma]]),
+
                                           [kernel], num_samples, [
                                               Configuration.MoG,
                                               Configuration.ENTROPY,

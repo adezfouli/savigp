@@ -1,9 +1,9 @@
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import multivariate_likelihood
+from likelihood import MultivariateGaussian
 from data_source import DataSource
-from gsavigp import GSAVIGP
+from gsavigp_diag import GSAVIGP_Diag
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 import numpy as np
 from optimizer import Optimizer
@@ -26,8 +26,8 @@ class Experiments:
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         gaussian_sigma = 0.2
-        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
-                                 np.array([[gaussian_sigma]]), kernel, 10000, None)
+        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
+                                 kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         mu, var = m._raw_predict(Xtest)
         Experiments.export_results('boston', Xtrain, Ytrain, Xtest, YTest, mu, var)
@@ -42,8 +42,8 @@ class Experiments:
         Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], multivariate_likelihood(np.array([[gaussian_sigma]])),
-                                 np.array([[gaussian_sigma]]), kernel, 10000, None)
+        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
+                                 kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
         show(block=True)
@@ -57,8 +57,8 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 20)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = GSAVIGP(Xtrain, Ytrain, Xtrain.shape[0], 1, multivariate_likelihood(np.array([[sigma]])),
-                                 np.array([[sigma]]), kernel, 10000, None)
+        m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
+                                 kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
         gp = SAVIGP_Prediction.gpy_prediction(X, Y, sigma, kernel[0])

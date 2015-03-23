@@ -19,6 +19,7 @@ class Configuration(Enum):
     ELL = 'ELL'
     HYPER = 'HYP'
     MoG = 'MOG'
+    LL = 'LL'
 
 
 class SAVIGP(Model):
@@ -49,7 +50,7 @@ class SAVIGP(Model):
         self.input_dim = X[0].shape[0]
         self.output_dim = Y[0].shape[0]
         self.kernels = kernels
-        self.cond_likelihood = likelihood.get_ll()
+        self.cond_likelihood = likelihood
         self.X = X
         self.Y = Y
         self.n_samples = n_samples
@@ -59,6 +60,9 @@ class SAVIGP(Model):
         self.sparse = X.shape[0] != self.num_inducing
         if Configuration.HYPER in self.config_list:
             self.num_hyper_params = self.kernels[0].gradient.shape[0]
+
+        if Configuration.LL in self.config_list:
+            self.num_like_params = likelihood.get_num_params()
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -101,6 +105,9 @@ class SAVIGP(Model):
 
         if Configuration.HYPER in self.config_list:
             self.param_names += ['k'] * self.num_latent_proc * self.num_hyper_params
+
+        if Configuration.LL in self.config_list:
+            self.param_names += ['ll'] * self.num_like_params
 
         return self.param_names
 
@@ -149,7 +156,7 @@ class SAVIGP(Model):
 
         if Configuration.ELL in self.config_list:
             pX, pY = self._get_data_partition()
-            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
+            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
             self.ll += xell
             if Configuration.MoG in self.config_list:
                 grad_m += xdell_dm
@@ -170,6 +177,11 @@ class SAVIGP(Model):
                                       (grad_hyper.flatten()) * self.hyper_params.flatten()
                                       ])
 
+        if Configuration.LL in self.config_list:
+            self.grad_ll = np.hstack([self.grad_ll,
+                                      xdell_dll
+                                      ])
+
     def set_configuration(self, config_list):
         self.config_list = config_list
         self._update()
@@ -179,16 +191,21 @@ class SAVIGP(Model):
         receives parameter from optimizer and transforms them
         :param p: input parameters
         """
-        # print 'set', p
         self.last_param = p
         index = 0
         if Configuration.MoG in self.config_list:
             self.MoG.update_parameters(p[:self.MoG.num_parameters()])
             index = self.MoG.num_parameters()
         if Configuration.HYPER in self.config_list:
-            self.hyper_params = np.exp(p[index:].reshape((self.num_latent_proc, self.num_hyper_params)))
+            self.hyper_params = np.exp(p[index:(index + self.num_latent_proc * self.num_hyper_params)].
+                                       reshape((self.num_latent_proc, self.num_hyper_params)))
             for j in range(self.num_latent_proc):
                 self.kernels[j].param_array[:] = self.hyper_params[j]
+            index += self.num_latent_proc * self.num_hyper_params
+
+        if Configuration.LL in self.config_list:
+            self.cond_likelihood.set_params(p[index:index + self.num_like_params])
+
         self._update()
 
     def get_params(self):
@@ -200,6 +217,8 @@ class SAVIGP(Model):
             params = self.MoG.parameters
         if Configuration.HYPER in self.config_list:
             params = np.hstack([params, np.log(self.hyper_params.flatten())])
+        if Configuration.LL in self.config_list:
+            params = np.hstack([params, self.cond_likelihood.get_params()])
         return params
 
     def log_likelihood(self):
@@ -269,7 +288,13 @@ class SAVIGP(Model):
         else:
             d_ell_d_hyper = 0
 
+        if Configuration.LL in self.config_list:
+            d_ell_d_ll = np.zeros(self.num_like_params)
+        else:
+            d_ell_d_ll = 0
+
         if Configuration.MoG in self.config_list or \
+            Configuration.LL in self.config_list or \
             (Configuration.HYPER in self.config_list and self.sparse):
             A, Kzx, K = self._get_A_K(X)
             for n in range(len(X)):
@@ -288,10 +313,12 @@ class SAVIGP(Model):
                         f[:, k, j] = self.normal_samples[j, :] * math.sqrt(sigma_kj[k, j]) + mean_kj[k, j]
 
                 for k in range(self.num_mog_comp):
-                    cond_ll = cond_log_likelihood(f[:, k, :], Y[n, :])
+                    cond_ll = cond_log_likelihood.ll(f[:, k, :], Y[n, :])
                     sum_cond_ll = cond_ll.sum()
                     d_ell_dPi[k] += sum_cond_ll
                     total_ell += sum_cond_ll * self.MoG.pi[k]
+                    if Configuration.LL in self.config_list:
+                        d_ell_d_ll += self.MoG.pi[k] * self.cond_likelihood.ll_grad(f[:, k, :], Y[n, :]).sum()
                     for j in range(self.num_latent_proc):
                         if Configuration.MoG in self.config_list:
                             s_dell_dm[k, j] += np.dot(f[:, k, j] - mean_kj[k, j], cond_ll)
@@ -333,7 +360,7 @@ class SAVIGP(Model):
 
         d_ell_dPi = d_ell_dPi / n_sample
 
-        return total_ell / n_sample, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper / n_sample
+        return total_ell / n_sample, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper / n_sample, d_ell_d_ll / n_sample
 
     def dKzxn_dhyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
