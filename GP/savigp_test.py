@@ -184,7 +184,6 @@ class SAVIGP_Test:
         Optimizer.BFGS(s1, max_fun=3)
 
         s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                      np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
                 Configuration.ENTROPY,
@@ -209,7 +208,6 @@ class SAVIGP_Test:
         gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp_mean, gp_var = gp.predict(X)
         s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                      np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
                 Configuration.ENTROPY,
@@ -231,5 +229,5 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    # SAVIGP_Test.init_test()
+    SAVIGP_Test.init_test()
     SAVIGP_Test.test_grad()
