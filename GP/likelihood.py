@@ -53,4 +53,9 @@ class UnivariateGaussian(Likelihood):
         return ll
 
     def get_ll_grad(self):
-        raise Exception("gradients not supported for multivariate Gaussian")
+        def grad(f, y):
+            return 1.0 / 2 * inner1d(f-y, f-y) / (self.sigma * self.sigma)
+        return grad
+
+    def get_num_params(self):
+        return 1
