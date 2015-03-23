@@ -13,3 +13,5 @@
 
 #python
 *.pyc
+
+.Rhistory
