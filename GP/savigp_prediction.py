@@ -9,7 +9,7 @@ from gsavigp import GSAVIGP
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import Optimizer
 from savigp import Configuration
-from cond_likelihood import multivariate_likelihood
+from likelihood import MultivariateGaussian, UnivariateGaussian
 from plot import plot_fit
 
 
@@ -30,7 +30,7 @@ class SAVIGP_Prediction:
 
         num_samples = 10000
         if model_type == 'diag':
-            s1 = GSAVIGP(X, Y, num_inducing, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
+            s1 = GSAVIGP(X, Y, num_inducing, 2, UnivariateGaussian(gaussian_sigma),
                             np.array([[gaussian_sigma]]),
                             [kernel], num_samples,
                                 [
@@ -43,7 +43,7 @@ class SAVIGP_Prediction:
         else:
             # for full gaussian with single component
             s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing,
-                                          multivariate_likelihood(np.array([[gaussian_sigma]])),
+                                          MultivariateGaussian(np.array([[gaussian_sigma]])),
                                           np.array([[gaussian_sigma]]),
                                           [kernel], num_samples, [
                                               Configuration.MoG,
@@ -80,7 +80,7 @@ class SAVIGP_Prediction:
 
     @staticmethod
     def prediction_test():
-        models = ['diag', 'full']
+        models = ['full']
         num_input = 100
         num_inducting = num_input
         for m in models:

@@ -49,7 +49,7 @@ class SAVIGP(Model):
         self.input_dim = X[0].shape[0]
         self.output_dim = Y[0].shape[0]
         self.kernels = kernels
-        self.cond_likelihood = likelihood
+        self.cond_likelihood = likelihood.get_ll()
         self.X = X
         self.Y = Y
         self.n_samples = n_samples

@@ -1,7 +1,7 @@
 import csv
 import GPy
 from sklearn import preprocessing
-from cond_likelihood import multivariate_likelihood
+from likelihood import multivariate_likelihood
 from data_source import DataSource
 from gsavigp import GSAVIGP
 from gsavigp_single_comp import GSAVIGP_SignleComponenet

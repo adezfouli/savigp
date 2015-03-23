@@ -15,7 +15,7 @@ from gsavigp import GSAVIGP
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import *
 from savigp import Configuration
-from cond_likelihood import multivariate_likelihood
+from likelihood import MultivariateGaussian
 from grad_checker import GradChecker
 from plot import plot_fit
 from util import chol_grad, jitchol, bcolors
@@ -38,7 +38,7 @@ class SAVIGP_Test:
         else:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP(X, Y, num_inducing, 3, multivariate_likelihood(np.array(cov)), np.array(cov),
+        s1 = GSAVIGP(X, Y, num_inducing, 3, MultivariateGaussian(np.array(cov)), np.array(cov),
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
         s1.rand_init_mog()
@@ -67,7 +67,7 @@ class SAVIGP_Test:
         else:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing, multivariate_likelihood(np.array(cov)),
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing, MultivariateGaussian(np.array(cov)),
                                       np.array(cov),
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config)
 
@@ -152,7 +152,7 @@ class SAVIGP_Test:
 
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
 
-        s1 = GSAVIGP(X, Y, num_input_samples, 2, multivariate_likelihood(np.array([[gaussian_sigma]])),
+        s1 = GSAVIGP(X, Y, num_input_samples, 2, MultivariateGaussian(np.array([[gaussian_sigma]])),
                      np.array([[gaussian_sigma]]),
                      [kernel], num_samples, [
                 Configuration.MoG,
@@ -163,7 +163,7 @@ class SAVIGP_Test:
             ])
         Optimizer.BFGS(s1, max_fun=3)
 
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])),
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
                                       np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
@@ -188,7 +188,7 @@ class SAVIGP_Test:
         X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
         gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp_mean, gp_var = gp.predict(X)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, multivariate_likelihood(np.array([[gaussian_sigma]])),
+        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
                                       np.array([[gaussian_sigma]]),
                                       [kernel], num_samples, [
                 Configuration.MoG,
