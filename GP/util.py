@@ -1,4 +1,7 @@
 import math
+import os
+import random
+import string
 import numpy as np
 from numpy.ma import trace
 from scipy import linalg
@@ -131,3 +134,10 @@ def test_grad():
 
     L_len = (dim) * (dim + 1) / 2
     GradChecker.check(f, grad_f, np.random.uniform(low=1.0, high=3.0, size=dim), ["f"] * L_len)
+
+def check_dir_exists(dir_name):
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
