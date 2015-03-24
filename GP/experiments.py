@@ -1,7 +1,7 @@
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian
+from likelihood import MultivariateGaussian, UnivariateGaussian
 from data_source import DataSource
 from gsavigp_diag import GSAVIGP_Diag
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
@@ -26,9 +26,9 @@ class Experiments:
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         gaussian_sigma = 0.2
-        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
+        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 10000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
+        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
         mu, var = m._raw_predict(Xtest)
         Experiments.export_results('boston', Xtrain, Ytrain, Xtest, YTest, mu, var)
         Experiments.export_model('boston_model.csv', m)
@@ -59,7 +59,7 @@ class Experiments:
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
                                  kernel, 10000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
+        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
         plot_fit(m)
         gp = SAVIGP_Prediction.gpy_prediction(X, Y, sigma, kernel[0])
         gp.plot()
@@ -84,14 +84,13 @@ class Experiments:
 
     @staticmethod
     def export_model(file_name, model):
-        model.set_configuration([Configuration.MoG, Configuration.HYPER])
         path = '../../results/'
 
         with open(path + file_name, 'w') as fp:
             f = csv.writer(fp, delimiter=',')
             f.writerow(['#model', model.__class__])
-            params = model.get_params()
-            param_names = model.get_param_names()
+            params = model.get_all_params()
+            param_names = model.get_all_param_names()
             for j in range(len(params)):
                 f.writerow([param_names[j], params[j]])
 
@@ -105,5 +104,5 @@ class Experiments:
 
 if __name__ == '__main__':
     # Experiments.gaussian_1D_data()
-    # Experiments.boston_data()
-    Experiments.gaussian_1D_data_diag()
+    Experiments.boston_data()
+    # Experiments.gaussian_1D_data_diag()

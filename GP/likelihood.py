@@ -16,10 +16,10 @@ class Likelihood:
         raise Exception("not implemented yet")
 
     def ll_grad(self, f, y):
-        raise Exception("gradients not supported for multivariate Gaussian")
+        raise Exception("not implemented yet")
 
     def get_num_params(self):
-        raise Exception("gradients not supported for multivariate Gaussian")
+        raise Exception("not implemented yet")
 
     def set_params(self, p):
         raise Exception("not implemented yet")
@@ -44,6 +44,11 @@ class MultivariateGaussian(Likelihood):
     def get_sigma(self):
         return self.sigma
 
+    def get_params(self):
+        return self.sigma.flatten()
+
+    def get_num_params(self):
+        return self.sigma.flatten().shape[0]
 
 class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):

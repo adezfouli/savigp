@@ -58,6 +58,9 @@ class SAVIGP(Model):
         self.last_param = None
         self.hyper_params = None
         self.sparse = X.shape[0] != self.num_inducing
+        self.num_hyper_params = self.kernels[0].gradient.shape[0]
+        self.num_like_params = self.cond_likelihood.get_num_params()
+
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -106,11 +109,28 @@ class SAVIGP(Model):
 
         return self.param_names
 
+
+    def get_all_param_names(self):
+        param_names = []
+        param_names += ['m'] * self.MoG.get_m_size() + ['s'] * \
+                                                            self.MoG.get_s_size() + ['pi'] * self.num_mog_comp
+        param_names += ['k'] * self.num_latent_proc * self.num_hyper_params
+        param_names += ['ll'] * self.num_like_params
+
+        return param_names
+
+
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
             self.chol[j, :, :] = jitchol(self.kernels[j].K(self.Z[j, :, :], self.Z[j, :, :]))
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
+
+    def kernel_hyp_params(self):
+        hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
+        for j in range(self.num_latent_proc):
+            hyper_params[j] = self.kernels[j].param_array[:].copy()
+        return hyper_params
 
     def _update(self):
 
@@ -119,18 +139,14 @@ class SAVIGP(Model):
 
         self.ll = 0
 
-        if Configuration.HYPER in self.config_list:
-            self.hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
-
         if Configuration.MoG in self.config_list:
             grad_m = np.zeros((self.MoG.m_dim()))
             grad_s = np.zeros((self.MoG.get_s_size()))
             grad_pi = np.zeros((self.MoG.pi_dim()))
 
         if Configuration.HYPER in self.config_list:
+            self.hyper_params = self.kernel_hyp_params()
             grad_hyper = np.zeros(self.hyper_params.shape)
-            for j in range(self.num_latent_proc):
-                self.hyper_params[j] = self.kernels[j].param_array[:].copy()
 
         if Configuration.ENTROPY in self.config_list:
             self.ll += self._l_ent()
@@ -179,11 +195,6 @@ class SAVIGP(Model):
 
     def set_configuration(self, config_list):
         self.config_list = config_list
-        if Configuration.HYPER in self.config_list:
-            self.num_hyper_params = self.kernels[0].gradient.shape[0]
-
-        if Configuration.LL in self.config_list:
-            self.num_like_params = self.cond_likelihood.get_num_params()
         self._update()
 
     def set_params(self, p):
@@ -219,6 +230,15 @@ class SAVIGP(Model):
             params = np.hstack([params, np.log(self.hyper_params.flatten())])
         if Configuration.LL in self.config_list:
             params = np.hstack([params, self.cond_likelihood.get_params()])
+        return params
+
+    def get_all_params(self):
+        """
+        returns all the parameters in the model
+        """
+        params = self.MoG.parameters
+        params = np.hstack([params, np.log(self.kernel_hyp_params().flatten())])
+        params = np.hstack([params, self.cond_likelihood.get_params()])
         return params
 
     def log_likelihood(self):
