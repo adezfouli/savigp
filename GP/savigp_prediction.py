@@ -43,7 +43,7 @@ class SAVIGP_Prediction:
         else:
             # for full gaussian with single component
             s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing,
-                                          MultivariateGaussian(np.array([[gaussian_sigma]])),
+                                          UnivariateGaussian(np.array(gaussian_sigma)),
 
                                           [kernel], num_samples, [
                                               Configuration.MoG,
@@ -54,9 +54,9 @@ class SAVIGP_Prediction:
                                           ])
 
         # Optimizer.SGD(s1, 1e-16,  s1._get_params(), 2000, verbose=False, adaptive_alpha=False)
-        _, t1, t2 = Optimizer.optimize_model(s1, max_fun=max_fun, verbose=verbose, method=['mog'])
+        _, t1, t2 = Optimizer.optimize_model(s1, max_fun=max_fun, verbose=verbose, method=['mog', 'll', 'hyp'])
         if verbose:
-            print 'parameters:', s1.get_params()
+            print 'parameters:', s1.get_all_params()
             print 'num_input_samples', num_input_samples
             print 'num_samples', num_samples
             print 'gaussian sigma', gaussian_sigma

@@ -10,6 +10,7 @@ from optimizer import Optimizer
 from plot import plot_fit
 from savigp_prediction import SAVIGP_Prediction
 from matplotlib.pyplot import show
+from util import id_generator, check_dir_exists
 
 
 __author__ = 'AT'
@@ -18,10 +19,34 @@ __author__ = 'AT'
 class Experiments:
 
     @staticmethod
+    def export_result_model(Xtest, Xtrain, Ytest, Ytrain, model, mu, var):
+        path = '../../results/botson_' + id_generator() + '/'
+        check_dir_exists(path)
+        file_name = 'boston'
+        np.savetxt(path + file_name + '_train' + '.csv', np.hstack((Xtrain, Ytrain))
+                   , header=''.join(['X%d,'%(j) for j in range(Xtrain.shape[1])] +
+                                    ['Y%d,'%(j) for j in range(Ytrain.shape[1])])
+                                        , delimiter=',')
+
+        np.savetxt(path + file_name + '_test' + '.csv', np.hstack((Xtest, Ytest, mu, var))
+                   , header=''.join(['X%d,'%(j) for j in range(Xtest.shape[1])] +
+                                    ['Y%d,'%(j) for j in range(Ytest.shape[1])] +
+                                    ['mu%d,'%(j) for j in range(mu.shape[1])] +
+                                    ['var%d,'%(j) for j in range(Ytest.shape[1])])
+                                        , delimiter=',')
+        with open(path + file_name +'_model', 'w') as fp:
+            f = csv.writer(fp, delimiter=',')
+            f.writerow(['#model', model.__class__])
+            params = model.get_all_params()
+            param_names = model.get_all_param_names()
+            for j in range(len(params)):
+                f.writerow([param_names[j], params[j]])
+
+    @staticmethod
     def boston_data():
         X, Y = DataSource.boston_data()
-        X = preprocessing.scale(X)
-        Y = preprocessing.scale(Y)
+        # X = preprocessing.scale(X)
+        # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         gaussian_sigma = 0.2
@@ -29,8 +54,7 @@ class Experiments:
                                  kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
         mu, var = m._raw_predict(Xtest)
-        Experiments.export_results('boston', Xtrain, Ytrain, Xtest, YTest, mu, var)
-        Experiments.export_model('boston_model.csv', m)
+        Experiments.export_result_model(Xtest, Xtrain, YTest, Ytrain, m, mu, var)
 
     @staticmethod
     def gaussian_1D_data():
@@ -64,34 +88,6 @@ class Experiments:
         gp.plot()
         show(block=True)
 
-
-    @staticmethod
-    def export_results(file_name, Xtrain, Ytrain, Xtest, Ytest, mu, var):
-        path = '../../results/'
-
-        np.savetxt(path + file_name + '_train' + '.csv', np.hstack((Xtrain, Ytrain))
-                   , header=''.join(['X%d,'%(j) for j in range(Xtrain.shape[1])] +
-                                    ['Y%d,'%(j) for j in range(Ytrain.shape[1])])
-                                        , delimiter=',')
-
-        np.savetxt(path + file_name + '_test' + '.csv', np.hstack((Xtest, Ytest, mu, var))
-                   , header=''.join(['X%d,'%(j) for j in range(Xtest.shape[1])] +
-                                    ['Y%d,'%(j) for j in range(Ytest.shape[1])] +
-                                    ['mu%d,'%(j) for j in range(mu.shape[1])] +
-                                    ['var%d,'%(j) for j in range(Ytest.shape[1])])
-                                        , delimiter=',')
-
-    @staticmethod
-    def export_model(file_name, model):
-        path = '../../results/'
-
-        with open(path + file_name, 'w') as fp:
-            f = csv.writer(fp, delimiter=',')
-            f.writerow(['#model', model.__class__])
-            params = model.get_all_params()
-            param_names = model.get_all_param_names()
-            for j in range(len(params)):
-                f.writerow([param_names[j], params[j]])
 
     @staticmethod
     def get_train_test(X, Y, n_train):
