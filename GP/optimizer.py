@@ -189,6 +189,7 @@ class Optimizer:
                     break
 
         except KeyboardInterrupt:
+            print 'interrupted by the user'
             if total_evals == 0:
                 total_evals = float('Nan')
         end=time.time()
