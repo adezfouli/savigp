@@ -145,6 +145,7 @@ class Optimizer:
         last_param = None
         try:
             while not converged:
+                print 'mog params'
                 if 'mog' in method:
                     model.set_configuration([
                         Configuration.MoG,
@@ -164,6 +165,7 @@ class Optimizer:
                     print 'diff:', np.mean(np.absolute(new_params - last_param))
                 last_param = new_params
 
+                print 'hyp params'
                 if 'hyp' in method:
                     model.set_configuration([
                         Configuration.ENTROPY,
@@ -174,6 +176,7 @@ class Optimizer:
                     d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
                     total_evals += d['funcalls']
 
+                print 'll params'
                 if 'll' in method:
                     model.set_configuration([
                         Configuration.ELL,

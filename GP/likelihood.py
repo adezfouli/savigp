@@ -59,10 +59,10 @@ class UnivariateGaussian(Likelihood):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
     def ll_grad(self, f, y):
-        return self.const_grad + 1.0 / 2 * inner1d(f-y, f-y) / (self.sigma * self.sigma)
+        return self.const_grad * self.sigma + 1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
     def set_params(self, p):
-        self.sigma = p[0]
+        self.sigma = math.exp(p[0])
         self.const = -1.0 / 2 * np.log(self.sigma) - 1 / 2 * np.log(2 * math.pi)
         self.const_grad = -1.0 / 2 / self.sigma
 
@@ -70,7 +70,7 @@ class UnivariateGaussian(Likelihood):
         return np.array([[self.sigma]])
 
     def get_params(self):
-        return np.array([self.sigma])
+        return np.array(np.log([self.sigma]))
 
     def get_num_params(self):
         return 1
