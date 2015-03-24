@@ -58,11 +58,6 @@ class SAVIGP(Model):
         self.last_param = None
         self.hyper_params = None
         self.sparse = X.shape[0] != self.num_inducing
-        if Configuration.HYPER in self.config_list:
-            self.num_hyper_params = self.kernels[0].gradient.shape[0]
-
-        if Configuration.LL in self.config_list:
-            self.num_like_params = likelihood.get_num_params()
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -87,7 +82,7 @@ class SAVIGP(Model):
 
         self.init_mog()
 
-        self._update()
+        self.set_configuration(self.config_list)
 
     def init_mog(self):
         pass
@@ -184,6 +179,11 @@ class SAVIGP(Model):
 
     def set_configuration(self, config_list):
         self.config_list = config_list
+        if Configuration.HYPER in self.config_list:
+            self.num_hyper_params = self.kernels[0].gradient.shape[0]
+
+        if Configuration.LL in self.config_list:
+            self.num_like_params = self.cond_likelihood.get_num_params()
         self._update()
 
     def set_params(self, p):
