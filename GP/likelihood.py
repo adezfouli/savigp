@@ -53,7 +53,7 @@ class MultivariateGaussian(Likelihood):
 class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):
         Likelihood.__init__(self)
-        self.set_params([sigma])
+        self.set_params(np.log([sigma]))
 
     def ll(self, f, y):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
