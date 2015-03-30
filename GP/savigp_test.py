@@ -140,10 +140,10 @@ class SAVIGP_Test:
         SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'diag sparse')
 
         e1 = SAVIGP_Test.test_grad_single([Configuration.ELL, Configuration.LL], False, False, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'full sparse')
+        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'full not sparse')
 
         e1 = SAVIGP_Test.test_grad_diag([Configuration.ELL, Configuration.LL], False, False, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'diag sparse')
+        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'diag not sparse')
 
         for c in configs:
             e1 = SAVIGP_Test.test_grad_diag(c, verbose, False, 'multi_Gaussian')
