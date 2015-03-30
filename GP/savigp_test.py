@@ -46,7 +46,7 @@ class SAVIGP_Test:
     @staticmethod
     def test_grad_diag(config, verbose, sparse, likelihood_type):
         num_input_samples = 3
-        num_samples = 100000
+        num_samples = 1000000
         cov, gaussian_sigma, ll, num_process = SAVIGP_Test.get_cond_ll(likelihood_type)
         np.random.seed(1212)
         if sparse:
@@ -73,7 +73,7 @@ class SAVIGP_Test:
     @staticmethod
     def test_grad_single(config, verbose, sparse, likelihood_type):
         num_input_samples = 3
-        num_samples = 100000
+        num_samples = 1000000
         cov, gaussian_sigma, ll, num_process = SAVIGP_Test.get_cond_ll(likelihood_type)
         np.random.seed(111)
         if sparse:
@@ -147,7 +147,7 @@ class SAVIGP_Test:
 
         for c in configs:
             e1 = SAVIGP_Test.test_grad_diag(c, verbose, False, 'multi_Gaussian')
-            SAVIGP_Test.report_output(c, e1, 'mog not sparse')
+            SAVIGP_Test.report_output(c, e1, 'diag not sparse')
 
         for c in configs:
             e1 = SAVIGP_Test.test_grad_single(c, verbose, False, 'multi_Gaussian')

@@ -1,7 +1,7 @@
 library(ggplot2)
 
 SSE = data.frame(SSE = numeric(0), expr = character(0))
-path = '../../results/botson_WQXVO9/boston'
+path = '../../results/botson_70CD0D/boston'
 data_gp = read.csv(paste(path, '_gp_test.csv', sep=''))
 data_savigp = read.csv(paste(path, '_savigp_test.csv', sep=''))
 data_train = read.csv(paste(path, '_gp_train.csv', sep=''))
@@ -15,8 +15,6 @@ graph_bar(SSE, 'boston')
 graph_bar = function(data, name){
   ggplot(subset(data,  TRUE), aes(x = expr, y = SSE, fill  = expr)) + 
     geom_boxplot() + 
-#    stat_summary(fun.y = "mean", geom = "bar", position = position_dodge() ) + 
-#    stat_summary(fun.data = "mean_cl_boot", geom="linerange", colour="black", position=position_dodge(.9)) +
     theme_bw() +
     ylim(c(0, 0.4)) + 
     theme(legend.direction = "vertical", legend.position = "right", legend.box = "vertical", 

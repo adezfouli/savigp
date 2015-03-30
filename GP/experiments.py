@@ -58,7 +58,7 @@ class Experiments:
         kernel = [GPy.kern.RBF(1, variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
         m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
-                             kernel, 10000, None)
+                             kernel, 100000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog'])
         y_pred, var_pred = m._raw_predict(Xtest)
         Experiments.export_result_model(m, Xtest, Xtrain, Ytest, Ytrain, y_pred, var_pred, 'savigp')
@@ -112,5 +112,5 @@ class Experiments:
 
 if __name__ == '__main__':
     # Experiments.gaussian_1D_data()
-    # Experiments.boston_data()
-    Experiments.gaussian_1D_data_diag()
+    Experiments.boston_data()
+    # Experiments.gaussian_1D_data_diag()
