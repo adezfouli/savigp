@@ -46,7 +46,7 @@ class SAVIGP_Test:
     @staticmethod
     def test_grad_diag(config, verbose, sparse, likelihood_type):
         num_input_samples = 3
-        num_samples = 1000000
+        num_samples = 100000
         cov, gaussian_sigma, ll, num_process = SAVIGP_Test.get_cond_ll(likelihood_type)
         np.random.seed(1212)
         if sparse:
@@ -73,7 +73,7 @@ class SAVIGP_Test:
     @staticmethod
     def test_grad_single(config, verbose, sparse, likelihood_type):
         num_input_samples = 3
-        num_samples = 1000000
+        num_samples = 100000
         cov, gaussian_sigma, ll, num_process = SAVIGP_Test.get_cond_ll(likelihood_type)
         np.random.seed(111)
         if sparse:
@@ -130,37 +130,29 @@ class SAVIGP_Test:
             [
                 Configuration.HYPER,
                 Configuration.ELL,
+            ],
+            [
+                Configuration.LL,
+                Configuration.ELL,
             ]
         ]
 
-        e1 = SAVIGP_Test.test_grad_single([Configuration.ELL, Configuration.LL], False, True, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'full sparse')
+        sparse = [True, False]
+        models = ['diag', 'full']
+        ll = ['univariate_Gaussian', 'multi_Gaussian']
 
-        e1 = SAVIGP_Test.test_grad_diag([Configuration.ELL, Configuration.LL], False, True, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'diag sparse')
-
-        e1 = SAVIGP_Test.test_grad_single([Configuration.ELL, Configuration.LL], False, False, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'full not sparse')
-
-        e1 = SAVIGP_Test.test_grad_diag([Configuration.ELL, Configuration.LL], False, False, 'univariate_Gaussian')
-        SAVIGP_Test.report_output([Configuration.ELL, Configuration.LL], e1, 'diag not sparse')
-
-        for c in configs:
-            e1 = SAVIGP_Test.test_grad_diag(c, verbose, False, 'multi_Gaussian')
-            SAVIGP_Test.report_output(c, e1, 'diag not sparse')
-
-        for c in configs:
-            e1 = SAVIGP_Test.test_grad_single(c, verbose, False, 'multi_Gaussian')
-            SAVIGP_Test.report_output(c, e1, 'full not sparse')
-
-        for c in configs:
-            e1 = SAVIGP_Test.test_grad_diag(c, verbose, True, 'multi_Gaussian')
-            SAVIGP_Test.report_output(c, e1, 'diag sparse')
-
-        for c in configs:
-            e1 = SAVIGP_Test.test_grad_single(c, verbose, True, 'multi_Gaussian')
-            SAVIGP_Test.report_output(c, e1, 'full sparse')
-
+        for m in models:
+            for s in sparse:
+                for l in ll:
+                    for c in configs:
+                        # for multi_Gaussian gradients of ll are not implemented
+                        if not ('multi_Gaussian' == l and Configuration.LL in c):
+                            e1 = None
+                            if m == 'diag':
+                                e1 = SAVIGP_Test.test_grad_diag(c, False, s, l)
+                            if m == 'full':
+                                e1 = SAVIGP_Test.test_grad_single(c, False, s, l)
+                            SAVIGP_Test.report_output(c, e1, m + ', ' + ' sparse:' + str(s) + ', ' + ', ' + l)
 
 
     @staticmethod
