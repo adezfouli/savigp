@@ -199,7 +199,7 @@ class SAVIGP_Test:
         return m
 
     @staticmethod
-    def test_gp():
+    def test_gp(plot=False):
         np.random.seed(111)
         num_input_samples = 10
         num_samples = 10000
@@ -227,9 +227,13 @@ class SAVIGP_Test:
         else:
             print bcolors.WARNING, "failed: var gp prediction ", var_error
         print bcolors.ENDC
+        if plot:
+            plot_fit(m)
+            gp.plot()
+            show(block=True)
 
 
 if __name__ == '__main__':
-    SAVIGP_Test.test_gp()
+    SAVIGP_Test.test_gp(True)
     # SAVIGP_Test.init_test()
     # SAVIGP_Test.test_grad()
