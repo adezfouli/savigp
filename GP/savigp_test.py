@@ -99,14 +99,20 @@ class SAVIGP_Test:
     @staticmethod
     def report_output(config, error, model):
         if error < 0.1:
-            print bcolors.OKBLUE, 'passed:', model, config, error
+            print bcolors.OKBLUE, 'passed:', model, config, ' error: ', error
         else:
-            print bcolors.WARNING, 'failed', model, config, error
+            print bcolors.WARNING, 'failed', model, config, ' error: ', error
         print bcolors.ENDC
 
     @staticmethod
     def test_grad(verbose=False):
         configs = [
+            [
+                Configuration.MoG,
+                Configuration.ENTROPY,
+                Configuration.CROSS,
+                Configuration.ELL,
+            ],
             [
                 Configuration.MoG,
                 Configuration.ENTROPY,
@@ -152,7 +158,8 @@ class SAVIGP_Test:
                                 e1 = SAVIGP_Test.test_grad_diag(c, False, s, l)
                             if m == 'full':
                                 e1 = SAVIGP_Test.test_grad_single(c, False, s, l)
-                            SAVIGP_Test.report_output(c, e1, m + ', ' + ' sparse:' + str(s) + ', ' + ', ' + l)
+                            SAVIGP_Test.report_output(c, e1, 'model: ' + m + ', ' + ' sparse:' + str(s) + ', ' + ', '
+                                                      + 'likelihood: ' + l)
 
 
     @staticmethod

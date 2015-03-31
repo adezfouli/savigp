@@ -24,13 +24,13 @@ class GradChecker:
                 return f((concatenate((x0[:i], x, x0[(i+1):]))))
             t = get_d1(f_i, [x0[i]])
             p_errro=None
-            if g[i] != 0:
-                p_errro = abs(t-g[i]) / abs(g[i])
+            if t != 0:
+                p_errro = abs(t-g[i]) / abs(t)
             rows += [[name[i], g[i], t, abs(t-g[i]), p_errro]]
             if abs(g[i]) <1e-4 and abs(t) < 1e-4:
                 pass
             else:
-                aver_error += abs(t-g[i]) / abs(g[i])
+                aver_error += abs(t-g[i]) / abs(t)
             if verbose:
                 print 'element:', i
         table.add_rows(rows)
