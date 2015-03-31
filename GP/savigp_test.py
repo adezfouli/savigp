@@ -203,17 +203,18 @@ class SAVIGP_Test:
         np.random.seed(111)
         num_input_samples = 10
         num_samples = 10000
-        gaussian_sigma = 0.2
+        gaussian_sigma = 1
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel)
-        gp_mean, gp_var = gp.predict(X)
+        kernel = [GPy.kern.RBF(1, variance=.2, lengthscale=np.array((.2,)))]
         m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
-                                      [kernel], num_samples, None)
+                                      kernel, num_samples, None)
         try:
             Optimizer.optimize_model(m, 10000, False, ['mog'])
         except KeyboardInterrupt:
             pass
         sa_mean, sa_var = m._raw_predict(X)
+        gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
+        gp_mean, gp_var = gp.predict(X)
         mean_error = (np.abs(sa_mean - gp_mean)).sum() / sa_mean.shape[0]
         var_error = (np.abs(sa_var - gp_var)).sum() / gp_var.T.shape[0]
         if mean_error < 0.1:
@@ -229,5 +230,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    SAVIGP_Test.init_test()
-    SAVIGP_Test.test_grad()
+    SAVIGP_Test.test_gp()
+    # SAVIGP_Test.init_test()
+    # SAVIGP_Test.test_grad()
