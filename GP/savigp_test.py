@@ -200,31 +200,32 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_gp():
+        np.random.seed(111)
         num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = 0.2
-        X, Y, kernel = SAVIGP_Test.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel)
         gp_mean, gp_var = gp.predict(X)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                      [kernel], num_samples, [
-                Configuration.MoG,
-                Configuration.ENTROPY,
-                Configuration.CROSS,
-                Configuration.ELL,
-                # Configuration.HYPER
-            ])
+        m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
+                                      [kernel], num_samples, None)
         try:
-            # Optimizer.SGD(s1, 1e-6, s1._get_params(), 10000,  ftol=1e-3, adaptive_alpha=False)
-            Optimizer.BFGS(s1, max_fun=100000)
+            Optimizer.optimize_model(m, 10000, False, ['mog'])
         except KeyboardInterrupt:
             pass
-        sa_mean, sa_var = s1._predict(X)
-        print 'asvig mean:', sa_mean
-        print 'gp_mean:', gp_mean.T
-        print 'asvig var:', sa_var
-        print 'gp_var:', gp_var.T
-
+        sa_mean, sa_var = m._raw_predict(X)
+        mean_error = (np.abs(sa_mean - gp_mean)).sum() / sa_mean.shape[0]
+        var_error = (np.abs(sa_var - gp_var)).sum() / gp_var.T.shape[0]
+        if mean_error < 0.1:
+            print bcolors.OKBLUE, "passed: mean gp prediction ", mean_error
+        else:
+            print bcolors.WARNING, "failed: mean gp prediction ", mean_error
+        print bcolors.ENDC
+        if var_error < 0.1:
+            print bcolors.OKBLUE, "passed: var gp prediction ", var_error
+        else:
+            print bcolors.WARNING, "failed: var gp prediction ", var_error
+        print bcolors.ENDC
 
 
 if __name__ == '__main__':
