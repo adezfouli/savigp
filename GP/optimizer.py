@@ -123,14 +123,16 @@ class Optimizer:
         return d
 
     @staticmethod
-    def general(model, opt_indices=None):
+    def general(model, opt_indices=None, verbose=False):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
         minimize(f, start, jac=f_grad, method='Newton-CG',
                  callback=lambda x: update(x))
+
+        return {'funcalls': 1}
 
     @staticmethod
     def print_short(a):
@@ -158,6 +160,7 @@ class Optimizer:
                     d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
+                    # d = Optimizer.general(model, verbose=verbose)
                     total_evals += d['funcalls']
 
                 # check for convergence
