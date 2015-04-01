@@ -20,33 +20,51 @@ from util import id_generator, check_dir_exists
 class Experiments:
 
     @staticmethod
-    def export_result_model(model, Xtest, Xtrain, Ytest, Ytrain, Y_pred, var_pred, name):
-        path = '../../results/botson_' + id_generator(size=6) +'/'
-        # path = '../../results/botson_' + '/'
+    def export_train(name, Xtrain, Ytrain):
+        path = '../../results/' + name +'/'
         check_dir_exists(path)
-        file_name = 'boston_' + name
-        np.savetxt(path + file_name + '_train' + '.csv', np.hstack((Ytrain, Xtrain))
+        file_name = 'train_' + name
+        np.savetxt(path + file_name + '.csv', np.hstack((Ytrain, Xtrain))
                    , header=''.join(
                                     ['Y%d,'%(j) for j in range(Ytrain.shape[1])]+
                                     ['X%d,'%(j) for j in range(Xtrain.shape[1])]
                                     )
                     , delimiter=',', comments='')
 
-        np.savetxt(path + file_name + '_test' + '.csv', np.hstack((Ytest, Y_pred, var_pred, Xtest))
-                   , header=''.join(
-                                    ['Y%d,'%(j) for j in range(Ytest.shape[1])] +
-                                    ['mu%d,'%(j) for j in range(Y_pred.shape[1])] +
-                                    ['var%d,'%(j) for j in range(Ytest.shape[1])] +
-                                    ['X%d,'%(j) for j in range(Xtest.shape[1])])
-                    , delimiter=',', comments='')
+    @staticmethod
+    def export_model(model, name):
+        path = '../../results/' + name +'/'
+        check_dir_exists(path)
+        file_name = 'model_' + name
         if model is not None:
-            with open(path + file_name +'_model.csv', 'w') as fp:
+            with open(path + file_name + '.csv', 'w') as fp:
                 f = csv.writer(fp, delimiter=',')
                 f.writerow(['#model', model.__class__])
                 params = model.get_all_params()
                 param_names = model.get_all_param_names()
                 for j in range(len(params)):
                     f.writerow([param_names[j], params[j]])
+
+
+    @staticmethod
+    def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names):
+        path = '../../results/' + name +'/'
+        check_dir_exists(path)
+        file_name = 'test_' + name
+        out = []
+        out.append(Ytrue)
+        out += Ypred
+        out += Yvar_pred
+        out.append(X)
+        out = np.hstack(out)
+        np.savetxt(path + file_name + '.csv', out
+                   , header=''.join(
+                                    ['Ytrue%d,'%(j) for j in range(Ytrue.shape[1])] +
+                                    ['Ypred_%s_%d,'%(m, j) for m in pred_names for j in range(Ypred[0].shape[1])] +
+                                    ['Yvar_pred_%s_%d,'%(m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] +
+                                    ['X%d,'%(j) for j in range(X.shape[1])]
+                                    )
+                    , delimiter=',', comments='')
 
     @staticmethod
     def boston_data():
@@ -57,17 +75,19 @@ class Experiments:
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
-        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
+        SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                              kernel, 100000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog'])
-        y_pred, var_pred = m._raw_predict(Xtest)
-        Experiments.export_result_model(m, Xtest, Xtrain, Ytest, Ytrain, y_pred, var_pred, 'savigp')
+        Optimizer.optimize_model(SAVIGP_m, 10, True, ['mog'])
+        y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
 
         # exporing exact gp predictions
-        m = GPy.models.GPRegression(Xtrain, Ytrain)
-        m.optimize('bfgs')
-        y_pred, var_pred = m.predict(Xtest)
-        Experiments.export_result_model(None, Xtest, Xtrain, Ytest, Ytrain, y_pred, var_pred, 'gp')
+        gp_m = GPy.models.GPRegression(Xtrain, Ytrain)
+        # m.optimize('bfgs')
+        y_pred_gp, var_pred_gp = gp_m.predict(Xtest)
+
+        Experiments.export_test('boston', Xtest, Ytest, [y_pred_gp, y_pred], [var_pred_gp, var_pred], ['gp', 'savigp'])
+        Experiments.export_train('boston', Xtrain, Ytrain)
+        Experiments.export_model(SAVIGP_m, 'boston')
 
     @staticmethod
     def gaussian_1D_data():

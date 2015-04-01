@@ -1,13 +1,13 @@
 library(ggplot2)
 
 SSE = data.frame(SSE = numeric(0), expr = character(0))
-path = '../../results/botson_70CD0D/boston'
-data_gp = read.csv(paste(path, '_gp_test.csv', sep=''))
-data_savigp = read.csv(paste(path, '_savigp_test.csv', sep=''))
-data_train = read.csv(paste(path, '_gp_train.csv', sep=''))
+path = '../../results/botson/'
+data_test = read.csv(paste(path, 'test_boston.csv', sep=''))
+data_train = read.csv(paste(path, 'train_boston.csv', sep=''))
 
-SSE = rbind(SSE, data.frame(SSE = (data_gp$Y0 - data_gp$mu0)^2 / mean((mean(data_train$Y0)-data_gp$Y0)^2), expr = 'gp'))
-SSE = rbind(SSE, data.frame(SSE = (data_savigp$Y0 - data_savigp$mu0)^2 / mean((mean(data_train$Y0)-data_savigp$Y0)^2), expr = 'savigp'))
+SSE = rbind(SSE, data.frame(SSE = (data_test$Ytrue0 - data_test$Ypred_gp_0)^2 / mean((mean(data_train$Y0)-data_test$Ytrue0)^2), expr = 'gp'))
+SSE = rbind(SSE, data.frame(SSE = (data_test$Ytrue0 - data_test$Ypred_savigp_0)^2 / mean((mean(data_train$Y0)-data_test$Ytrue0)^2), expr = 'savigp'))
+
 
 
 graph_bar(SSE, 'boston')
