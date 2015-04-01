@@ -118,7 +118,9 @@ class Optimizer:
         opt = nlopt.opt(algorithm, len(model.get_params()))
         opt.set_min_objective(myfunc)
         opt.set_ftol_rel(1e-3)
-        return opt.optimize(model.get_params())
+        opt_x = opt.optimize(model.get_params())
+        d = {'opt_params': opt_x, 'funcalls': 1}
+        return d
 
     @staticmethod
     def general(model, opt_indices=None):
@@ -154,6 +156,7 @@ class Optimizer:
                         Configuration.ELL,
                     ])
                     d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     total_evals += d['funcalls']
 

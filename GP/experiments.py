@@ -68,10 +68,10 @@ class Experiments:
 
     @staticmethod
     def boston_data():
+        np.random.seed(12000)
         X, Y = DataSource.boston_data()
         X = preprocessing.scale(X)
         Y = preprocessing.scale(Y)
-
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
