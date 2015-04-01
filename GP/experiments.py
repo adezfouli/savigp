@@ -77,7 +77,7 @@ class Experiments:
         gaussian_sigma = 1.0
         SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                              kernel, 100000, None)
-        Optimizer.optimize_model(SAVIGP_m, 10, True, ['mog'])
+        Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog'])
         y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
 
         # exporing exact gp predictions
