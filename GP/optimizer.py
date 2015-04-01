@@ -92,22 +92,22 @@ class Optimizer:
         return d
 
     @staticmethod
-    def CG(model, opt_indices=None):
+    def CG(model, opt_indices=None, verbose=False):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
         fmin_cg(f, start, f_grad, epsilon=1e-6,
                 callback=lambda x: update(x))
 
     @staticmethod
-    def NLOPT(model, algorithm, opt_indices=None):
+    def NLOPT(model, algorithm, opt_indices=None, verbose=False):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
 
         def myfunc(x, grad):
             update(x)
@@ -135,7 +135,7 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-5):
+    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-6):
         if not method:
             method=['hyp', 'mog']
         converged=False
