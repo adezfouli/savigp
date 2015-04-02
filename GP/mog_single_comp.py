@@ -1,4 +1,4 @@
-from scipy.linalg import cho_solve
+from scipy.linalg import cho_solve, solve_triangular
 from mog import MoG
 
 __author__ = 'AT'
@@ -7,7 +7,7 @@ from GPy.util.linalg import mdot
 import math
 from numpy.ma import trace
 import numpy as np
-from util import chol_grad, pddet, inv_chol, jitchol
+from util import chol_grad, pddet, inv_chol, jitchol, tr_AB
 
 
 class MoG_SingleComponent(MoG):
@@ -100,8 +100,13 @@ class MoG_SingleComponent(MoG):
     def s_from_array(self, sa):
         self.L_flatten = sa.reshape((self.num_comp, self.num_process, self.get_sjk_size()))
 
-    def tr_A_mult_S(self, A, k, j):
-        return trace(cho_solve((A, True), self.s[k,j]))
+    # def tr_A_mult_S(self, A, k, j):
+    #     return trace(cho_solve((A, True), self.s[k,j]))
+
+    def tr_A_mult_S(self, L, k, j):
+        a = solve_triangular(L, self.L[k, j, :], lower=True)
+        return tr_AB(a.T, a)
+
 
     def C_m(self, j, k, l):
         return mdot(self.invC_klj[k, l, j], (self.m[k, j, :] - self.m[l, j, :]))

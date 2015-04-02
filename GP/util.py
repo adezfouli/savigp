@@ -3,6 +3,7 @@ import os
 import random
 import string
 import numpy as np
+from numpy.core.umath_tests import inner1d
 from numpy.ma import trace
 from scipy import linalg
 from scipy.linalg import det, inv, lapack
@@ -141,3 +142,6 @@ def check_dir_exists(dir_name):
 
 def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+def tr_AB(a, b):
+    return np.sum(inner1d(a, b.T))

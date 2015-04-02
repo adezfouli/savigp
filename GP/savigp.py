@@ -6,7 +6,7 @@ import math
 from GPy.util.linalg import mdot
 import numpy as np
 from numpy.ma import trace, vstack
-from scipy.linalg import logm, det, cho_solve
+from scipy.linalg import logm, det, cho_solve, solve_triangular
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
@@ -420,6 +420,27 @@ class SAVIGP(Model):
     def transform_dcorss_dS(self):
         return self._dcross_ds().flatten()
 
+    # def _cross_dcorss_dpi(self, N):
+    #     """
+    #     calculating L_corss by pi_k, and also calculates the cross term
+    #     :returns d cross / d pi, cross
+    #     """
+    #     cross = 0
+    #     d_pi = np.zeros(self.num_mog_comp)
+    #     for j in range(self.num_latent_proc):
+    #         for k in range(self.num_mog_comp):
+    #             d_pi[k] += \
+    #                 N * math.log(2 * math.pi) + \
+    #                 self.log_detZ[j] + \
+    #                 mdot(self.MoG.m[k, j, :].T, cho_solve((self.chol[j, :, :], True), self.MoG.m[k, j, :])) + \
+    #                 self.MoG.tr_A_mult_S(self.chol[j, :, :], k, j)
+    #     for k in range(self.num_mog_comp):
+    #         cross += self.MoG.pi[k] * d_pi[k]
+    #
+    #     d_pi *= -1. / 2
+    #     cross *= -1. / 2
+    #     return cross, d_pi
+
     def _cross_dcorss_dpi(self, N):
         """
         calculating L_corss by pi_k, and also calculates the cross term
@@ -429,10 +450,11 @@ class SAVIGP(Model):
         d_pi = np.zeros(self.num_mog_comp)
         for j in range(self.num_latent_proc):
             for k in range(self.num_mog_comp):
+                a = solve_triangular(self.chol[j, :, :], self.MoG.m[k, j, :], lower=True)
                 d_pi[k] += \
                     N * math.log(2 * math.pi) + \
                     self.log_detZ[j] + \
-                    mdot(self.MoG.m[k, j, :].T, cho_solve((self.chol[j, :, :], True), self.MoG.m[k, j, :])) + \
+                     + np.dot(a, a.T) + \
                     self.MoG.tr_A_mult_S(self.chol[j, :, :], k, j)
         for k in range(self.num_mog_comp):
             cross += self.MoG.pi[k] * d_pi[k]
@@ -440,6 +462,7 @@ class SAVIGP(Model):
         d_pi *= -1. / 2
         cross *= -1. / 2
         return cross, d_pi
+
 
     def _dcross_K(self, j):
         dc_dK = np.zeros((self.num_inducing, self.num_inducing))

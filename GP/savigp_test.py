@@ -144,7 +144,7 @@ class SAVIGP_Test:
         ]
 
         sparse = [True, False]
-        models = ['diag', 'full']
+        models = ['full', 'diag']
         ll = ['univariate_Gaussian', 'multi_Gaussian']
 
         for m in models:
@@ -234,6 +234,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    SAVIGP_Test.test_gp(True)
+    # SAVIGP_Test.test_gp(True)
     # SAVIGP_Test.init_test()
-    # SAVIGP_Test.test_grad()
+    SAVIGP_Test.test_grad()
