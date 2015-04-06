@@ -208,6 +208,13 @@ class SAVIGP_Test:
         kernel = [GPy.kern.RBF(1, variance=.2, lengthscale=np.array((.2,)))]
         m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
                                       kernel, num_samples, None)
+
+        # update model using optimal parameters
+        # gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
+        # gp_mean, gp_var = gp.predict(X, full_cov=True)
+        # m.MoG.m[0,0] = gp_mean[:,0]
+        # m.MoG.update_covariance(0, gp_var - gaussian_sigma * np.eye(10))
+
         try:
             Optimizer.optimize_model(m, 10000, False, ['mog'])
         except KeyboardInterrupt:
