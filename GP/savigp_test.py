@@ -212,7 +212,7 @@ class SAVIGP_Test:
             Optimizer.optimize_model(m, 10000, False, ['mog'])
         except KeyboardInterrupt:
             pass
-        sa_mean, sa_var = m._raw_predict(X)
+        sa_mean, sa_var = m.predict(X)
         gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
         gp_mean, gp_var = gp.predict(X)
         mean_error = (np.abs(sa_mean - gp_mean)).sum() / sa_mean.shape[0]
@@ -234,6 +234,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    # SAVIGP_Test.test_gp(True)
-    # SAVIGP_Test.init_test()
+    SAVIGP_Test.test_gp(True)
+    SAVIGP_Test.init_test()
     SAVIGP_Test.test_grad()

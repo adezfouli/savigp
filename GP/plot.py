@@ -84,7 +84,7 @@ def plot_fit(model, plot_limits=None, which_data_rows='all',
             Xgrid[:,i] = v
 
         #make a prediction on the frame and plot it
-        m, v = model._raw_predict(Xgrid)
+        m, v = model.predict(Xgrid)
         lower = m - 2*np.sqrt(v)
         upper = m + 2*np.sqrt(v)
 
@@ -130,7 +130,7 @@ def plot_fit(model, plot_limits=None, which_data_rows='all',
 
         #predict on the frame and plot
         if plot_raw:
-            m, _ = model._raw_predict(Xgrid)
+            m, _ = model.predict(Xgrid)
         else:
             if isinstance(model,GPCoregionalizedRegression) or isinstance(model,SparseGPCoregionalizedRegression):
                 meta = {'output_index': Xgrid[:,-1:].astype(np.int)}

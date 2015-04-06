@@ -530,11 +530,8 @@ class SAVIGP(Model):
 
         return normal_ell
 
-    def _raw_predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
-        if self.num_latent_proc > 1:
-            raise Exception('unable to plot')
-
-        mu, var = self._predict(Xnew)
+    def predict(self, Xnew):
+        mu, var = self._predict_kj(Xnew)
         predicted_mu = np.average(mu, axis=1, weights=self.MoG.pi)
         predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
                         + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2

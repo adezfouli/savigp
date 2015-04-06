@@ -93,7 +93,7 @@ class Experiments:
                                  kernel, 10000, None)
 
         Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog', 'hyp', 'll'])
-        y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
+        y_pred, var_pred = SAVIGP_m.predict(Xtest)
 
         # exporing exact gp predictions
         gp_m = GPy.models.GPRegression(Xtrain, Ytrain)

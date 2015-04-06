@@ -26,5 +26,5 @@ class GSAVIGP_Diag(SAVIGP_Diag):
         gell = self._gaussian_ell(X, Y, cond_log_likelihood.get_sigma())
         return gell, xdell_dm, xdell_dS, xdell_dpi, xell_hyper, xdell_dll
 
-    def _predict(self, Xnew, which_parts='all', full_cov=False, stop=False):
+    def _predict_kj(self, Xnew):
         return self._gaussian_predict(Xnew, self.cond_likelihood.get_sigma())
