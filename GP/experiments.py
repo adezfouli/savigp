@@ -111,7 +111,7 @@ class Experiments:
 
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
         PlotOutput.plot_output(name, Experiments.get_output_path(), [name])
-        if m is SAVIGP:
+        if isinstance(m, SAVIGP):
             Experiments.export_model(m,  name)
 
     @staticmethod
@@ -157,5 +157,8 @@ class Experiments:
 
 if __name__ == '__main__':
     # Experiments.gaussian_1D_data()
-    Experiments.boston_data(method='full')
+    Experiments.boston_data(method='gp')
+    # Experiments.boston_data(method='full')
+    # Experiments.boston_data(method='mix1')
+    # Experiments.boston_data(method='mix2')
     # Experiments.gaussian_1D_data_diag()

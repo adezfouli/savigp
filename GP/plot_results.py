@@ -24,7 +24,7 @@ class PlotOutput:
         SSE = DataFrame(SSE)
         ion()
         ax = SSE.plot(kind='box', title="SSE")
-        ax.set_ylim(0, 1)
+        ax.set_ylim(0, 3)
         check_dir_exists(infile_path + name + '/graphs/')
         savefig(infile_path + name + '/graphs/SSE.pdf')
         show(block=True)
@@ -36,5 +36,5 @@ class PlotOutput:
 
 
 if __name__ == '__main__':
-    PlotOutput.plot_output('boston', '../../results/', ['boston_full', 'boston_mix1'])
+    PlotOutput.plot_output('boston', '../../results/', ['boston_full', 'boston_mix1', 'boston_mix2', 'boston_gp'])
 
