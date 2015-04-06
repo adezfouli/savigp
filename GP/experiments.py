@@ -82,7 +82,7 @@ class Experiments:
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
         SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
-                             kernel, 100000, None)
+                             kernel, 10000, None)
         Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog', 'hyp', 'll'])
         y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
 
