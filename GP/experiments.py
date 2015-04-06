@@ -1,3 +1,5 @@
+from plot_results import PlotOutput
+
 __author__ = 'AT'
 
 import csv
@@ -20,8 +22,12 @@ from util import id_generator, check_dir_exists
 class Experiments:
 
     @staticmethod
+    def get_output_path():
+        return '../../results/'
+
+    @staticmethod
     def export_train(name, Xtrain, Ytrain):
-        path = '../../results/' + name +'/'
+        path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
         file_name = 'train_' + name
         np.savetxt(path + file_name + '.csv', np.hstack((Ytrain, Xtrain))
@@ -33,7 +39,7 @@ class Experiments:
 
     @staticmethod
     def export_model(model, name):
-        path = '../../results/' + name +'/'
+        path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
         file_name = 'model_' + name
         if model is not None:
@@ -48,7 +54,7 @@ class Experiments:
 
     @staticmethod
     def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names):
-        path = '../../results/' + name +'/'
+        path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
         file_name = 'test_' + name
         out = []
@@ -77,17 +83,18 @@ class Experiments:
         gaussian_sigma = 1.0
         SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                              kernel, 100000, None)
-        Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog'])
+        # Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog'])
         y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
 
         # exporing exact gp predictions
         gp_m = GPy.models.GPRegression(Xtrain, Ytrain)
-        # m.optimize('bfgs')
+        gp_m.optimize('bfgs')
         y_pred_gp, var_pred_gp = gp_m.predict(Xtest)
 
         Experiments.export_test('boston', Xtest, Ytest, [y_pred_gp, y_pred], [var_pred_gp, var_pred], ['gp', 'savigp'])
         Experiments.export_train('boston', Xtrain, Ytrain)
         Experiments.export_model(SAVIGP_m, 'boston')
+        PlotOutput.plot_output('boston', Experiments.get_output_path(), ['gp', 'savigp'])
 
     @staticmethod
     def gaussian_1D_data():
