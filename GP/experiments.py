@@ -73,7 +73,7 @@ class Experiments:
         X = preprocessing.scale(X)
         Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
-        kernel = [GPy.kern.RBF(1, variance=1, lengthscale=np.array((1.,)))]
+        kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
         SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                              kernel, 100000, None)
