@@ -73,7 +73,7 @@ class Experiments:
                     , delimiter=',', comments='')
 
     @staticmethod
-    def boston_data():
+    def boston_data(method='full'):
         np.random.seed(12000)
         X, Y = DataSource.boston_data()
         # X = preprocessing.scale(X)
@@ -81,8 +81,17 @@ class Experiments:
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
-        SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
-                             kernel, 10000, None)
+
+        if method == 'full':
+            SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
+                                 kernel, 10000, None)
+        if method == 'mix1':
+            SAVIGP_m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, UnivariateGaussian(np.array(gaussian_sigma)),
+                                 kernel, 10000, None)
+        if method == 'mix2':
+            SAVIGP_m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 2, UnivariateGaussian(np.array(gaussian_sigma)),
+                                 kernel, 10000, None)
+
         Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog', 'hyp', 'll'])
         y_pred, var_pred = SAVIGP_m._raw_predict(Xtest)
 
@@ -91,10 +100,11 @@ class Experiments:
         gp_m.optimize('bfgs')
         y_pred_gp, var_pred_gp = gp_m.predict(Xtest)
 
-        Experiments.export_test('boston', Xtest, Ytest, [y_pred_gp, y_pred], [var_pred_gp, var_pred], ['gp', 'savigp'])
-        Experiments.export_train('boston', Xtrain, Ytrain)
-        Experiments.export_model(SAVIGP_m, 'boston')
-        PlotOutput.plot_output('boston', Experiments.get_output_path(), ['gp', 'savigp'])
+        name = 'boston_' + method
+        Experiments.export_test(name, Xtest, Ytest, [y_pred_gp, y_pred], [var_pred_gp, var_pred], ['gp', 'savigp'])
+        Experiments.export_train(name, Xtrain, Ytrain)
+        Experiments.export_model(SAVIGP_m,  name)
+        PlotOutput.plot_output(name, Experiments.get_output_path(), ['gp', 'savigp'])
 
     @staticmethod
     def gaussian_1D_data():
