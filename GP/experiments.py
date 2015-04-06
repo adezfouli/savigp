@@ -1,4 +1,5 @@
 from plot_results import PlotOutput
+from savigp import SAVIGP
 
 __author__ = 'AT'
 
@@ -79,32 +80,39 @@ class Experiments:
         # X = preprocessing.scale(X)
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
+        name = 'boston_' + method
+        Experiments.export_train(name, Xtrain, Ytrain)
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
 
         if method == 'full':
-            SAVIGP_m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 10000, None)
+            Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
+
         if method == 'mix1':
-            SAVIGP_m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 10000, None)
+            Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
+
         if method == 'mix2':
-            SAVIGP_m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 2, UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 2, UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 10000, None)
+            Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
 
-        Optimizer.optimize_model(SAVIGP_m, 10000, True, ['mog', 'hyp', 'll'])
-        y_pred, var_pred = SAVIGP_m.predict(Xtest)
+        if method == 'gp':
+            m = GPy.models.GPRegression(Xtrain, Ytrain)
+            m.optimize('bfgs')
+            y_pred, var_pred = m.predict(Xtest)
 
-        # exporing exact gp predictions
-        gp_m = GPy.models.GPRegression(Xtrain, Ytrain)
-        gp_m.optimize('bfgs')
-        y_pred_gp, var_pred_gp = gp_m.predict(Xtest)
 
-        name = 'boston_' + method
-        Experiments.export_test(name, Xtest, Ytest, [y_pred_gp, y_pred], [var_pred_gp, var_pred], ['gp', 'savigp'])
-        Experiments.export_train(name, Xtrain, Ytrain)
-        Experiments.export_model(SAVIGP_m,  name)
-        PlotOutput.plot_output(name, Experiments.get_output_path(), ['gp', 'savigp'])
+        Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
+        PlotOutput.plot_output(name, Experiments.get_output_path(), [name])
+        if m is SAVIGP:
+            Experiments.export_model(m,  name)
 
     @staticmethod
     def gaussian_1D_data():
@@ -149,5 +157,5 @@ class Experiments:
 
 if __name__ == '__main__':
     # Experiments.gaussian_1D_data()
-    Experiments.boston_data()
+    Experiments.boston_data(method='full')
     # Experiments.gaussian_1D_data_diag()
