@@ -203,7 +203,7 @@ class SAVIGP_Test:
         np.random.seed(111)
         num_input_samples = 50
         num_samples = 10000
-        gaussian_sigma = 1
+        gaussian_sigma = .2
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         kernel = [GPy.kern.RBF(1, variance=.2, lengthscale=np.array((.2,)))]
 
@@ -226,7 +226,7 @@ class SAVIGP_Test:
         except KeyboardInterrupt:
             pass
         sa_mean, sa_var = m.predict(X)
-        gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
+        gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, deepcopy(kernel[0]))
         gp_mean, gp_var = gp.predict(X)
         mean_error = (np.abs(sa_mean - gp_mean)).sum() / sa_mean.shape[0]
         var_error = (np.abs(sa_var - gp_var)).sum() / gp_var.T.shape[0]
@@ -247,6 +247,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    SAVIGP_Test.test_gp(True, method='diag')
+    SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
     # SAVIGP_Test.test_grad()

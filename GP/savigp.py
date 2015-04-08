@@ -1,3 +1,4 @@
+import GPy
 from scipy.misc import logsumexp
 from mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
@@ -36,7 +37,7 @@ class SAVIGP(Model):
     :rtype: model object
     """
 
-    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list=None):
+    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list=None, latent_noise=0):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -55,12 +56,12 @@ class SAVIGP(Model):
         self.Y = Y
         self.n_samples = n_samples
         self.param_names = []
+        self.latent_noise = latent_noise
         self.last_param = None
         self.hyper_params = None
         self.sparse = X.shape[0] != self.num_inducing
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
         self.num_like_params = self.cond_likelihood.get_num_params()
-
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -81,11 +82,18 @@ class SAVIGP(Model):
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc) \
             .reshape((self.num_latent_proc, self.n_samples))
 
+        self._update_latent_kernel()
+
         self._update_inverses()
 
         self.init_mog()
 
         self.set_configuration(self.config_list)
+
+    def _update_latent_kernel(self):
+        self.kernels_latent = []
+        for j in range(len(self.kernels)):
+            self.kernels_latent.append(self.kernels[j] + GPy.kern.White(self.X.shape[1], variance=self.latent_noise))
 
     def init_mog(self):
         pass
@@ -122,7 +130,7 @@ class SAVIGP(Model):
 
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
-            self.chol[j, :, :] = jitchol(self.kernels[j].K(self.Z[j, :, :], self.Z[j, :, :]))
+            self.chol[j, :, :] = jitchol(self.kernels_latent[j].K(self.Z[j, :, :], self.Z[j, :, :]))
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
 
@@ -213,6 +221,7 @@ class SAVIGP(Model):
             for j in range(self.num_latent_proc):
                 self.kernels[j].param_array[:] = self.hyper_params[j]
             index += self.num_latent_proc * self.num_hyper_params
+            self._update_latent_kernel()
 
         if Configuration.LL in self.config_list:
             self.cond_likelihood.set_params(p[index:index + self.num_like_params])
@@ -260,7 +269,7 @@ class SAVIGP(Model):
         """
         calculating diagonal terms of K_tilda for latent process j (eq 4)
         """
-        return self.kernels[j].Kdiag(p_X) - mdiag_dot(A, K)
+        return self.kernels_latent[j].Kdiag(p_X) - mdiag_dot(A, K)
 
     def _b(self, n, j, Aj):
         """
@@ -278,7 +287,7 @@ class SAVIGP(Model):
         return Kj[n] + self.MoG.aSa(Aj[n, :], j)
 
     def dK_dtheta(self, j):
-        return self.kernels[j].gradient
+        return self.kernels_latent[j].gradient
 
     # @profile
     def _get_A_K(self, p_X):
@@ -286,7 +295,7 @@ class SAVIGP(Model):
         K = np.empty((self.num_latent_proc, len(p_X)))
         Kzx = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
         for j in range(self.num_latent_proc):
-            Kzx[j, :, :] = self.kernels[j].K(self.Z[j, :, :], p_X)
+            Kzx[j, :, :] = self.kernels_latent[j].K(self.Z[j, :, :], p_X)
             A[j] = self._A(j, Kzx[j, :, :])
             K[j] = self._Kdiag(p_X, Kzx[j, :, :], A[j], j)
         return A, Kzx, K
@@ -475,7 +484,7 @@ class SAVIGP(Model):
     def _dcross_dhyper(self):
         dc_dh = np.empty((self.num_latent_proc, self.num_hyper_params))
         for j in range(self.num_latent_proc):
-            self.kernels[j].update_gradients_full(self._dcross_K(j), self.Z[j])
+            self.kernels_latent[j].update_gradients_full(self._dcross_K(j), self.Z[j])
             dc_dh[j] = self.kernels[j].gradient.copy()
 
         return dc_dh
