@@ -77,7 +77,7 @@ class Experiments:
     def boston_data(method='full'):
         np.random.seed(12000)
         X, Y = DataSource.boston_data()
-        # X = preprocessing.scale(X)
+        X = preprocessing.scale(X)
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'boston_' + method
