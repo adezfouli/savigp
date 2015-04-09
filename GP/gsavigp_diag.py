@@ -17,8 +17,9 @@ class GSAVIGP_Diag(SAVIGP_Diag):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list):
-        super(GSAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list)
+    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list, latent_noise):
+        super(GSAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
+                                           config_list, latent_noise)
 
 
     def _ell(self, n_sample, X, Y, cond_log_likelihood):

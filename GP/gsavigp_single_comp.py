@@ -20,8 +20,9 @@ class GSAVIGP_SignleComponenet(SAVIGP_SingleComponent):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples, config_list):
-        super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood, kernels, n_samples, config_list)
+    def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples, config_list, latent_noise):
+        super(GSAVIGP_SignleComponenet, self).__init__(X, Y, num_inducing, 1, likelihood, kernels, n_samples,
+                                                     config_list, latent_noise)
 
 
     def _ell(self, n_sample, X, Y, cond_log_likelihood):
