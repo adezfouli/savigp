@@ -55,7 +55,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = GSAVIGP_Diag(X, Y, num_inducing, 3, ll,
-                     [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0)
+                     [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
 
         s1.rand_init_mog()
 
@@ -82,7 +82,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing, ll,
-                                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0)
+                                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
 
         s1.rand_init_mog()
 
@@ -179,7 +179,7 @@ class SAVIGP_Test:
                 Configuration.CROSS,
                 Configuration.ELL,
                 Configuration.HYPER
-            ], 0)
+            ], 0, True)
         Optimizer.BFGS(s1, max_fun=3)
 
         s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
@@ -189,7 +189,7 @@ class SAVIGP_Test:
                 Configuration.CROSS,
                 Configuration.ELL,
                 Configuration.HYPER
-            ], 0)
+            ], 0, True)
         Optimizer.BFGS(s1, max_fun=3)
 
 
@@ -209,11 +209,11 @@ class SAVIGP_Test:
 
         if method == 'full':
             m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0)
+                                          kernel, num_samples, None, 0, False)
 
         if method == 'diag':
             m = GSAVIGP_Diag(X, Y, num_input_samples, 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0)
+                                          kernel, num_samples, None, 0, False)
 
         # update model using optimal parameters
         # gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
