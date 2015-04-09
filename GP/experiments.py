@@ -110,9 +110,9 @@ class Experiments:
 
 
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
-        PlotOutput.plot_output(name, Experiments.get_output_path(), [name])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m,  name)
+        return name
 
     @staticmethod
     def gaussian_1D_data():
@@ -156,9 +156,10 @@ class Experiments:
         return Xn[:n_train], Yn[:n_train], Xn[n_train:], Yn[n_train:]
 
 if __name__ == '__main__':
-    # Experiments.gaussian_1D_data()
-    Experiments.boston_data(method='gp')
-    # Experiments.boston_data(method='full')
-    # Experiments.boston_data(method='mix1')
-    # Experiments.boston_data(method='mix2')
+    plots = []
+    plots.append(Experiments.boston_data(method='gp'))
+    # plots.append(Experiments.boston_data(method='full'))
+    plots.append(Experiments.boston_data(method='mix1'))
+    # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
+    PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)
