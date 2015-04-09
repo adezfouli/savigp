@@ -24,7 +24,6 @@ class PlotOutput:
         SSE = DataFrame(SSE)
         ion()
         ax = SSE.plot(kind='box', title="SSE")
-        ax.set_ylim(0, 3)
         check_dir_exists(infile_path + name + '/graphs/')
         savefig(infile_path + name + '/graphs/SSE.pdf')
         show(block=True)
