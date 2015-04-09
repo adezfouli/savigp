@@ -200,20 +200,21 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_gp(plot=False, method='full'):
+        # note that this test fails without latent noise in the case of full Gaussian
         np.random.seed(111)
-        num_input_samples = 50
+        num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = .2
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        kernel = [GPy.kern.RBF(1, variance=.2, lengthscale=np.array((.2,)))]
+        kernel = [GPy.kern.RBF(1, variance=1., lengthscale=np.array((1.,)))]
 
         if method == 'full':
             m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0, False)
+                                          kernel, num_samples, None, 0, True)
 
         if method == 'diag':
             m = GSAVIGP_Diag(X, Y, num_input_samples, 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0, False)
+                                          kernel, num_samples, None, 0, True)
 
         # update model using optimal parameters
         # gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
@@ -247,6 +248,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    # SAVIGP_Test.test_gp(True, method='full')
+    SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
-    SAVIGP_Test.test_grad()
+    # SAVIGP_Test.test_grad()
