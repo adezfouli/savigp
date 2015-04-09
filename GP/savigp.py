@@ -130,7 +130,7 @@ class SAVIGP(Model):
 
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
-            self.chol[j, :, :] = jitchol(self.kernels_latent[j].K(self.Z[j, :, :], self.Z[j, :, :]))
+            self.chol[j, :, :] = jitchol(self.kernels_latent[j].K(self.Z[j, :, :]))
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
 
