@@ -1,4 +1,6 @@
 from GPy.util import datasets
+import pandas
+from pandas.util.testing import DataFrame
 
 __author__ = 'AT'
 
@@ -41,6 +43,16 @@ class DataSource:
         y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
         return X, y
 
+    @staticmethod
+    def wisconsin_breast_cancer_data():
+        data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
+        # replacing Y values with 0 and 1
+        data_test.loc[data_test[10] == 2, 10] = 0
+        data_test.loc[data_test[10] == 4, 10] = 1
+        X = data_test.ix[:, 1:9]
+        Y = data_test.ix[:, 10]
+        return np.array(X), np.array([Y]).T
+
 
     @staticmethod
     def boston_data():
@@ -48,3 +60,7 @@ class DataSource:
         X = data['X'].copy()
         Y = data['Y'].copy()
         return X, Y
+
+if __name__ == '__main__':
+    X, Y = DataSource.wisconsin_breast_cancer_data()
+    pass
