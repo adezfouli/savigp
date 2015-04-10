@@ -87,19 +87,19 @@ class Experiments:
 
         if method == 'full':
             m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0, False)
+                                 kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix1':
             m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0.0001, False)
+                                 kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix2':
             m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 2, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0, False)
+                                 kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
@@ -107,7 +107,6 @@ class Experiments:
             m = GPy.models.GPRegression(Xtrain, Ytrain)
             m.optimize('bfgs')
             y_pred, var_pred = m.predict(Xtest)
-
 
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
         if isinstance(m, SAVIGP):
