@@ -1,3 +1,4 @@
+from scipy.misc import logsumexp
 from scipy.special._ufuncs import gammaln
 
 __author__ = 'AT'
@@ -106,3 +107,61 @@ class LogGaussianCox(Likelihood):
 
     def get_num_params(self):
         return 1
+
+
+class LogitsticLL(Likelihood):
+    """
+    Logistic likelihood
+
+    p(y|f) = 1 / (1 + exp(-f))
+
+    lambda = f + offset
+    """
+
+    def __init__(self):
+        Likelihood.__init__(self)
+
+    def ll(self, f, y):
+        return (f + np.abs(f)) / 2 + np.log(1 + np.exp(-np.abs(f)))
+
+    def ll_grad(self, f, y):
+        raise Exception("gradients not supported for multivariate Gaussian")
+
+    def set_params(self, p):
+        if p.shape[0] != 0:
+            raise Exception("Logistic function does not have free parameters")
+
+    def get_params(self):
+        return np.array([])
+
+    def get_num_params(self):
+        return 0
+
+class SoftmaxLL(Likelihood):
+    """
+    Softmax likelihood:
+
+    p(y=c|f) = exp(f_c) / (f_1 + ... + f_N)
+    """
+
+    def __init__(self):
+        Likelihood.__init__(self)
+
+    def ll(self, f, y):
+        for j in f.shape[1]:
+            f[:,j] -= f[:,y]
+
+        return -logsumexp(f, 1)
+
+    def ll_grad(self, f, y):
+        raise Exception("gradients not supported for multivariate Gaussian")
+
+    def set_params(self, p):
+        if p.shape[0] != 0:
+            raise Exception("Softmax function does not have free parameters")
+
+    def get_params(self):
+        return np.array([])
+
+    def get_num_params(self):
+        return 0
