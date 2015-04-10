@@ -1,3 +1,5 @@
+from scipy.special._ufuncs import gammaln
+
 __author__ = 'AT'
 
 import math
@@ -71,6 +73,36 @@ class UnivariateGaussian(Likelihood):
 
     def get_params(self):
         return np.array(np.log([self.sigma]))
+
+    def get_num_params(self):
+        return 1
+
+
+class LogGaussianCox(Likelihood):
+    """
+    Log Gaussian Cox process
+
+    p(y|f) = (lambda)^y exp(-lambda) / y!
+
+    lambda = f + offset
+    """
+
+    def __init__(self, offset):
+        Likelihood.__init__(self)
+        self.offset = offset
+
+    def ll(self, f, y):
+        _log_lambda = (f + self.offset)
+        return y * _log_lambda - np.exp(_log_lambda) - gammaln(y + 1)
+
+    def ll_grad(self, f, y):
+        return y-np.exp(f+self.offset)
+
+    def set_params(self, p):
+        self.offset = p[0]
+
+    def get_params(self):
+        return np.array([self.offset])
 
     def get_num_params(self):
         return 1
