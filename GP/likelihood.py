@@ -109,7 +109,7 @@ class LogGaussianCox(Likelihood):
         return 1
 
 
-class LogitsticLL(Likelihood):
+class LogisticLL(Likelihood):
     """
     Logistic likelihood
 

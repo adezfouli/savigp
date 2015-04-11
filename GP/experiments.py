@@ -6,7 +6,7 @@ __author__ = 'AT'
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian, UnivariateGaussian
+from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL
 from data_source import DataSource
 from gsavigp_diag import GSAVIGP_Diag
 from gsavigp_single_comp import GSAVIGP_SignleComponenet
@@ -135,6 +135,25 @@ class Experiments:
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
                                      num_samples, sparsify_factor)
+
+    @staticmethod
+    def breast_caner_data(method, sparsify_factor):
+        np.random.seed(12000)
+        X, Y = DataSource.boston_data()
+        X = preprocessing.scale(X)
+        # Y = preprocessing.scale(Y)
+        Xtrain, Ytrain, Xtest, Ytest = Experiments.breast_caner_data(X, Y, 300)
+        name = 'breast_cancer_' + Experiments.get_ID()
+        kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
+
+        #number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 20000
+        cond_ll = LogisticLL()
+
+        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
+                                     num_samples, sparsify_factor)
+
 
     @staticmethod
     def gaussian_1D_data():
