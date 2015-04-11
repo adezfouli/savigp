@@ -139,7 +139,7 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-5):
+    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-3):
         if not method:
             method=['hyp', 'mog']
         converged=False
