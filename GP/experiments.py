@@ -1,5 +1,7 @@
 from plot_results import PlotOutput
 from savigp import SAVIGP
+from savigp_diag import SAVIGP_Diag
+from savigp_single_comp import SAVIGP_SingleComponent
 
 __author__ = 'AT'
 
@@ -8,8 +10,6 @@ import GPy
 from sklearn import preprocessing
 from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL
 from data_source import DataSource
-from gsavigp_diag import GSAVIGP_Diag
-from gsavigp_single_comp import GSAVIGP_SignleComponenet
 import numpy as np
 from optimizer import Optimizer
 from plot import plot_fit
@@ -92,17 +92,17 @@ class Experiments:
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing, num_samples,
                   sparsify_factor):
         if method == 'full':
-            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, cond_ll,
+            m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix1':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
+            m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix2':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
+            m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
@@ -164,7 +164,7 @@ class Experiments:
         Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
+        m = SAVIGP_SingleComponent(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
                                  kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
@@ -179,7 +179,7 @@ class Experiments:
         Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 20)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
+        m = SAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
                                  kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
         plot_fit(m)
@@ -199,8 +199,8 @@ class Experiments:
 if __name__ == '__main__':
     plots = []
     # plots.append(Experiments.boston_data('gp', 1))
-    plots.append(Experiments.boston_data('full', 0.6))
-    # plots.append(Experiments.boston_data(method='mix1'))
+    # plots.append(Experiments.boston_data('full', 1))
+    plots.append(Experiments.boston_data('mix1', 1))
     # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
     # PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)

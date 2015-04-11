@@ -10,6 +10,12 @@ from savigp import SAVIGP
 
 class SAVIGP_Diag(SAVIGP):
 
+    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list,
+                 latent_noise, is_exact_ell):
+        super(SAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood,
+                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell)
+
+
     def update_N_z(self):
         self.log_z = np.zeros((self.num_mog_comp))
         self.log_N_kl = np.zeros((self.num_mog_comp, self.num_mog_comp))

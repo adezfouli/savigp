@@ -1,5 +1,6 @@
 from scipy.misc import logsumexp
 from scipy.special._ufuncs import gammaln
+from util import cross_ent_normal
 
 __author__ = 'AT'
 
@@ -30,6 +31,11 @@ class Likelihood:
     def get_params(self):
         raise Exception("not implemented yet")
 
+    def predict(self, mu, sigma):
+        raise Exception("not implemented yet")
+
+    def ell(self, mu, sigma, Y):
+        raise Exception("not implemented yet")
 
 class MultivariateGaussian(Likelihood):
     def __init__(self, sigma):
@@ -52,6 +58,10 @@ class MultivariateGaussian(Likelihood):
 
     def get_num_params(self):
         return self.sigma.flatten().shape[0]
+
+    def ell(self, mu, sigma, Y):
+        return cross_ent_normal(mu, np.diag(sigma), Y, np.array(self.sigma))
+
 
 class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):
@@ -77,6 +87,14 @@ class UnivariateGaussian(Likelihood):
 
     def get_num_params(self):
         return 1
+
+    def predict(self, mu, sigma):
+        return mu, sigma + self.sigma
+
+    def ell(self, mu, sigma, Y):
+        return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
+
+
 
 
 class LogGaussianCox(Likelihood):

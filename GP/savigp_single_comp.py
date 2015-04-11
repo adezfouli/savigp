@@ -8,9 +8,9 @@ import numpy as np
 
 
 class SAVIGP_SingleComponent(SAVIGP):
-    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list, latent_noise):
-        super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood,
-                                                     kernels, n_samples, config_list, latent_noise)
+    def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples, config_list, latent_noise, is_exact_ell):
+        super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
+                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell)
 
     def init_mog(self):
         for j in range(self.num_latent_proc):

@@ -1,4 +1,6 @@
 from data_source import DataSource
+from savigp_diag import SAVIGP_Diag
+from savigp_single_comp import SAVIGP_SingleComponent
 
 __author__ = 'AT'
 
@@ -11,8 +13,6 @@ import GPy
 from matplotlib.pyplot import show
 from GPy.util.linalg import mdot
 import numpy as np
-from gsavigp_diag import GSAVIGP_Diag
-from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import *
 from savigp import Configuration
 from likelihood import MultivariateGaussian, UnivariateGaussian
@@ -54,7 +54,7 @@ class SAVIGP_Test:
         else:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_Diag(X, Y, num_inducing, 3, ll,
+        s1 = SAVIGP_Diag(X, Y, num_inducing, 3, ll,
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
 
         s1.rand_init_mog()
@@ -81,7 +81,7 @@ class SAVIGP_Test:
         else:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing, ll,
+        s1 = SAVIGP_SingleComponent(X, Y, num_inducing, ll,
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
 
         s1.rand_init_mog()
@@ -171,7 +171,7 @@ class SAVIGP_Test:
 
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
 
-        s1 = GSAVIGP_Diag(X, Y, num_input_samples, 2, MultivariateGaussian(np.array([[gaussian_sigma]])),
+        s1 = SAVIGP_Diag(X, Y, num_input_samples, 2, MultivariateGaussian(np.array([[gaussian_sigma]])),
 
                      [kernel], num_samples, [
                 Configuration.MoG,
@@ -182,7 +182,7 @@ class SAVIGP_Test:
             ], 0, True)
         Optimizer.BFGS(s1, max_fun=3)
 
-        s1 = GSAVIGP_SignleComponenet(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
+        s1 = SAVIGP_SingleComponent(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
                                       [kernel], num_samples, [
                 Configuration.MoG,
                 Configuration.ENTROPY,
@@ -209,12 +209,12 @@ class SAVIGP_Test:
         kernel = [GPy.kern.RBF(1, variance=1., lengthscale=np.array((1.,)))]
 
         if method == 'full':
-            m = GSAVIGP_SignleComponenet(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0, True)
+            m = SAVIGP_SingleComponent(X, Y, num_input_samples, UnivariateGaussian(np.array(gaussian_sigma)),
+                                          kernel, num_samples, None, 0.001, True)
 
         if method == 'diag':
-            m = GSAVIGP_Diag(X, Y, num_input_samples, 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                          kernel, num_samples, None, 0, True)
+            m = SAVIGP_Diag(X, Y, num_input_samples, 1, UnivariateGaussian(np.array(gaussian_sigma)),
+                                          kernel, num_samples, None, 0.001, True)
 
         # update model using optimal parameters
         # gp = SAVIGP_Test.gpy_prediction(X, Y, gaussian_sigma, kernel[0])
@@ -248,6 +248,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    SAVIGP_Test.test_gp(True, method='full')
+    # SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
-    # SAVIGP_Test.test_grad()
+    SAVIGP_Test.test_grad()

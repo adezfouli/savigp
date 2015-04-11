@@ -5,12 +5,12 @@ from matplotlib.pyplot import show
 import numpy as np
 
 from data_source import DataSource
-from gsavigp_diag import GSAVIGP_Diag
-from gsavigp_single_comp import GSAVIGP_SignleComponenet
 from optimizer import Optimizer
 from savigp import Configuration
 from likelihood import MultivariateGaussian, UnivariateGaussian
 from plot import plot_fit
+from savigp_diag import SAVIGP_Diag
+from savigp_single_comp import SAVIGP_SingleComponent
 
 
 class SAVIGP_Prediction:
@@ -30,7 +30,7 @@ class SAVIGP_Prediction:
 
         num_samples = 10000
         if model_type == 'diag':
-            s1 = GSAVIGP_Diag(X, Y, num_inducing, 2, UnivariateGaussian(gaussian_sigma),
+            s1 = SAVIGP_Diag(X, Y, num_inducing, 2, UnivariateGaussian(gaussian_sigma),
 
                             [kernel], num_samples,
                                 [
@@ -39,10 +39,10 @@ class SAVIGP_Prediction:
                                     Configuration.CROSS,
                                     Configuration.ELL,
                                     # Configuration.HYPER
-                                ])
+                                ], 0.001, True)
         else:
             # for full gaussian with single component
-            s1 = GSAVIGP_SignleComponenet(X, Y, num_inducing,
+            s1 = SAVIGP_SingleComponent(X, Y, num_inducing,
                                           UnivariateGaussian(np.array(gaussian_sigma)),
 
                                           [kernel], num_samples, [
@@ -51,7 +51,7 @@ class SAVIGP_Prediction:
                                               Configuration.CROSS,
                                               Configuration.ELL,
                                               # Configuration.HYPER
-                                          ])
+                                          ], 0.001, True)
 
         # Optimizer.SGD(s1, 1e-16,  s1._get_params(), 2000, verbose=False, adaptive_alpha=False)
         _, t1, t2 = Optimizer.optimize_model(s1, max_fun=max_fun, verbose=verbose, method=['mog', 'll', 'hyp'])

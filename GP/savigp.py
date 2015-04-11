@@ -37,7 +37,8 @@ class SAVIGP(Model):
     :rtype: model object
     """
 
-    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list=None, latent_noise=0):
+    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
+                 config_list=None, latent_noise=0, exact_ell=False):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -62,6 +63,7 @@ class SAVIGP(Model):
         self.sparse = X.shape[0] != self.num_inducing
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
         self.num_like_params = self.cond_likelihood.get_num_params()
+        self.is_exact_ell = exact_ell
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -345,7 +347,10 @@ class SAVIGP(Model):
                     cond_ll = cond_log_likelihood.ll(f[:, k, :], Y[n, :])
                     sum_cond_ll = cond_ll.sum()
                     d_ell_dPi[k] += sum_cond_ll
-                    total_ell += sum_cond_ll * self.MoG.pi[k]
+                    if self.is_exact_ell:
+                        total_ell += self.cond_likelihood.ell(mean_kj[k, :], sigma_kj[k, :], Y[n, :]) * self.MoG.pi[k]
+                    else:
+                        total_ell += sum_cond_ll * self.MoG.pi[k]
                     if Configuration.LL in self.config_list:
                         d_ell_d_ll += self.MoG.pi[k] * self.cond_likelihood.ll_grad(f[:, k, :], Y[n, :]).sum()
                     for j in range(self.num_latent_proc):
@@ -389,7 +394,13 @@ class SAVIGP(Model):
 
         d_ell_dPi = d_ell_dPi / n_sample
 
-        return total_ell / n_sample, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper / n_sample, d_ell_d_ll / n_sample
+        d_ell_d_hyper /= n_sample
+        d_ell_d_ll /= n_sample
+
+        if not self.is_exact_ell:
+            total_ell /= n_sample
+
+        return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
     def dKzxn_dhyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
@@ -497,7 +508,7 @@ class SAVIGP(Model):
                    (self.MoG.C_m(j, k, l))
         return m_k
 
-    def _gaussian_predict(self, t_X, normal_sigma):
+    def _predict_kj(self, t_X):
         """
         predicting at test points t_X
         :param t_X: test point
@@ -516,28 +527,9 @@ class SAVIGP(Model):
                 mean_kj[:, j] = self._b(n, j, A[j])
                 sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
 
-            predicted_mu[n, :, :] = mean_kj[:, :]
-            predicted_var[n, :, :] = normal_sigma + sigma_kj[:, :]
+            predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[:, :], sigma_kj[:, :])
 
         return predicted_mu, predicted_var
-
-    def _gaussian_ell(self, p_X, p_Y, normal_sigma):
-        normal_ell = 0
-        A, Kzx, K = self._get_A_K(p_X)
-
-        for n in range(len(p_X)):
-            mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
-            sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
-            for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b(n, j, A[j])
-                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
-
-            for k in range(self.num_mog_comp):
-                if normal_sigma is not None:
-                    normal_ell += cross_ent_normal(mean_kj[k, :], np.diag(sigma_kj[k, :]), p_Y[n, :], normal_sigma) * \
-                                  self.MoG.pi[k]
-
-        return normal_ell
 
     def predict(self, Xnew):
         mu, var = self._predict_kj(Xnew)
