@@ -102,22 +102,23 @@ class Experiments:
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        samples = 20000
 
         if method == 'full':
             m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0.001, False)
+                                 kernel, samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix1':
             m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0.001, False)
+                                 kernel, samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix2':
             m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, 100000, None, 0.001, False)
+                                 kernel, samples, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
@@ -176,9 +177,9 @@ class Experiments:
 
 if __name__ == '__main__':
     plots = []
-    plots.append(Experiments.boston_data('gp', 1))
-    # plots.append(Experiments.boston_data('full', 0.9))
+    # plots.append(Experiments.boston_data('gp', 1))
+    plots.append(Experiments.boston_data('full', 0.6))
     # plots.append(Experiments.boston_data(method='mix1'))
     # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
-    PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)
+    # PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)
