@@ -74,7 +74,7 @@ class Experiments:
                     , delimiter=',', comments='')
 
     @staticmethod
-    def boston_data(method='full'):
+    def boston_data(method, sparsify_factor):
         np.random.seed(12000)
         X, Y = DataSource.boston_data()
         X = preprocessing.scale(X)
@@ -85,20 +85,23 @@ class Experiments:
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
 
+        #number of inducing points
+        num_inducing = Xtrain.shape[0] * sparsify_factor
+
         if method == 'full':
-            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, Xtrain.shape[0], UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix1':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
 
         if method == 'mix2':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 2, UnivariateGaussian(np.array(gaussian_sigma)),
+            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, UnivariateGaussian(np.array(gaussian_sigma)),
                                  kernel, 100000, None, 0.001, False)
             Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
             y_pred, var_pred = m.predict(Xtest)
@@ -156,9 +159,9 @@ class Experiments:
 
 if __name__ == '__main__':
     plots = []
-    plots.append(Experiments.boston_data(method='gp'))
-    # plots.append(Experiments.boston_data(method='full'))
-    plots.append(Experiments.boston_data(method='mix1'))
+    # plots.append(Experiments.boston_data(method='gp'))
+    plots.append(Experiments.boston_data('full', 1))
+    # plots.append(Experiments.boston_data(method='mix1'))
     # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
     PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)
