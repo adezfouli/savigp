@@ -30,7 +30,7 @@ class Experiments:
     def export_train(name, Xtrain, Ytrain):
         path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
-        file_name = 'train_' + name
+        file_name = 'train_'
         np.savetxt(path + file_name + '.csv', np.hstack((Ytrain, Xtrain))
                    , header=''.join(
                                     ['Y%d,'%(j) for j in range(Ytrain.shape[1])]+
@@ -42,7 +42,7 @@ class Experiments:
     def export_model(model, name):
         path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
-        file_name = 'model_' + name
+        file_name = 'model_'
         if model is not None:
             with open(path + file_name + '.csv', 'w') as fp:
                 f = csv.writer(fp, delimiter=',')
@@ -57,7 +57,7 @@ class Experiments:
     def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names):
         path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
-        file_name = 'test_' + name
+        file_name = 'test_'
         out = []
         out.append(Ytrue)
         out += Ypred
@@ -73,6 +73,21 @@ class Experiments:
                                     )
                     , delimiter=',', comments='')
 
+
+    @staticmethod
+    def export_configuration(name, config):
+        path = Experiments.get_output_path() + name +'/'
+        check_dir_exists(path)
+        file_name = path + 'config_' + '.csv'
+        with open(file_name, 'wb') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=config.keys())
+            writer.writeheader()
+            writer.writerow(config)
+
+    @staticmethod
+    def get_ID():
+        return id_generator(size=6)
+
     @staticmethod
     def boston_data(method, sparsify_factor):
         np.random.seed(12000)
@@ -80,7 +95,7 @@ class Experiments:
         X = preprocessing.scale(X)
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
-        name = 'boston_' + method
+        name = 'boston_' + Experiments.get_ID()
         Experiments.export_train(name, Xtrain, Ytrain)
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
@@ -114,6 +129,8 @@ class Experiments:
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m,  name)
+
+        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor})
         return name
 
     @staticmethod
@@ -159,8 +176,8 @@ class Experiments:
 
 if __name__ == '__main__':
     plots = []
-    # plots.append(Experiments.boston_data(method='gp'))
-    plots.append(Experiments.boston_data('full', 0.9))
+    plots.append(Experiments.boston_data('gp', 1))
+    # plots.append(Experiments.boston_data('full', 0.9))
     # plots.append(Experiments.boston_data(method='mix1'))
     # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
