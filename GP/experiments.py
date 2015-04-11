@@ -86,7 +86,7 @@ class Experiments:
         gaussian_sigma = 1.0
 
         #number of inducing points
-        num_inducing = Xtrain.shape[0] * sparsify_factor
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
 
         if method == 'full':
             m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, UnivariateGaussian(np.array(gaussian_sigma)),
@@ -160,7 +160,7 @@ class Experiments:
 if __name__ == '__main__':
     plots = []
     # plots.append(Experiments.boston_data(method='gp'))
-    plots.append(Experiments.boston_data('full', 1))
+    plots.append(Experiments.boston_data('full', 0.9))
     # plots.append(Experiments.boston_data(method='mix1'))
     # plots.append(Experiments.boston_data(method='mix2'))
     # Experiments.gaussian_1D_data_diag()
