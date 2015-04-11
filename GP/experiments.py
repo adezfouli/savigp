@@ -89,6 +89,35 @@ class Experiments:
         return id_generator(size=6)
 
     @staticmethod
+    def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing, num_samples,
+                  sparsify_factor):
+        if method == 'full':
+            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, cond_ll,
+                                         kernel, num_samples, None, 0.001, False)
+            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
+        if method == 'mix1':
+            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
+                             kernel, num_samples, None, 0.001, False)
+            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
+        if method == 'mix2':
+            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
+                             kernel, num_samples, None, 0.001, False)
+            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            y_pred, var_pred = m.predict(Xtest)
+        if method == 'gp':
+            m = GPy.models.GPRegression(Xtrain, Ytrain)
+            m.optimize('bfgs')
+            y_pred, var_pred = m.predict(Xtest)
+        Experiments.export_train(name, Xtrain, Ytrain)
+        Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
+        if isinstance(m, SAVIGP):
+            Experiments.export_model(m, name)
+        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor})
+        return name
+
+    @staticmethod
     def boston_data(method, sparsify_factor):
         np.random.seed(12000)
         X, Y = DataSource.boston_data()
@@ -96,43 +125,16 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'boston_' + Experiments.get_ID()
-        Experiments.export_train(name, Xtrain, Ytrain)
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
         gaussian_sigma = 1.0
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        samples = 20000
+        num_samples = 20000
+        cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        if method == 'full':
-            m = GSAVIGP_SignleComponenet(Xtrain, Ytrain, num_inducing, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
-            y_pred, var_pred = m.predict(Xtest)
-
-        if method == 'mix1':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
-            y_pred, var_pred = m.predict(Xtest)
-
-        if method == 'mix2':
-            m = GSAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, UnivariateGaussian(np.array(gaussian_sigma)),
-                                 kernel, samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
-            y_pred, var_pred = m.predict(Xtest)
-
-        if method == 'gp':
-            m = GPy.models.GPRegression(Xtrain, Ytrain)
-            m.optimize('bfgs')
-            y_pred, var_pred = m.predict(Xtest)
-
-        Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
-        if isinstance(m, SAVIGP):
-            Experiments.export_model(m,  name)
-
-        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor})
-        return name
+        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
+                                     num_samples, sparsify_factor)
 
     @staticmethod
     def gaussian_1D_data():
