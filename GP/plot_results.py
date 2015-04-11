@@ -1,5 +1,6 @@
 import csv
 import math
+import os
 from matplotlib.pyplot import show, ion, savefig
 import pandas
 from pandas.util.testing import DataFrame
@@ -33,6 +34,11 @@ class PlotOutput:
         check_dir_exists(infile_path + name + '/graphs/')
         savefig(infile_path + name + '/graphs/NLPD.pdf')
         show(block=True)
+
+    @staticmethod
+    def plot_output_all(name, path):
+        dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+        PlotOutput.plot_output(name, path, dir)
 
     @staticmethod
     def read_config(path):
