@@ -130,7 +130,7 @@ class Experiments:
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 20000
+        num_samples = 100000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
@@ -198,9 +198,28 @@ class Experiments:
 
 if __name__ == '__main__':
     plots = []
+
     # plots.append(Experiments.boston_data('gp', 1))
-    # plots.append(Experiments.boston_data('full', 1))
-    plots.append(Experiments.boston_data('mix1', 1))
-    # plots.append(Experiments.boston_data(method='mix2'))
-    # Experiments.gaussian_1D_data_diag()
-    # PlotOutput.plot_output('boston', Experiments.get_output_path(), plots)
+    plots.append(Experiments.boston_data('mix1', 0.1))
+
+
+    # methods = ['mix1', 'mix2', 'full']
+    # for m in methods:
+        # plots.append(Experiments.boston_data(m, 1))
+
+        # plots.append(Experiments.boston_data(m, 0.2))
+        #
+        # plots.append(Experiments.boston_data(m, 0.6))
+        #
+        # plots.append(Experiments.boston_data(m, 0.4))
+        #
+        # plots.append(Experiments.boston_data(m, 0.8))
+
+    # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+    #                            lambda x: (x['m'] in ['mix2']), False)
+
+    # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+    #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
+
+    # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+    #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
