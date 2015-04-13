@@ -14,7 +14,7 @@ class PlotOutput:
         graphs = {}
         graphs['SSE'] = {}
         graphs['NLPD'] = {}
-        graphs['CCR'] = {}
+        graphs['ER'] = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
             if filter is None or filter(data_config):
@@ -30,10 +30,10 @@ class PlotOutput:
                     graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
                 if data_config['ll'] in ['LogisticLL']:
-                    graphs['CCR'][str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == 1))
-                                                                 | ((Ypred < 0.5) & (Ytrue == -1))
+                    graphs['ER'][str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == -1))
+                                                                 | ((Ypred < 0.5) & (Ytrue == 1))
                                                                  ).mean()])
-                    graphs['NLPD'][str(data_config)] = (-Ytrue + 1) / 2 + Ytrue * Ypred
+                    graphs['NLPD'][str(data_config)] = -np.log((-Ytrue + 1) / 2 + Ytrue * Ypred)
 
 
         for n, g in graphs.iteritems():
@@ -42,7 +42,7 @@ class PlotOutput:
                 ion()
                 if n in ['SSE', 'NLPD']:
                     g.plot(kind='box', title=n)
-                if n in ['CCR']:
+                if n in ['ER']:
                     ax =g.plot(kind='bar', title=n)
                     patches, labels = ax.get_legend_handles_labels()
                     ax.legend(patches, labels, loc='lower center')
