@@ -90,21 +90,21 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing, num_samples,
-                  sparsify_factor):
+                  sparsify_factor, to_optimize):
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            Optimizer.optimize_model(m, 100000, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            Optimizer.optimize_model(m, 100000, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, ['mog', 'hyp', 'll'])
+            Optimizer.optimize_model(m, 100000, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
@@ -134,7 +134,7 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
-                                     num_samples, sparsify_factor)
+                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'])
 
     @staticmethod
     def breast_caner_data(method, sparsify_factor):
@@ -152,7 +152,7 @@ class Experiments:
         cond_ll = LogisticLL()
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
-                                     num_samples, sparsify_factor)
+                                     num_samples, sparsify_factor, ['mog', 'hyp'])
 
 
     @staticmethod
