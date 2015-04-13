@@ -200,7 +200,7 @@ if __name__ == '__main__':
     plots = []
 
     # plots.append(Experiments.boston_data('gp', 1))
-    plots.append(Experiments.boston_data('mix1', 0.1))
+    plots.append(Experiments.breast_caner_data('full', 1.0))
 
 
     # methods = ['mix1', 'mix2', 'full']
