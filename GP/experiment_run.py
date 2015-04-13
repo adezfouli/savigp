@@ -3,6 +3,7 @@ from experiments import Experiments
 from plot_results import PlotOutput
 from multiprocessing.pool import ThreadPool
 
+
 class ExperimentRunner:
 
     @staticmethod
@@ -18,8 +19,12 @@ class ExperimentRunner:
         p.map(f, configs)
 
     @staticmethod
-    def logistic_experiment():
-        plots.append(Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0}))
+    def boston_experiment():
+        Experiments.boston_data({'method': 'full', 'sparse_factor': 1.0})
+
+    @staticmethod
+    def wisconsin_breast_experiment():
+        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0})
 
     @staticmethod
     def plot():
@@ -34,14 +39,9 @@ class ExperimentRunner:
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                        lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
 
-    @staticmethod
-    def test(x):
-        print x
-
 if __name__ == '__main__':
     plots = []
     ExperimentRunner.parallel_experiment(Experiments.boston_data, 2)
     # ExerpiemntRunner.logistic_experiment()
-    # ExerpiemntRunner.boston_experiment()
 
 
