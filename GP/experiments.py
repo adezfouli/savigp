@@ -27,6 +27,10 @@ class Experiments:
         return '../../results/'
 
     @staticmethod
+    def get_number_samples():
+        return 20000
+
+    @staticmethod
     def export_train(name, Xtrain, Ytrain):
         path = Experiments.get_output_path() + name +'/'
         check_dir_exists(path)
@@ -131,7 +135,7 @@ class Experiments:
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 100000
+        num_samples = Experiments.get_number_samples()
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
@@ -149,7 +153,7 @@ class Experiments:
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 20000
+        num_samples = Experiments.get_number_samples()
         cond_ll = LogisticLL()
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
