@@ -33,7 +33,7 @@ class PlotOutput:
                     graphs['CCR'][str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == 1))
                                                                  | ((Ypred < 0.5) & (Ytrue == -1))
                                                                  ).mean()])
-                    # graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
+                    graphs['NLPD'][str(data_config)] = (-Ytrue + 1) / 2 + Ytrue * Ypred
 
 
         for n, g in graphs.iteritems():
@@ -43,7 +43,9 @@ class PlotOutput:
                 if n in ['SSE', 'NLPD']:
                     g.plot(kind='box', title=n)
                 if n in ['CCR']:
-                    g.plot(kind='bar', title=n)
+                    ax =g.plot(kind='bar', title=n)
+                    patches, labels = ax.get_legend_handles_labels()
+                    ax.legend(patches, labels, loc='lower center')
                 if export_pdf:
                     check_dir_exists(infile_path + name + '/graphs/')
                     savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
