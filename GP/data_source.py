@@ -47,7 +47,7 @@ class DataSource:
     def wisconsin_breast_cancer_data():
         data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
         # replacing Y values with 0 and 1
-        data_test.loc[data_test[10] == 2, 10] = 0
+        data_test.loc[data_test[10] == 2, 10] = -1
         data_test.loc[data_test[10] == 4, 10] = 1
         data_test = data_test.convert_objects(convert_numeric=True).dropna()
         X = data_test.ix[:, 1:9]
