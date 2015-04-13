@@ -14,6 +14,7 @@ class PlotOutput:
         graphs = {}
         graphs['SSE'] = {}
         graphs['NLPD'] = {}
+        graphs['CCR'] = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
             if filter is None or filter(data_config):
@@ -28,14 +29,20 @@ class PlotOutput:
                     graphs['SSE'][str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
                     graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
+                if data_config['ll'] in ['LogisticLL']:
+                    graphs['CCR'][str(data_config)] = 1. * ((Ypred > 0.5) & (Ytrue == 1))
+                    graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
+
+
         for n, g in graphs.iteritems():
-            g= DataFrame(g)
-            ion()
-            ax = g.plot(kind='box', title=n)
-            if export_pdf:
-                check_dir_exists(infile_path + name + '/graphs/')
-                savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
-            show(block=True)
+            if g:
+                g= DataFrame(g)
+                ion()
+                ax = g.plot(kind='box', title=n)
+                if export_pdf:
+                    check_dir_exists(infile_path + name + '/graphs/')
+                    savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
+                show(block=True)
 
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
