@@ -11,8 +11,9 @@ class PlotOutput:
 
     @staticmethod
     def plot_output(name, infile_path, model_names, filter, export_pdf):
-        SSE = {}
-        NLPD = {}
+        graphs = {}
+        graphs['SSE'] = {}
+        graphs['NLPD'] = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
             if filter is None or filter(data_config):
@@ -22,21 +23,19 @@ class PlotOutput:
                 Ypred = data_test['Ypred__0']
                 Ytrue = data_test['Ytrue0']
                 Yvar = data_test['Yvar_pred__0']
-                SSE[str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
-                NLPD[str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
-        SSE = DataFrame(SSE)
-        ion()
-        ax = SSE.plot(kind='box', title="SSE")
-        if export_pdf:
-            check_dir_exists(infile_path + name + '/graphs/')
-            savefig(infile_path + name + '/graphs/SSE.pdf')
-        show(block=True)
-        NLPD = DataFrame(NLPD)
-        NLPD.plot(kind='box', title="NLPD")
-        if export_pdf:
-            check_dir_exists(infile_path + name + '/graphs/')
-            savefig(infile_path + name + '/graphs/NLPD.pdf')
-        show(block=True)
+
+                if data_config['ll'] in ['UnivariateGaussian']:
+                    graphs['SSE'][str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
+                    graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
+
+        for n, g in graphs.iteritems():
+            g= DataFrame(g)
+            ion()
+            ax = g.plot(kind='box', title=n)
+            if export_pdf:
+                check_dir_exists(infile_path + name + '/graphs/')
+                savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
+            show(block=True)
 
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
