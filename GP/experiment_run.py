@@ -1,4 +1,3 @@
-import multiprocessing
 from experiments import Experiments
 from plot_results import PlotOutput
 from multiprocessing.pool import ThreadPool
@@ -41,7 +40,7 @@ class ExperimentRunner:
 
 if __name__ == '__main__':
     plots = []
+    ExperimentRunner.parallel_experiment(Experiments.wisconsin_breast_cancer_data, 2)
     ExperimentRunner.parallel_experiment(Experiments.boston_data, 2)
-    # ExerpiemntRunner.logistic_experiment()
-
-
+    ExperimentRunner.boston_experiment()
+    ExperimentRunner.wisconsin_breast_experiment()
