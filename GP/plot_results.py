@@ -30,7 +30,9 @@ class PlotOutput:
                     graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
                 if data_config['ll'] in ['LogisticLL']:
-                    graphs['CCR'][str(data_config)] = np.array([(1. * ((Ypred > 0.5) & (Ytrue == 1))).mean()])
+                    graphs['CCR'][str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == 1))
+                                                                 | ((Ypred < 0.5) & (Ytrue == -1))
+                                                                 ).mean()])
                     # graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
 
