@@ -138,20 +138,26 @@ class LogisticLL(Likelihood):
 
     def __init__(self):
         Likelihood.__init__(self)
+        self.n_samples = 20000
+        self.normal_samples = np.random.normal(0, 1, self.n_samples).reshape((1, self.n_samples))
 
     def ll(self, f, y):
-        t = -(f + np.abs(f)) / 2 - np.log(1 + np.exp(-np.abs(f)))
-        if y == 0:
-            return t[:,0]
         if y == 1:
-            return 1. - t[:,0]
+            return -(f + np.abs(f)) / 2 - np.log(1 + np.exp(-np.abs(f)))
+        if y == -1:
+            return -(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f)))
 
     def ll_grad(self, f, y):
-        raise Exception("gradients not supported for multivariate Gaussian")
+        raise Exception("gradients not supported for logistic regression")
 
     def set_params(self, p):
         if p.shape[0] != 0:
             raise Exception("Logistic function does not have free parameters")
+
+    def predict(self, mu, sigma):
+        f = self.normal_samples * math.sqrt(sigma) + mu
+        mean = np.exp(self.ll(f.T, 1)).mean()
+        return mean, mean * (1 - mean)
 
     def get_params(self):
         return np.array([])
