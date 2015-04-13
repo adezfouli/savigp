@@ -508,7 +508,7 @@ class SAVIGP(Model):
                    (self.MoG.C_m(j, k, l))
         return m_k
 
-    def _predict_kj(self, t_X):
+    def _predict_comp(self, t_X):
         """
         predicting at test points t_X
         :param t_X: test point
@@ -517,8 +517,8 @@ class SAVIGP(Model):
         # print 'ell started'
         A, Kzx, K = self._get_A_K(t_X)
 
-        predicted_mu = np.empty((t_X.shape[0], self.num_mog_comp, self.num_latent_proc))
-        predicted_var = np.empty((t_X.shape[0], self.num_mog_comp, self.num_latent_proc))
+        predicted_mu = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
+        predicted_var = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
         for n in range(len(t_X)):
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
@@ -527,12 +527,13 @@ class SAVIGP(Model):
                 mean_kj[:, j] = self._b(n, j, A[j])
                 sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
 
-            predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[:, :], sigma_kj[:, :])
+            for k in range(self.num_mog_comp):
+                predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[k, :], sigma_kj[k, :])
 
         return predicted_mu, predicted_var
 
     def predict(self, Xnew):
-        mu, var = self._predict_kj(Xnew)
+        mu, var = self._predict_comp(Xnew)
         predicted_mu = np.average(mu, axis=1, weights=self.MoG.pi)
         predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
                         + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2
