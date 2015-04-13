@@ -95,20 +95,22 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing, num_samples,
                   sparsify_factor, to_optimize):
+        opt_max_fun_evals = 100000
+        opt_iter = 200
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, 100000, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
@@ -119,7 +121,12 @@ class Experiments:
         if isinstance(m, SAVIGP):
             Experiments.export_model(m, name)
         Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor,
-                                                's': num_samples, 'll': cond_ll.__class__.__name__})
+                                                's': num_samples, 'll': cond_ll.__class__.__name__,
+                                                'opt_max_evals': opt_max_fun_evals,
+                                                'opt_iter': opt_iter
+                                                },
+
+                                        )
         return name
 
     @staticmethod

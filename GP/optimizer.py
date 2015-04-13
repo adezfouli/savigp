@@ -139,13 +139,12 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-4):
+    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-4, opt_iter=200):
         if not method:
             method=['hyp', 'mog']
         converged=False
         start=time.time()
         total_evals = 0
-        fun_iteration = 200
         last_param = None
         try:
             while not converged:
@@ -157,7 +156,7 @@ class Optimizer:
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, opt_iter), verbose=verbose)
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     # d = Optimizer.general(model, verbose=verbose)
@@ -179,7 +178,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, opt_iter), verbose=verbose)
                     total_evals += d['funcalls']
 
                 if 'll' in method:
@@ -188,7 +187,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.LL
                     ])
-                    d = Optimizer.BFGS(model, max_fun=min(max_fun, fun_iteration), verbose=verbose)
+                    d = Optimizer.BFGS(model, max_fun=min(max_fun, opt_iter), verbose=verbose)
                     total_evals += d['funcalls']
 
                 if total_evals > max_fun:
