@@ -143,9 +143,9 @@ class LogisticLL(Likelihood):
 
     def ll(self, f, y):
         if y == 1:
-            return -(f + np.abs(f)) / 2 - np.log(1 + np.exp(-np.abs(f)))
+            return (-(f + np.abs(f)) / 2 - np.log(1 + np.exp(-np.abs(f))))[:,0]
         if y == -1:
-            return -(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f)))
+            return (-(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f))))[:,0]
 
     def ll_grad(self, f, y):
         raise Exception("gradients not supported for logistic regression")
