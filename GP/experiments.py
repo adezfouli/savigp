@@ -123,7 +123,9 @@ class Experiments:
         return name
 
     @staticmethod
-    def boston_data(method, sparsify_factor):
+    def boston_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
         X, Y = DataSource.boston_data()
         X = preprocessing.scale(X)
@@ -142,7 +144,9 @@ class Experiments:
                                      num_samples, sparsify_factor, ['mog', 'hyp', 'll'])
 
     @staticmethod
-    def breast_caner_data(method, sparsify_factor):
+    def wisconsin_breast_cancer_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
         X, Y = DataSource.wisconsin_breast_cancer_data()
         X = preprocessing.scale(X)
