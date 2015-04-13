@@ -139,10 +139,10 @@ class Experiments:
     @staticmethod
     def breast_caner_data(method, sparsify_factor):
         np.random.seed(12000)
-        X, Y = DataSource.boston_data()
+        X, Y = DataSource.wisconsin_breast_cancer_data()
         X = preprocessing.scale(X)
         # Y = preprocessing.scale(Y)
-        Xtrain, Ytrain, Xtest, Ytest = Experiments.breast_caner_data(X, Y, 300)
+        Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'breast_cancer_' + Experiments.get_ID()
         kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
 
