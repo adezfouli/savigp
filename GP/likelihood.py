@@ -140,7 +140,11 @@ class LogisticLL(Likelihood):
         Likelihood.__init__(self)
 
     def ll(self, f, y):
-        return (f + np.abs(f)) / 2 + np.log(1 + np.exp(-np.abs(f)))
+        t = -(f + np.abs(f)) / 2 - np.log(1 + np.exp(-np.abs(f)))
+        if y == 0:
+            return t[:,0]
+        if y == 1:
+            return 1. - t[:,0]
 
     def ll_grad(self, f, y):
         raise Exception("gradients not supported for multivariate Gaussian")
