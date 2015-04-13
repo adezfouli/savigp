@@ -49,6 +49,7 @@ class DataSource:
         # replacing Y values with 0 and 1
         data_test.loc[data_test[10] == 2, 10] = 0
         data_test.loc[data_test[10] == 4, 10] = 1
+        data_test = data_test.convert_objects(convert_numeric=True).dropna()
         X = data_test.ix[:, 1:9]
         Y = data_test.ix[:, 10]
         return np.array(X), np.array([Y]).T
