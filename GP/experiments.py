@@ -114,7 +114,7 @@ class Experiments:
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m, name)
-        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor})
+        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor, 's': num_samples})
         return name
 
     @staticmethod
