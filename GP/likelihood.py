@@ -176,10 +176,12 @@ class SoftmaxLL(Likelihood):
         Likelihood.__init__(self)
 
     def ll(self, f, y):
-        for j in range(f.shape[1]):
-            f[:,j] -= f[:, y[0]]
+        u = f.copy()
+        k = f[:, y[0]].copy()
+        for j in range(u.shape[1]):
+            u[:,j] -= k
 
-        return -logsumexp(f, 1)
+        return -logsumexp(u, 1)
 
     def ll_grad(self, f, y):
         raise Exception("gradients not supported for multivariate Gaussian")
