@@ -20,13 +20,13 @@ IND1 = train_labels(D1+1,:) == 1;           % offset by 1 as we label from zero
 IND2 = train_labels(D2+1,:) == 1;
 IND3 = train_labels(D3+1,:) == 1;
 x = [train_patterns(:,IND1)'; train_patterns(:,IND2)';train_patterns(:,IND3)'];
-y = [ones(sum(IND1),1); ones(sum(IND2),1)+1; ones(sum(IND3),1)+2];
+y = [zeros(sum(IND1),1); zeros(sum(IND2),1)+1; zeros(sum(IND3),1)+2];
 
 ITE1 = test_labels(D1+1,:) == 1;            % offset by 1 as we label from zero
 ITE2 = test_labels(D2+1,:) == 1;
 ITE3 = test_labels(D3+1,:) == 1;
 xx = [test_patterns(:,ITE1)'; test_patterns(:,ITE2)'; test_patterns(:,ITE3)'];
-yy = [ones(sum(ITE1),1); ones(sum(ITE2),1)+1; ones(sum(ITE3),1)+2];
+yy = [zeros(sum(ITE1),1); zeros(sum(ITE2),1)+1; zeros(sum(ITE3),1)+2];
 
 csvwrite('train.csv',[y,x])
 csvwrite('test.csv',[yy,xx])
