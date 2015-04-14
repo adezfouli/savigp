@@ -53,7 +53,7 @@ class PlotOutput:
 
     @staticmethod
     def config_to_str(config):
-        return config['method'] + str(config['sparsify_factor'])
+        return config['method'] +':' + str(config['sparsify_factor'])
 
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
