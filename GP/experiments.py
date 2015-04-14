@@ -8,7 +8,7 @@ __author__ = 'AT'
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL
+from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -168,6 +168,27 @@ class Experiments:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = LogisticLL()
+
+        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
+                                     num_samples, sparsify_factor, ['mog', 'hyp'])
+
+
+    @staticmethod
+    def USPS_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        Xtrain, Ytrain, Xtest, Ytest = DataSource.USPS_data()
+        Xtrain = preprocessing.scale(Xtrain)
+        Xtest = preprocessing.scale(Xtest)
+
+        name = 'USUS_' + Experiments.get_ID()
+        kernel = [GPy.kern.RBF(Xtrain.shape[1], variance=1, lengthscale=np.array((1.,)))]
+
+        #number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+        cond_ll = SoftmaxLL()
 
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'hyp'])

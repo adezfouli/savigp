@@ -46,13 +46,24 @@ class DataSource:
     @staticmethod
     def wisconsin_breast_cancer_data():
         data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
-        # replacing Y values with 0 and 1
+        # replacing Y values with -1 and 1
         data_test.loc[data_test[10] == 2, 10] = -1
         data_test.loc[data_test[10] == 4, 10] = 1
         data_test = data_test.convert_objects(convert_numeric=True).dropna()
         X = data_test.ix[:, 1:9]
         Y = data_test.ix[:, 10]
         return np.array(X), np.array([Y]).T
+
+    @staticmethod
+    def USPS_data():
+        train = pandas.read_csv('../data/USPS/train.csv', header=None)
+        X_train = train.ix[:, 1:256]
+        Y_train = train.ix[:, 0]
+
+        test = pandas.read_csv('../data/USPS/test.csv', header=None)
+        X_test = test.ix[:, 1:256]
+        Y_test = test.ix[:, 0]
+        return X_train, Y_train, X_test, Y_test
 
 
     @staticmethod
