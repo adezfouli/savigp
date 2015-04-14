@@ -97,20 +97,21 @@ class Experiments:
                   sparsify_factor, to_optimize):
         opt_max_fun_evals = 100000
         opt_iter = 200
+        tol=1e-4
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize)
+            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
             y_pred, var_pred = m.predict(Xtest)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
@@ -123,7 +124,8 @@ class Experiments:
         Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor,
                                                 's': num_samples, 'll': cond_ll.__class__.__name__,
                                                 'opt_max_evals': opt_max_fun_evals,
-                                                'opt_iter': opt_iter
+                                                'opt_iter': opt_iter,
+                                                'tol': tol
                                                 },
 
                                         )
