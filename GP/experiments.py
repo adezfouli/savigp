@@ -143,7 +143,7 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'boston_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
         gaussian_sigma = 1.0
 
         #number of inducing points
@@ -164,7 +164,7 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'breast_cancer_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -184,8 +184,8 @@ class Experiments:
         Xtrain = preprocessing.scale(Xtrain)
         Xtest = preprocessing.scale(Xtest)
 
-        name = 'USUS_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
+        name = 'USPS_' + Experiments.get_ID()
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 3)
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
