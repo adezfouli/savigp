@@ -97,7 +97,7 @@ class Experiments:
                   sparsify_factor, to_optimize):
         opt_max_fun_evals = 100000
         opt_iter = 200
-        tol=1e-4
+        tol=1e-3
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
