@@ -26,8 +26,8 @@ class PlotOutput:
                 Yvar = data_test['Yvar_pred__0']
 
                 if data_config['ll'] in ['UnivariateGaussian']:
-                    graphs['SSE'][str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
-                    graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
+                    graphs['SSE'][PlotOutput.config_to_str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
+                    graphs['NLPD'][PlotOutput.config_to_str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
                 if data_config['ll'] in ['LogisticLL']:
                     graphs['ER'][PlotOutput.config_to_str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == -1))
