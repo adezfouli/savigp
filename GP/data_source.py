@@ -52,7 +52,7 @@ class DataSource:
         data_test = data_test.convert_objects(convert_numeric=True).dropna()
         X = data_test.ix[:, 1:9]
         Y = data_test.ix[:, 10]
-        return np.array(X), np.array([Y]).T
+        return np.array(X), Y[:, np.newaxis]
 
     @staticmethod
     def USPS_data():
