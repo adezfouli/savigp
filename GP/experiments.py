@@ -121,8 +121,10 @@ class Experiments:
         Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m, name)
-        Experiments.export_configuration(name, {'m': method, 'c': sparsify_factor,
-                                                's': num_samples, 'll': cond_ll.__class__.__name__,
+        Experiments.export_configuration(name, {'method': method,
+                                                'sparsify_factor': sparsify_factor,
+                                                'sample_num': num_samples,
+                                                'll': cond_ll.__class__.__name__,
                                                 'opt_max_evals': opt_max_fun_evals,
                                                 'opt_iter': opt_iter,
                                                 'tol': tol
