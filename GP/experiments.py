@@ -143,7 +143,7 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'boston_' + Experiments.get_ID()
-        kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
+        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
         gaussian_sigma = 1.0
 
         #number of inducing points
@@ -164,7 +164,7 @@ class Experiments:
         # Y = preprocessing.scale(Y)
         Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
         name = 'breast_cancer_' + Experiments.get_ID()
-        kernel = [GPy.kern.RBF(X.shape[1], variance=1, lengthscale=np.array((1.,)))]
+        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -185,7 +185,7 @@ class Experiments:
         Xtest = preprocessing.scale(Xtest)
 
         name = 'USUS_' + Experiments.get_ID()
-        kernel = [GPy.kern.RBF(Xtrain.shape[1], variance=1, lengthscale=np.array((1.,)))]
+        kernel = Experiments.get_kernels(Xtrain.shape[1], Ytrain.shape[1])
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -195,6 +195,10 @@ class Experiments:
         return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'hyp'])
 
+
+    @staticmethod
+    def get_kernels(input_dim, num_latent_proc):
+        return [GPy.kern.RBF(input_dim, variance=1, lengthscale=np.array((1.,))) for j in range(num_latent_proc)]
 
     @staticmethod
     def gaussian_1D_data():
