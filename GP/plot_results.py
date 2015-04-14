@@ -30,10 +30,10 @@ class PlotOutput:
                     graphs['NLPD'][str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
 
                 if data_config['ll'] in ['LogisticLL']:
-                    graphs['ER'][str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == -1))
+                    graphs['ER'][PlotOutput.config_to_str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == -1))
                                                                  | ((Ypred < 0.5) & (Ytrue == 1))
                                                                  ).mean()])
-                    graphs['NLPD'][str(data_config)] = -np.log((-Ytrue + 1) / 2 + Ytrue * Ypred)
+                    graphs['NLPD'][PlotOutput.config_to_str(data_config)] = -np.log((-Ytrue + 1) / 2 + Ytrue * Ypred)
 
 
         for n, g in graphs.iteritems():
@@ -50,6 +50,10 @@ class PlotOutput:
                     check_dir_exists(infile_path + name + '/graphs/')
                     savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
                 show(block=True)
+
+    @staticmethod
+    def config_to_str(config):
+        return config['method'] + str(config['sparsify_factor'])
 
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
