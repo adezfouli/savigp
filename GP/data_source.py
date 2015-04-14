@@ -63,7 +63,7 @@ class DataSource:
         test = pandas.read_csv('../data/USPS/test.csv', header=None)
         X_test = test.ix[:, 1:256]
         Y_test = test.ix[:, 0]
-        return X_train, Y_train, X_test, Y_test
+        return X_train, Y_train[:, np.newaxis], X_test, Y_test[:, np.newaxis]
 
 
     @staticmethod
