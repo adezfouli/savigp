@@ -1,8 +1,8 @@
 import GPy
+from atom.enum import Enum
 from scipy.misc import logsumexp
 from mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
-from aetypes import Enum
 import math
 from GPy.util.linalg import mdot
 import numpy as np
@@ -11,7 +11,6 @@ from scipy.linalg import logm, det, cho_solve, solve_triangular
 import scipy.stats
 from GPy import likelihoods
 from GPy.core import Model
-from line_profiler import *
 
 
 class Configuration(Enum):
