@@ -28,6 +28,10 @@ class ExperimentRunner:
         Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0})
 
     @staticmethod
+    def USPS_experiment():
+        Experiments.USPS_data({'method': 'full', 'sparse_factor': 1.0})
+
+    @staticmethod
     def plot():
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
                                    None, False)
