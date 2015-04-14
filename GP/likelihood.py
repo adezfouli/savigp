@@ -176,8 +176,8 @@ class SoftmaxLL(Likelihood):
         Likelihood.__init__(self)
 
     def ll(self, f, y):
-        for j in f.shape[1]:
-            f[:,j] -= f[:,y]
+        for j in range(f.shape[1]):
+            f[:,j] -= f[:, y[0]]
 
         return -logsumexp(f, 1)
 
