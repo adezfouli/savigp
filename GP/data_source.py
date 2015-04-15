@@ -74,9 +74,9 @@ class DataSource:
             test = pandas.read_csv('../data/boston_housing/test_' + str(i) + '.csv', header=None)
             data.append({
                 'train_Y': train.ix[:, 0].values[:, np.newaxis],
-                'train_X': train.ix[:, 1:9].values,
+                'train_X': train.ix[:, 1:].values,
                 'test_Y': test.ix[:, 0].values[:, np.newaxis],
-                'test_X': test.ix[:, 1:9].values,
+                'test_X': test.ix[:, 1:].values,
                 'id': i
             })
 
