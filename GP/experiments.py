@@ -96,7 +96,7 @@ class Experiments:
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize):
         opt_max_fun_evals = 100000
-        opt_iter = 200
+        opt_iter = 3
         tol=1e-3
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
@@ -140,6 +140,7 @@ class Experiments:
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
         data = DataSource.boston_data()
+        names = []
         for d in data:
             Xtrain = d['train_X']
             Ytrain = d['train_Y']
@@ -154,8 +155,9 @@ class Experiments:
             num_samples = Experiments.get_number_samples()
             cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-            return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll'])
+            names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll']))
+        return names
 
     @staticmethod
     def wisconsin_breast_cancer_data(config):

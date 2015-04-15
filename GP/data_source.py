@@ -69,7 +69,7 @@ class DataSource:
     @staticmethod
     def boston_data():
         data = []
-        for i in range(1,5):
+        for i in range(1, 6):
             train = pandas.read_csv('../data/boston_housing/train_' + str(i) + '.csv', header=None)
             test = pandas.read_csv('../data/boston_housing/test_' + str(i) + '.csv', header=None)
             data.append({
