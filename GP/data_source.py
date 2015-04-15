@@ -68,10 +68,19 @@ class DataSource:
 
     @staticmethod
     def boston_data():
-        data = datasets.boston_housing()
-        X = data['X'].copy()
-        Y = data['Y'].copy()
-        return X, Y
+        data = []
+        for i in range(1,5):
+            train = pandas.read_csv('../data/boston_housing/train_' + i + '.csv', header=None)
+            test = pandas.read_csv('../data/boston_housing/test_' + i + '.csv', header=None)
+            data.append({
+                'train_Y': train.ix[:, 0],
+                'train_X': train.ix[:, 1:9],
+                'test_Y': test.ix[:, 0],
+                'test_X': test.ix[:, 1:9]
+
+            })
+
+        return data
 
 if __name__ == '__main__':
     X, Y = DataSource.wisconsin_breast_cancer_data()
