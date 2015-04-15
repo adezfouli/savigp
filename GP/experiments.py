@@ -93,7 +93,7 @@ class Experiments:
         return id_generator(size=6)
 
     @staticmethod
-    def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing, num_samples,
+    def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize):
         opt_max_fun_evals = 100000
         opt_iter = 200
@@ -127,7 +127,8 @@ class Experiments:
                                                 'll': cond_ll.__class__.__name__,
                                                 'opt_max_evals': opt_max_fun_evals,
                                                 'opt_iter': opt_iter,
-                                                'tol': tol
+                                                'tol': tol,
+                                                'run_id': run_id
                                                 },
 
                                         )
@@ -138,21 +139,23 @@ class Experiments:
         method = config['method']
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
-        X, Y = DataSource.boston_data()
-        X = preprocessing.scale(X)
-        # Y = preprocessing.scale(Y)
-        Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
-        name = 'boston_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
-        gaussian_sigma = 1.0
+        data = DataSource.boston_data()
+        for d in data:
+            Xtrain = d['train_X']
+            Ytrain = d['train_Y']
+            Xtest = d['test_X']
+            Ytest = d['test_Y']
+            name = 'boston_' + Experiments.get_ID()
+            kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
+            gaussian_sigma = 1.0
 
-        #number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = Experiments.get_number_samples()
-        cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
+            #number of inducing points
+            num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+            num_samples = Experiments.get_number_samples()
+            cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'])
+            return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll'])
 
     @staticmethod
     def wisconsin_breast_cancer_data(config):

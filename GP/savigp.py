@@ -48,8 +48,8 @@ class SAVIGP(Model):
         self.num_mog_comp = num_mog_comp
         self.num_inducing = num_inducing
         self.MoG = self._get_mog()
-        self.input_dim = X[0].shape[0]
-        self.output_dim = Y[0].shape[0]
+        self.input_dim = X.shape[1]
+        self.output_dim = Y.shape[1]
         self.kernels = kernels
         self.cond_likelihood = likelihood
         self.X = X
