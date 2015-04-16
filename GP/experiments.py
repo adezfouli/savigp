@@ -29,7 +29,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 20000
+        return 2000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain):
@@ -104,25 +104,26 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_iter = 200
+        opt_iter = 100
         tol=1e-3
         total_time = None
         timer_per_iter = None
+        verbose=False
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
             _. timer_per_iter, total_time = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             _, timer_per_iter, total_time = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             _, timer_per_iter, total_time = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
             if 'll' in to_optimize and 'hyp' in to_optimize:
