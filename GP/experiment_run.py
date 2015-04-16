@@ -8,10 +8,10 @@ class ExperimentRunner:
     @staticmethod
     def get_configs():
         configs = []
-        expr_names = [Experiments.boston_data.__name__]
+        # expr_names = [Experiments.boston_data.__name__]
         expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
         methods = ['mix1', 'mix2', 'full']
-        sparse_factor = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1]
+        sparse_factor = [1.0]
         for e in expr_names:
             for m in methods:
                 for s in sparse_factor:
@@ -34,7 +34,7 @@ class ExperimentRunner:
     @staticmethod
     def plot():
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   None, False)
+                                   lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: (x['m'] in ['mix2']), False)
         #
@@ -51,6 +51,7 @@ if __name__ == '__main__':
     # n_process = 4
     # p = Pool(n_process)
     # p.map(run_config, ExperimentRunner.get_configs())
-    ExperimentRunner.boston_experiment()
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
+    ExperimentRunner.plot()

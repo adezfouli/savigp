@@ -1,4 +1,4 @@
-from data_transformation import MeanTransformation
+from data_transformation import MeanTransformation, IdentityTransformation
 from plot_results import PlotOutput
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
@@ -124,22 +124,24 @@ class Experiments:
                 m.optimize('bfgs')
 
         y_pred, var_pred = m.predict(Xtest)
-        Experiments.export_train(name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
-        Experiments.export_test(name,
+        folder_name =  name + '_' + Experiments.get_ID()
+        Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
+        Experiments.export_test(folder_name,
                                 transformer.untransform_X(Xtest),
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
                                 [transformer.untransform_Y_var(var_pred)], [''])
         if isinstance(m, SAVIGP):
-            Experiments.export_model(m, name)
-        Experiments.export_configuration(name, {'method': method,
+            Experiments.export_model(m, folder_name)
+        Experiments.export_configuration(folder_name, {'method': method,
                                                 'sparsify_factor': sparsify_factor,
                                                 'sample_num': num_samples,
                                                 'll': cond_ll.__class__.__name__,
                                                 'opt_max_evals': opt_max_fun_evals,
                                                 'opt_iter': opt_iter,
                                                 'tol': tol,
-                                                'run_id': run_id
+                                                'run_id': run_id,
+                                                'experiment': name
                                                 },
 
                                         )
@@ -157,7 +159,7 @@ class Experiments:
             Ytrain = d['train_Y']
             Xtest = d['test_X']
             Ytest = d['test_Y']
-            name = 'boston_' + Experiments.get_ID()
+            name = 'boston'
             kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
             gaussian_sigma = 1.0
 
@@ -175,20 +177,24 @@ class Experiments:
         method = config['method']
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
-        X, Y = DataSource.wisconsin_breast_cancer_data()
-        X = preprocessing.scale(X)
-        # Y = preprocessing.scale(Y)
-        Xtrain, Ytrain, Xtest, Ytest = Experiments.get_train_test(X, Y, 300)
-        name = 'breast_cancer_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
+        data = DataSource.wisconsin_breast_cancer_data()
+        names = []
+        for d in data:
+            Xtrain = d['train_X']
+            Ytrain = d['train_Y']
+            Xtest = d['test_X']
+            Ytest = d['test_Y']
+            name = 'breast_cancer'
+            kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
 
-        #number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = Experiments.get_number_samples()
-        cond_ll = LogisticLL()
+            #number of inducing points
+            num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+            num_samples = Experiments.get_number_samples()
+            cond_ll = LogisticLL()
 
-        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp'])
+            names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                     num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation))
+        return names
 
 
     @staticmethod

@@ -45,14 +45,29 @@ class DataSource:
 
     @staticmethod
     def wisconsin_breast_cancer_data():
-        data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
-        # replacing Y values with -1 and 1
-        data_test.loc[data_test[10] == 2, 10] = -1
-        data_test.loc[data_test[10] == 4, 10] = 1
-        data_test = data_test.convert_objects(convert_numeric=True).dropna()
-        X = data_test.ix[:, 1:9]
-        Y = data_test.ix[:, 10]
-        return np.array(X), Y[:, np.newaxis]
+        # uncomment these lines to read directly from original file
+        # data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
+        # # replacing Y values with -1 and 1
+        # data_test.loc[data_test[10] == 2, 10] = -1
+        # data_test.loc[data_test[10] == 4, 10] = 1
+        # data_test = data_test.convert_objects(convert_numeric=True).dropna()
+        # X = data_test.ix[:, 1:9]
+        # Y = data_test.ix[:, 10]
+        # return np.array(X), Y[:, np.newaxis]
+        data = []
+        for i in range(1, 6):
+            train = pandas.read_csv('../data/wisconsin_cancer/train_' + str(i) + '.csv', header=None)
+            test = pandas.read_csv('../data/wisconsin_cancer/test_' + str(i) + '.csv', header=None)
+            data.append({
+                'train_Y': train.ix[:, 0].values[:, np.newaxis],
+                'train_X': train.ix[:, 1:].values,
+                'test_Y': test.ix[:, 0].values[:, np.newaxis],
+                'test_X': test.ix[:, 1:].values,
+                'id': i
+            })
+
+        return data
+
 
     @staticmethod
     def USPS_data():
