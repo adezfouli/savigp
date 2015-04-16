@@ -29,7 +29,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 2000
+        return 20000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain):
@@ -114,7 +114,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_iter = 100
+        opt_iter = 200
         tol=1e-3
         total_time = None
         timer_per_iter = None
