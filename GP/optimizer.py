@@ -190,7 +190,7 @@ class Optimizer:
                     d = Optimizer.BFGS(model, max_fun=min(max_fun, opt_iter), verbose=verbose)
                     total_evals += d['funcalls']
 
-                if total_evals > max_fun:
+                if (total_evals is not None) and total_evals > max_fun:
                     break
 
         except KeyboardInterrupt:
