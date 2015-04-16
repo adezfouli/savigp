@@ -63,6 +63,7 @@ class SAVIGP(Model):
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
         self.num_like_params = self.cond_likelihood.get_num_params()
         self.is_exact_ell = exact_ell
+        self.cached_ell=None
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -325,6 +326,7 @@ class SAVIGP(Model):
 
         if Configuration.MoG in self.config_list or \
             Configuration.LL in self.config_list or \
+            self.cached_ell is None or \
             (Configuration.HYPER in self.config_list and self.sparse):
             A, Kzx, K = self._get_A_K(X)
             for n in range(len(X)):
@@ -390,16 +392,18 @@ class SAVIGP(Model):
                     for j in range(self.num_latent_proc):
                         d_ell_dm[k, j, :] = self.MoG.pi[k] / n_sample * cho_solve((self.chol[j, :, :], True), d_ell_dm[k, j, :])
                         d_ell_ds[k, j, :] = self.MoG.pi[k] / n_sample / 2. * d_ell_ds[k, j, :]
+            if not self.is_exact_ell:
+                total_ell /= n_sample
+
+            self.cached_ell = total_ell
 
         d_ell_dPi = d_ell_dPi / n_sample
 
         d_ell_d_hyper /= n_sample
         d_ell_d_ll /= n_sample
 
-        if not self.is_exact_ell:
-            total_ell /= n_sample
 
-        return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+        return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
     def dKzxn_dhyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
