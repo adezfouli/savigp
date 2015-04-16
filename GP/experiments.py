@@ -106,18 +106,23 @@ class Experiments:
         opt_max_fun_evals = None
         opt_iter = 200
         tol=1e-3
+        total_time = None
+        timer_per_iter = None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+            _. timer_per_iter, total_time = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+            _, timer_per_iter, total_time = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
+            _, timer_per_iter, total_time = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
             if 'll' in to_optimize and 'hyp' in to_optimize:
@@ -141,7 +146,9 @@ class Experiments:
                                                 'opt_iter': opt_iter,
                                                 'tol': tol,
                                                 'run_id': run_id,
-                                                'experiment': name
+                                                'experiment': name,
+                                                'total_time': total_time,
+                                                'time_per_iter': timer_per_iter
                                                 },
 
                                         )
