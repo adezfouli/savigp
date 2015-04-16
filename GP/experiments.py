@@ -103,7 +103,7 @@ class Experiments:
         Xtrain = transformer.transform_X(Xtrain)
         Xtest = transformer.transform_X(Xtest)
 
-        opt_max_fun_evals = 100000
+        opt_max_fun_evals = None
         opt_iter = 200
         tol=1e-3
         if method == 'full':
