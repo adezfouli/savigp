@@ -112,7 +112,7 @@ class Experiments:
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            _. timer_per_iter, total_time = \
+            _, timer_per_iter, total_time = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
@@ -153,7 +153,7 @@ class Experiments:
                                                 },
 
                                         )
-        return name
+        return folder_name
 
     @staticmethod
     def boston_data(config):

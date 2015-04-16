@@ -228,11 +228,11 @@ class SAVIGP_Test:
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
                                            'test_' + Experiments.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog'], IdentityTransformation))
+                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation))
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
                                            'test_' + Experiments.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog'], IdentityTransformation))
+                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation))
 
         PlotOutput.plot_output('test', Experiments.get_output_path(), names, None, False)
 
