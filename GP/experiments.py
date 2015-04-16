@@ -43,6 +43,16 @@ class Experiments:
                                     )
                     , delimiter=',', comments='')
 
+
+    @staticmethod
+    def export_track(name, track):
+        path = Experiments.get_output_path() + name +'/'
+        check_dir_exists(path)
+        file_name = 'obj_track_'
+        np.savetxt(path + file_name + '.csv', np.array([track]).T,
+                   header='objective'
+                    , delimiter=',', comments='')
+
     @staticmethod
     def export_model(model, name):
         path = Experiments.get_output_path() + name +'/'
@@ -108,21 +118,22 @@ class Experiments:
         tol=1e-3
         total_time = None
         timer_per_iter = None
-        verbose=False
+        verbose=True
+        tracker=None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
-            _, timer_per_iter, total_time = \
+            _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            _, timer_per_iter, total_time = \
+            _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
-            _, timer_per_iter, total_time = \
+            _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
@@ -131,6 +142,8 @@ class Experiments:
 
         y_pred, var_pred = m.predict(Xtest)
         folder_name =  name + '_' + Experiments.get_ID()
+        if not (tracker is None):
+            Experiments.export_track(folder_name, tracker)
         Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
         Experiments.export_test(folder_name,
                                 transformer.untransform_X(Xtest),

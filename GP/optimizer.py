@@ -49,7 +49,7 @@ class Optimizer:
         return d
 
     @staticmethod
-    def get_f_f_grad_from_model(model, x0, opt_indices, verbose=False):
+    def get_f_f_grad_from_model(model, x0, opt_indices, tracker, verbose=False):
         last_x = np.empty((1, x0.shape[0]))
 
         def update(x):
@@ -63,7 +63,9 @@ class Optimizer:
         def f(X=None):
             if X is not None:
                 update(X)
-            return model.objective_function()
+            obj = model.objective_function()
+            tracker.append(obj)
+            return obj
 
         def f_grad(X=None):
             if X is not None:
@@ -86,10 +88,11 @@ class Optimizer:
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
+        tracker = []
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, verbose=verbose)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
-        return d
+        return d, tracker
 
     @staticmethod
     def CG(model, opt_indices=None, verbose=False):
@@ -148,6 +151,7 @@ class Optimizer:
         start=time.time()
         total_evals = 0
         last_param = None
+        obj_track = []
         try:
             while not converged:
                 if 'mog' in method:
@@ -158,10 +162,11 @@ class Optimizer:
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     # d = Optimizer.general(model, verbose=verbose)
+                    obj_track += tracker
                     total_evals += d['funcalls']
 
                 # check for convergence
@@ -180,7 +185,8 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    obj_track += tracker
                     total_evals += d['funcalls']
 
                 if 'll' in method:
@@ -189,7 +195,8 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.LL
                     ])
-                    d = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    obj_track += tracker
                     total_evals += d['funcalls']
 
                 if not (max_fun is None) and total_evals > max_fun:
@@ -200,4 +207,4 @@ class Optimizer:
             if total_evals == 0:
                 total_evals = float('Nan')
         end=time.time()
-        return model, (end - start) / total_evals, (end - start)
+        return model, (end - start) / total_evals, (end - start), obj_track
