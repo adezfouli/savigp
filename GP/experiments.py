@@ -1,3 +1,4 @@
+from data_transformation import MeanTransformation
 from plot_results import PlotOutput
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
@@ -94,31 +95,41 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
-                  sparsify_factor, to_optimize):
+                  sparsify_factor, to_optimize, trans_class):
+
+        transformer = trans_class.get_transformation(Ytrain, Xtrain)
+        Ytrain = transformer.transform_Y(Ytrain)
+        Ytest = transformer.transform_Y(Ytest)
+        Xtrain = transformer.transform_X(Xtrain)
+        Xtest = transformer.transform_X(Xtest)
+
         opt_max_fun_evals = 100000
-        opt_iter = 3
+        opt_iter = 200
         tol=1e-3
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
-            y_pred, var_pred = m.predict(Xtest)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
-            y_pred, var_pred = m.predict(Xtest)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, 0.001, False)
             Optimizer.optimize_model(m, opt_max_fun_evals, True, to_optimize, tol, opt_iter)
-            y_pred, var_pred = m.predict(Xtest)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain)
-            m.optimize('bfgs')
-            y_pred, var_pred = m.predict(Xtest)
-        Experiments.export_train(name, Xtrain, Ytrain)
-        Experiments.export_test(name, Xtest, Ytest, [y_pred], [var_pred], [''])
+            if 'll' in to_optimize and 'hyp' in to_optimize:
+                m.optimize('bfgs')
+
+        y_pred, var_pred = m.predict(Xtest)
+        Experiments.export_train(name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
+        Experiments.export_test(name,
+                                transformer.untransform_X(Xtest),
+                                transformer.untransform_Y(Ytest),
+                                [transformer.untransform_Y(y_pred)],
+                                [transformer.untransform_Y_var(var_pred)], [''])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m, name)
         Experiments.export_configuration(name, {'method': method,
@@ -156,7 +167,7 @@ class Experiments:
             cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
             names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll']))
+                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation))
         return names
 
     @staticmethod

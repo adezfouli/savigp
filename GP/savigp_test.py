@@ -1,4 +1,7 @@
 from data_source import DataSource
+from data_transformation import MeanTransformation, IdentityTransformation
+from experiments import Experiments
+from plot_results import PlotOutput
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
 
@@ -199,6 +202,42 @@ class SAVIGP_Test:
         return m
 
     @staticmethod
+    def test_savigp(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        names = []
+        num_input_samples = 10
+        gaussian_sigma = .2
+
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
+        train_n = int(0.5 * num_input_samples)
+
+        Xtrain = X[:train_n, :]
+        Ytrain = Y[:train_n, :]
+        Xtest = X[train_n:, :]
+        Ytest = Y[train_n:, :]
+        kernel1 = Experiments.get_kernels(Xtrain.shape[1], 1)
+        kernel2 = Experiments.get_kernels(Xtrain.shape[1], 1)
+        gaussian_sigma = 1.0
+
+        #number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+        cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
+
+        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
+                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+                                     num_samples, sparsify_factor, ['mog'], IdentityTransformation))
+
+        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
+                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+                                     num_samples, sparsify_factor, ['mog'], IdentityTransformation))
+
+        PlotOutput.plot_output('test', Experiments.get_output_path(), names, None, False)
+
+
+    @staticmethod
     def test_gp(plot=False, method='full'):
         # note that this test fails without latent noise in the case of full Gaussian
         np.random.seed(111)
@@ -250,4 +289,5 @@ class SAVIGP_Test:
 if __name__ == '__main__':
     # SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
-    SAVIGP_Test.test_grad()
+    # SAVIGP_Test.test_grad()
+    SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})
