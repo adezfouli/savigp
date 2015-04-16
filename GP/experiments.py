@@ -118,7 +118,7 @@ class Experiments:
         tol=1e-3
         total_time = None
         timer_per_iter = None
-        verbose=True
+        verbose=False
         tracker=None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
