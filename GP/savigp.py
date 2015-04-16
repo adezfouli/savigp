@@ -67,6 +67,7 @@ class SAVIGP(Model):
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
+        np.random.seed(12000)
         for j in range(self.num_latent_proc):
             if self.num_inducing == X.shape[0]:
                 i = range(self.X.shape[0])
