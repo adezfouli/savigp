@@ -3,7 +3,7 @@ import math
 import os
 from matplotlib.pyplot import show, ion, savefig
 import pandas
-from pandas.util.testing import DataFrame
+from pandas.util.testing import DataFrame, Series
 from util import check_dir_exists
 import numpy as np
 
@@ -26,30 +26,43 @@ class PlotOutput:
                 Yvar = data_test['Yvar_pred__0']
 
                 if data_config['ll'] in ['UnivariateGaussian']:
-                    graphs['SSE'][PlotOutput.config_to_str(data_config)] = (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean()
-                    graphs['NLPD'][PlotOutput.config_to_str(data_config)] = 0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar)
+                    PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config),
+                                           (Ypred - Ytrue)**2 / ((Y_mean - Ytrue) **2).mean())
+                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
+                                           0.5*(Ytrue-Ypred) ** 2./Yvar+np.log(2*math.pi*Yvar))
 
                 if data_config['ll'] in ['LogisticLL']:
-                    graphs['ER'][PlotOutput.config_to_str(data_config)] = np.array([(((Ypred > 0.5) & (Ytrue == -1))
+                    PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array([(((Ypred > 0.5) & (Ytrue == -1))
                                                                  | ((Ypred < 0.5) & (Ytrue == 1))
-                                                                 ).mean()])
-                    graphs['NLPD'][PlotOutput.config_to_str(data_config)] = -np.log((-Ytrue + 1) / 2 + Ytrue * Ypred)
+                                                                 ).mean()]))
+                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
+                                           -np.log((-Ytrue + 1) / 2 + Ytrue * Ypred))
 
 
         for n, g in graphs.iteritems():
             if g:
-                g= DataFrame(g)
                 ion()
                 if n in ['SSE', 'NLPD']:
+                    g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
                     g.plot(kind='box', title=n)
                 if n in ['ER']:
-                    ax =g.plot(kind='bar', title=n)
+                    g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
+                    m = g.mean()
+                    errors = g.std()
+                    ax =m.plot(kind='bar', yerr=errors, title=n)
                     patches, labels = ax.get_legend_handles_labels()
                     ax.legend(patches, labels, loc='lower center')
                 if export_pdf:
                     check_dir_exists(infile_path + name + '/graphs/')
                     savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
                 show(block=True)
+
+    @staticmethod
+    def add_to_list(l, name, value):
+        if not (name in l):
+            l[name] = value
+        else:
+            l[name] = np.hstack((l[name], value))
 
     @staticmethod
     def config_to_str(config):
