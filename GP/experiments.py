@@ -136,7 +136,7 @@ class Experiments:
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_iter)
         if method == 'gp':
-            m = GPy.models.GPRegression(Xtrain, Ytrain)
+            m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
                 m.optimize('bfgs')
 
