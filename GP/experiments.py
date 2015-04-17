@@ -181,7 +181,7 @@ class Experiments:
             Xtest = d['test_X']
             Ytest = d['test_Y']
             name = 'boston'
-            kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
+            kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
             gaussian_sigma = np.var(Ytrain)/4 + 1e-4
 
             #number of inducing points
@@ -240,8 +240,8 @@ class Experiments:
 
 
     @staticmethod
-    def get_kernels(input_dim, num_latent_proc):
-        return [GPy.kern.RBF(input_dim, variance=1, lengthscale=np.array((1.,))) for j in range(num_latent_proc)]
+    def get_kernels(input_dim, num_latent_proc, ARD):
+        return [GPy.kern.RBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
 
     @staticmethod
     def gaussian_1D_data():
