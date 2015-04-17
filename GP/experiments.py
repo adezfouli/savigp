@@ -29,7 +29,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 20000
+        return 2000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain):
@@ -46,7 +46,7 @@ class Experiments:
 
     @staticmethod
     def export_track(name, track):
-        path = Experiments.get_output_path() + name +'/'
+        path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'obj_track_'
         np.savetxt(path + file_name + '.csv', np.array([track]).T,
@@ -182,7 +182,7 @@ class Experiments:
             Ytest = d['test_Y']
             name = 'boston'
             kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
-            gaussian_sigma = 1.0
+            gaussian_sigma = np.var(Ytrain)/4 + 1e-4
 
             #number of inducing points
             num_inducing = int(Xtrain.shape[0] * sparsify_factor)
