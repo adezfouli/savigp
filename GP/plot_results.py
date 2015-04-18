@@ -47,7 +47,7 @@ class PlotOutput:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
                     p = g.quantile(0.975)
                     ax = g.plot(kind='box', title=n)
-                    ax.set_ylim(ax.get_ylim()[0], p.max())
+                    # ax.set_ylim(ax.get_ylim()[0], p.max())
                     # ax.axhline(y=0.1, linewidth=4, color='r')
                 if n in ['ER']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
