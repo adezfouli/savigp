@@ -33,10 +33,10 @@ class ExperimentRunner:
 
     @staticmethod
     def plot():
-        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                            lambda x: (x['m'] in ['mix2']), False)
+        #                            lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
+        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+                                   None, False)
         #
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
