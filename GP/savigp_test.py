@@ -226,15 +226,15 @@ class SAVIGP_Test:
         num_samples = Experiments.get_number_samples()
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
+        n1, _ = Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
                                            'test_' + Experiments.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation))
+                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
 
-        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
+        n2, _ =Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
                                            'test_' + Experiments.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation))
+                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
 
-        PlotOutput.plot_output('test', Experiments.get_output_path(), names, None, False)
+        PlotOutput.plot_output('test', Experiments.get_output_path(), [n1, n2], None, False)
 
 
     @staticmethod
@@ -289,5 +289,5 @@ class SAVIGP_Test:
 if __name__ == '__main__':
     # SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
-    # SAVIGP_Test.test_grad()
-    SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})
+    SAVIGP_Test.test_grad()
+    # SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})

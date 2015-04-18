@@ -166,7 +166,7 @@ class Experiments:
                                                 },
 
                                         )
-        return folder_name
+        return folder_name, m
 
     @staticmethod
     def boston_data(config):
