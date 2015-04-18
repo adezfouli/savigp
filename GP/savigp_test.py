@@ -207,7 +207,7 @@ class SAVIGP_Test:
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
         names = []
-        num_input_samples = 10
+        num_input_samples = 20
         gaussian_sigma = .2
 
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
@@ -217,8 +217,8 @@ class SAVIGP_Test:
         Ytrain = Y[:train_n, :]
         Xtest = X[train_n:, :]
         Ytest = Y[train_n:, :]
-        kernel1 = Experiments.get_kernels(Xtrain.shape[1], 1)
-        kernel2 = Experiments.get_kernels(Xtrain.shape[1], 1)
+        kernel1 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+        kernel2 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
         gaussian_sigma = 1.0
 
         #number of inducing points

@@ -115,7 +115,7 @@ class Experiments:
 
         opt_max_fun_evals = None
         opt_iter = 200
-        tol=1e-3
+        tol=1e-4
         total_time = None
         timer_per_iter = None
         verbose=False

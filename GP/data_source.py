@@ -17,7 +17,7 @@ class DataSource:
     def normal_generate_samples(n_samples, var):
         num_samples = n_samples
         noise = var
-        num_in = 1
+        num_in = 3
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
         # X = preprocessing.scale(X)
         X.sort(axis=0)
