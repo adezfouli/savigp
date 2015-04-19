@@ -63,7 +63,10 @@ class SAVIGP(Model):
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
         self.num_like_params = self.cond_likelihood.get_num_params()
         self.is_exact_ell = exact_ell
-        self.cached_ell=None
+
+        self.cached_ell = None
+        self.cached_ent = None
+        self.cached_cross = None
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
@@ -159,22 +162,26 @@ class SAVIGP(Model):
             self.hyper_params = self.kernel_hyp_params()
             grad_hyper = np.zeros(self.hyper_params.shape)
 
-        if Configuration.ENTROPY in self.config_list:
-            self.ll += self._l_ent()
+        if Configuration.ENTROPY in self.config_list or (self.cached_ent is None):
+            self.cached_ent = self._l_ent()
             if Configuration.MoG in self.config_list:
                 grad_m += self._d_ent_d_m()
                 grad_s += self._transformed_d_ent_d_S()
                 grad_pi += self._d_ent_d_pi()
+        self.ll += self.cached_ent
 
-        if Configuration.CROSS in self.config_list:
+        if Configuration.CROSS in self.config_list or (self.cached_cross is None):
             xcross, xdcorss_dpi = self._cross_dcorss_dpi(0)
-            self.ll += xcross
+            self.cached_cross = xcross
             if Configuration.MoG in self.config_list:
                 grad_m += self._dcorss_dm()
                 grad_s += self.transform_dcorss_dS()
                 grad_pi += xdcorss_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += self._dcross_dhyper()
+
+        self.ll += self.cached_cross
+
 
         if Configuration.ELL in self.config_list:
             pX, pY = self._get_data_partition()
