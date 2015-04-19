@@ -76,7 +76,7 @@ class UnivariateGaussian(Likelihood):
 
     def set_params(self, p):
         self.sigma = math.exp(p[0])
-        self.const = -1.0 / 2 * np.log(self.sigma) - 1 / 2 * np.log(2 * math.pi)
+        self.const = -1.0 / 2 * np.log(self.sigma) - 1.0 / 2 * np.log(2 * math.pi)
         self.const_grad = -1.0 / 2 / self.sigma
 
     def get_sigma(self):
