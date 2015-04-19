@@ -173,6 +173,7 @@ class Optimizer:
                 new_params = model.get_params()
                 if last_param is not None:
                     if np.mean(np.absolute(new_params - last_param)) < epsilon:
+                        print 'best obj found: ', model.objective_function()
                         break
                     print 'diff:', np.mean(np.absolute(new_params - last_param))
                 last_param = new_params
