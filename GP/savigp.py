@@ -80,6 +80,7 @@ class SAVIGP(Model):
 
         # Z is Q * M * D
         self.Z = Z
+        self.Kzz = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
@@ -136,7 +137,8 @@ class SAVIGP(Model):
 
     def _update_inverses(self):
         for j in range(self.num_latent_proc):
-            self.chol[j, :, :] = jitchol(self.kernels_latent[j].K(self.Z[j, :, :]))
+            self.Kzz[j, :, :] = self.kernels_latent[j].K(self.Z[j, :, :])
+            self.chol[j, :, :] = jitchol(self.Kzz[j, :, :])
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
 
