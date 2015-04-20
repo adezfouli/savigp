@@ -103,10 +103,12 @@ class MoG_SingleComponent(MoG):
     # def tr_A_mult_S(self, A, k, j):
     #     return trace(cho_solve((A, True), self.s[k,j]))
 
-    def tr_A_mult_S(self, L, k, j):
+    def tr_Ainv_mult_S(self, L, k, j):
         a = solve_triangular(L, self.L[k, j, :], lower=True)
         return tr_AB(a.T, a)
 
+    def tr_A_mult_S(self, A, k, j):
+        return tr_AB(A, self.s[k, j, :])
 
     def C_m(self, j, k, l):
         return mdot(self.invC_klj[k, l, j], (self.m[k, j, :] - self.m[l, j, :]))
@@ -117,8 +119,13 @@ class MoG_SingleComponent(MoG):
                 (self.m[k, j, :] - self.m[l, j, :]).T, self.invC_klj[k, l, j]))
 
 
-    def dAS_dS(self, L, k, j):
+    def dAinvS_dS(self, L, k, j):
         tmp = 2 * cho_solve((L, True), self.L[k,j])
+        tmp[np.diag_indices_from(tmp)] *= self.L[k,j][np.diag_indices_from(tmp)]
+        return tmp[np.tril_indices_from(self.L[k,j])]
+
+    def dAS_dS(self, S, k, j):
+        tmp = 2 * mdot(S, self.L[k,j])
         tmp[np.diag_indices_from(tmp)] *= self.L[k,j][np.diag_indices_from(tmp)]
         return tmp[np.tril_indices_from(self.L[k,j])]
 

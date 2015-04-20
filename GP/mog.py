@@ -92,7 +92,7 @@ class MoG:
         """ :return N_j(m_k|m_l, S_l + S_k)"""
         raise NotImplementedError
 
-    def tr_A_mult_S(self, A, k, j):
+    def tr_Ainv_mult_S(self, A, k, j):
         """ :return  trace(A S_kj) """
         raise NotImplementedError
 
@@ -112,9 +112,14 @@ class MoG:
         """ :return  m_kj m_kj^T s_kj  """
         raise NotImplementedError
 
-    def dAS_dS(self, L, k, j):
-        """ :return  dAS dS  """
+    def dAinvS_dS(self, L, k, j):
+        """ :return  dA^{-1}S dS  """
         raise NotImplementedError
+
+    def dAS_dS(self, L, k, j):
+        """ :return  dA^{-1}S dS  """
+        raise NotImplementedError
+
 
     def Sa(self, a, k, j):
         """ :return  S_kj a  """

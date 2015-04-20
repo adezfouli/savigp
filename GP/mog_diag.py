@@ -64,8 +64,11 @@ class MoG_Diag(MoG):
         self.s = np.exp(sa).reshape((self.num_comp, self.num_process, self.num_dim))
         self.log_s = sa.reshape((self.num_comp, self.num_process, self.num_dim))
 
+    def tr_Ainv_mult_S(self, L, k, j):
+        return np.dot(np.diagonal(inv_chol(L)), self.s[k,j,:])
+
     def tr_A_mult_S(self, A, k, j):
-        return np.dot(np.diagonal(inv_chol(A)), self.s[k,j,:])
+        return np.dot(np.diagonal(A), self.s[k,j,:])
 
     def C_m(self, j, k, l):
         return (self.m[k, j, :] - self.m[l, j, :]) / (self.s[l, j, :] + self.s[k, j, :])
@@ -82,8 +85,11 @@ class MoG_Diag(MoG):
     def mmTS(self, k, j):
         return mdot(self.m[k,j, np.newaxis].T, self.m[k,j, np.newaxis]) + np.diag(self.s[k,j])
 
-    def dAS_dS(self, L, k, j):
+    def dAinvS_dS(self, L, k, j):
         return np.diagonal(inv_chol(L)) * self.s[k,j,:].flatten()
+
+    def dAS_dS(self, S, k, j):
+        return np.diagonal(S) * self.s[k,j,:].flatten()
 
     def Sa(self, a, k, j):
         return a * self.s[k,j,:]
