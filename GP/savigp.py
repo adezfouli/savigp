@@ -213,7 +213,13 @@ class SAVIGP(Model):
 
     def set_configuration(self, config_list):
         self.config_list = config_list
+        self._clear_cache()
         self._update()
+
+    def _clear_cache(self):
+        self.cached_ell = None
+        self.cached_cross = None
+        self.cached_ent = None
 
     def set_params(self, p):
         """
