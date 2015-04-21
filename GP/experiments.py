@@ -114,7 +114,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_iter = 200
+        opt_iter = 15000
         tol=1e-4
         total_time = None
         timer_per_iter = None
