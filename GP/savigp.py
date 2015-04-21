@@ -289,14 +289,14 @@ class SAVIGP(Model):
         """
         return self.kernels_latent[j].Kdiag(p_X) - mdiag_dot(A, K)
 
-    def _b(self, n, j, Aj):
+    def _b(self, n, j, Aj, Kzx):
         """
         calculating [b_k(n)]j for latent process j (eq 19) for all k
         returns: a
         """
         return mdot(Aj[n, :], self.MoG.m[:, j, :].T)
 
-    def _sigma(self, n, j, Kj, Aj):
+    def _sigma(self, n, j, Kj, Aj, Kzx):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
@@ -355,8 +355,8 @@ class SAVIGP(Model):
 
                 f = np.empty((n_sample, self.num_mog_comp, self.num_latent_proc))
                 for j in range(self.num_latent_proc):
-                    mean_kj[:, j] = self._b(n, j, A[j])
-                    sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
+                    mean_kj[:, j] = self._b(n, j, A[j], Kzx)
+                    sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx)
                     for k in range(self.num_mog_comp):
                         f[:, k, j] = self.normal_samples[j, :] * math.sqrt(sigma_kj[k, j]) + mean_kj[k, j]
 
@@ -543,8 +543,8 @@ class SAVIGP(Model):
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
 
             for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b(n, j, A[j])
-                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j])
+                mean_kj[:, j] = self._b(n, j, A[j], Kzx)
+                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx)
 
             for k in range(self.num_mog_comp):
                 predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[k, :], sigma_kj[k, :])
