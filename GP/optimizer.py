@@ -205,6 +205,7 @@ class Optimizer:
 
         except KeyboardInterrupt:
             print 'interrupted by the user'
+            print 'last obj: ', model.objective_function()
             if total_evals == 0:
                 total_evals = float('Nan')
         end=time.time()
