@@ -355,8 +355,8 @@ class SAVIGP(Model):
 
                 f = np.empty((n_sample, self.num_mog_comp, self.num_latent_proc))
                 for j in range(self.num_latent_proc):
-                    mean_kj[:, j] = self._b(n, j, A[j], Kzx)
-                    sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx)
+                    mean_kj[:, j] = self._b(n, j, A[j], Kzx[j].T)
+                    sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx[j].T)
                     for k in range(self.num_mog_comp):
                         f[:, k, j] = self.normal_samples[j, :] * math.sqrt(sigma_kj[k, j]) + mean_kj[k, j]
 
@@ -401,7 +401,7 @@ class SAVIGP(Model):
                         for j in range(self.num_latent_proc):
                             Kxnz = Kzx[j, :, n]
                             d_ell_dm[k, j] += 1. / sigma_kj[k, j] * s_dell_dm[k, j] * Kxnz
-                            d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis], Kxnz) * s_dell_ds[k, j]
+                            d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis], Kxnz[:, np.newaxis].T) * s_dell_ds[k, j]
 
             if Configuration.MoG in self.config_list:
                 for k in range(self.num_mog_comp):

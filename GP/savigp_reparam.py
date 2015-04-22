@@ -1,15 +1,16 @@
 from GPy.util.linalg import mdot
 import math
+from savigp_single_comp import SAVIGP_SingleComponent
 
 __author__ = 'AT'
 
 from savigp import SAVIGP
 import numpy as np
 
-class SAVIGP_Reparam(SAVIGP):
+class SAVIGP_Reparam(SAVIGP_SingleComponent):
 
 
-    def _proj_m_grad(self, dl_dm, j):
+    def _proj_m_grad(self, j, dl_dm):
         return dl_dm
 
     def mdot_Aj(self, Ajn, Kxnz):
@@ -20,7 +21,7 @@ class SAVIGP_Reparam(SAVIGP):
         calculating [b_k(n)]j for latent process j (eq 19) for all k
         returns: a
         """
-        return mdot(Kzx, self.MoG.m[:, j, :].T)
+        return mdot(Kzx[n, :], self.MoG.m[:, j, :].T)
 
     def _sigma(self, n, j, Kj, Aj, Kzx):
         """
@@ -28,7 +29,7 @@ class SAVIGP_Reparam(SAVIGP):
         """
         if Kj[n] < 0:
             Kj[n] = 0
-        return Kj[n] + self.MoG.aSa(Kzx, j)
+        return Kj[n] + self.MoG.aSa(Kzx[n, :], j)
 
 
     def _dcorss_dm(self):
