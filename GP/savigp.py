@@ -170,6 +170,8 @@ class SAVIGP(Model):
                 grad_m += self._d_ent_d_m()
                 grad_s += self._transformed_d_ent_d_S()
                 grad_pi += self._d_ent_d_pi()
+            if Configuration.HYPER in self.config_list:
+                grad_hyper += self._dent_dhyper()
         self.ll += self.cached_ent
 
         if Configuration.CROSS in self.config_list or (self.cached_cross is None):
@@ -521,6 +523,9 @@ class SAVIGP(Model):
             dc_dh[j] = self.kernels[j].gradient.copy()
 
         return dc_dh
+
+    def _dent_dhyper(self):
+        return np.zeros((self.num_latent_proc, self.num_hyper_params))
 
     def _d_ent_d_m_kj(self, k, j):
         m_k = np.zeros(self.num_inducing)
