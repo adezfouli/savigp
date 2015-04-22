@@ -141,6 +141,13 @@ class SAVIGP_Test:
                 Configuration.ELL,
             ],
             [
+                Configuration.HYPER,
+                Configuration.ELL,
+                Configuration.ENTROPY,
+                Configuration.CROSS
+            ],
+
+            [
                 Configuration.LL,
                 Configuration.ELL,
             ]
