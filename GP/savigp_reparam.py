@@ -74,3 +74,27 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
         d_pi *= -1. / 2
         cross *= -1. / 2
         return cross, d_pi
+
+    def _dcross_K(self, j):
+        dc_dK = np.zeros((self.num_inducing, self.num_inducing))
+        for k in range(self.num_mog_comp):
+            dc_dK += -0.5 * self.MoG.pi[k] * (self.invZ[j]
+                                              + mdot(self.MoG.m[k, j, :], self.MoG.m[k, j, :].T) +
+                                              self.MoG.s[k, j, :, :]
+
+                                              )
+        return dc_dK
+
+    def _dent_dhyper(self):
+        dc_dh = np.empty((self.num_latent_proc, self.num_hyper_params))
+        for j in range(self.num_latent_proc):
+            self.kernels_latent[j].update_gradients_full(self.invZ[j], self.Z[j])
+            dc_dh[j] = self.kernels[j].gradient.copy()
+        return dc_dh
+
+
+    def _l_ent(self):
+        ent = -np.dot(self.MoG.pi,  self.log_z)
+        for j in range(self.num_latent_proc):
+            ent += self.log_detZ[j]
+        return ent
