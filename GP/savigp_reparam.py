@@ -84,7 +84,7 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
         dc_dK = np.zeros((self.num_inducing, self.num_inducing))
         for k in range(self.num_mog_comp):
             dc_dK += -0.5 * self.MoG.pi[k] * (self.invZ[j]
-                                              + mdot(self.MoG.m[k, j, :], self.MoG.m[k, j, :].T) +
+                                              + mdot(self.MoG.m[k, j, :, np.newaxis], self.MoG.m[k, j, :, np.newaxis].T) +
                                               self.MoG.s[k, j, :, :]
 
                                               )
