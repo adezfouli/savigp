@@ -30,7 +30,7 @@ class SAVIGP_Diag(SAVIGP):
         self.update_N_z()
         SAVIGP._update(self)
 
-    def mdot_Aj(self,Ajn):
+    def mdot_Aj(self, Ajn, Kxnz):
         return (Ajn[0] * Ajn[0])
 
 

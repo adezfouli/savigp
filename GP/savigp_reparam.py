@@ -8,6 +8,29 @@ import numpy as np
 
 class SAVIGP_Reparam(SAVIGP):
 
+
+    def _proj_m_grad(self, dl_dm, j):
+        return dl_dm
+
+    def mdot_Aj(self, Ajn, Kxnz):
+        return mdot(Kxnz.T, Kxnz)
+
+    def _b(self, n, j, Aj, Kzx):
+        """
+        calculating [b_k(n)]j for latent process j (eq 19) for all k
+        returns: a
+        """
+        return mdot(Kzx, self.MoG.m[:, j, :].T)
+
+    def _sigma(self, n, j, Kj, Aj, Kzx):
+        """
+        calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
+        """
+        if Kj[n] < 0:
+            Kj[n] = 0
+        return Kj[n] + self.MoG.aSa(Kzx, j)
+
+
     def _dcorss_dm(self):
         """
         calculating d corss / dm

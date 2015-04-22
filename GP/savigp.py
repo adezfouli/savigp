@@ -401,12 +401,12 @@ class SAVIGP(Model):
                         for j in range(self.num_latent_proc):
                             Kxnz = Kzx[j, :, n]
                             d_ell_dm[k, j] += 1. / sigma_kj[k, j] * s_dell_dm[k, j] * Kxnz
-                            d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis]) * s_dell_ds[k, j]
+                            d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis], Kxnz) * s_dell_ds[k, j]
 
             if Configuration.MoG in self.config_list:
                 for k in range(self.num_mog_comp):
                     for j in range(self.num_latent_proc):
-                        d_ell_dm[k, j, :] = self.MoG.pi[k] / n_sample * cho_solve((self.chol[j, :, :], True), d_ell_dm[k, j, :])
+                        d_ell_dm[k, j, :] = self.MoG.pi[k] / n_sample * self._proj_m_grad(j, d_ell_dm[k, j, :])
                         d_ell_ds[k, j, :] = self.MoG.pi[k] / n_sample / 2. * d_ell_ds[k, j, :]
             if not self.is_exact_ell:
                 total_ell /= n_sample
@@ -420,6 +420,9 @@ class SAVIGP(Model):
 
 
         return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+
+    def _proj_m_grad(self, j, dl_dm):
+        return cho_solve((self.chol[j, :, :], True), dl_dm)
 
     def dKzxn_dhyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
