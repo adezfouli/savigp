@@ -14,8 +14,7 @@ class SAVIGP_SingleComponent(SAVIGP):
 
     def init_mog(self):
         for j in range(self.num_latent_proc):
-            K = self.kernels[j].K(self.Z[j], self.Z[j])
-            self.MoG.update_covariance(j, K)
+            self.MoG.update_covariance(j, self.Kzz[j])
 
     def _update(self):
         self.update_N_z()

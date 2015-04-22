@@ -12,8 +12,7 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
 
     def init_mog(self):
         for j in range(self.num_latent_proc):
-            K = self.kernels[j].K(self.Z[j], self.Z[j])
-            self.MoG.update_covariance(j, np.eye(K.shape[0]))
+            self.MoG.update_covariance(j, self.invZ[j])
 
     def _proj_m_grad(self, j, dl_dm):
         return dl_dm
