@@ -16,6 +16,7 @@ class PlotOutput:
         graphs['SSE'] = {}
         graphs['NLPD'] = {}
         graphs['ER'] = {}
+        graph_n = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
             if filter is None or filter(data_config):
@@ -25,6 +26,10 @@ class PlotOutput:
                 Ypred = data_test['Ypred__0']
                 Ytrue = data_test['Ytrue0']
                 Yvar = data_test['Yvar_pred__0']
+
+                if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
+                    graph_n[PlotOutput.config_to_str(data_config)] = 0
+                graph_n[PlotOutput.config_to_str(data_config)] += 1
 
                 if data_config['ll'] in ['UnivariateGaussian']:
                     PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config),
@@ -43,9 +48,11 @@ class PlotOutput:
         for n, g in graphs.iteritems():
             if g:
                 ion()
+                for k in g.keys():
+                    print k, 'n: ', graph_n[k]
                 if n in ['SSE', 'NLPD']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
-                    p = g.quantile(0.975)
+                    # p = g.quantile(0.975)
                     ax = g.plot(kind='box', title=n)
                     # ax.set_ylim(ax.get_ylim()[0], p.max())
                     # ax.axhline(y=0.1, linewidth=4, color='r')
