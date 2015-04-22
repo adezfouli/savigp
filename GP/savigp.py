@@ -559,8 +559,8 @@ class SAVIGP(Model):
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
 
             for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b(n, j, A[j], Kzx)
-                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx)
+                mean_kj[:, j] = self._b(n, j, A[j], Kzx[j].T)
+                sigma_kj[:, j] = self._sigma(n, j, K[j], A[j], Kzx[j].T)
 
             for k in range(self.num_mog_comp):
                 predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[k, :], sigma_kj[k, :])
