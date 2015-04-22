@@ -92,9 +92,18 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
             dc_dh[j] = self.kernels[j].gradient.copy()
         return dc_dh
 
-
     def _l_ent(self):
         ent = -np.dot(self.MoG.pi,  self.log_z)
         for j in range(self.num_latent_proc):
             ent += self.log_detZ[j]
         return ent
+
+    def _dsigma_dhyp(self, j, k, A, Kxnz, n, xn):
+        return self.dKx_dhyper(j, xn) \
+               - self.dA_dhyper_mult_x(xn, j, A[j, n], -Kxnz.T) \
+               - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
+               2 * self.dKzxn_dhyper_mult_x(j, xn, self.MoG.Sa(Kxnz, k, j))
+
+
+    def _db_dhyp(self, j, k, A, n, xn):
+        return self.dKzxn_dhyper_mult_x(j, xn, self.MoG.m[k, j])

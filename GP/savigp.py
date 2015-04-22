@@ -320,6 +320,7 @@ class SAVIGP(Model):
             K[j] = self._Kdiag(p_X, Kzx[j, :, :], A[j], j)
         return A, Kzx, K
 
+
     def _ell(self, n_sample, X, Y, cond_log_likelihood):
 
         """
@@ -382,17 +383,14 @@ class SAVIGP(Model):
                         if self.sparse and Configuration.HYPER in self.config_list:
                             xn = X[np.newaxis, n, :]
                             Kxnz = Kzx[j, :, n]
-                            d_sigma_d_hyper = self.dKx_dhyper(j, xn) \
-                                              - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
-                                              2 * self.dA_dhyper_mult_x(xn, j, A[j, n],
-                                                                        self.MoG.Sa(A[j, n], k, j) - Kxnz.T / 2)
+                            d_sigma_d_hyper = self._dsigma_dhyp(j, k, A, Kxnz, n, xn)
+
+                            d_b_d_hyper = self._db_dhyp(j, k, A, n, xn)
 
                             # repeats f to aling it with the number of hyper params
                             fr = np.repeat(f[:, k, j, np.newaxis], self.num_hyper_params, axis=1)
-
                             tmp = 1. / sigma_kj[k, j] * d_sigma_d_hyper \
-                                  - 2. * (fr - mean_kj[k, j]) / sigma_kj[k, j] * self.dA_dhyper_mult_x(xn, j, A[j, n],
-                                                                                                       self.MoG.m[k, j]) \
+                                  - 2. * (fr - mean_kj[k, j]) / sigma_kj[k, j] * d_b_d_hyper \
                                   - ((fr - mean_kj[k, j]) ** 2) * sigma_kj[k, j] ** (-2) * d_sigma_d_hyper
 
                             d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array(
@@ -425,6 +423,16 @@ class SAVIGP(Model):
 
     def _proj_m_grad(self, j, dl_dm):
         return cho_solve((self.chol[j, :, :], True), dl_dm)
+
+    def _dsigma_dhyp(self, j, k, A, Kxnz, n, xn):
+        return self.dKx_dhyper(j, xn) \
+               - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
+               2 * self.dA_dhyper_mult_x(xn, j, A[j, n],
+                                         self.MoG.Sa(A[j, n], k, j) - Kxnz.T / 2)
+
+    def _db_dhyp(self, j, k, A, n, xn):
+        return self.dA_dhyper_mult_x(xn, j, A[j, n], self.MoG.m[k, j])
+
 
     def dKzxn_dhyper_mult_x(self, j, x_n, x):
         self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
