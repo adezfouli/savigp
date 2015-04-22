@@ -79,7 +79,7 @@ class MoG_SingleComponent(MoG):
         # self.m = np.zeros((self.num_comp, self.num_process, self.num_dim))
         for k in range(self.num_comp):
             for j in range(self.num_process):
-                self.L_flatten[k,j,:] = np.random.uniform(low=0.1, high=1.0, size=self.get_sjk_size())
+                self.L_flatten[k,j,:] = np.random.uniform(low=1.1, high=5.0, size=self.get_sjk_size())
 
     def get_sjk_size(self):
         # return self.num_dim
