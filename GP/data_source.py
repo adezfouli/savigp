@@ -57,8 +57,8 @@ class DataSource:
         # return np.array(X), Y[:, np.newaxis]
         data = []
         for i in range(1, 6):
-            train = pandas.read_csv('../data/wisconsin_cancer/train_' + str(i) + '.csv', header=None)
-            test = pandas.read_csv('../data/wisconsin_cancer/test_' + str(i) + '.csv', header=None)
+            train = pandas.read_csv('data/wisconsin_cancer/train_' + str(i) + '.csv', header=None)
+            test = pandas.read_csv('data/wisconsin_cancer/test_' + str(i) + '.csv', header=None)
             data.append({
                 'train_Y': train.ix[:, 0].values[:, np.newaxis],
                 'train_X': train.ix[:, 1:].values,
@@ -72,11 +72,11 @@ class DataSource:
 
     @staticmethod
     def USPS_data():
-        train = pandas.read_csv('../data/USPS/train.csv', header=None)
+        train = pandas.read_csv('data/USPS/train.csv', header=None)
         X_train = train.ix[:, 1:256]
         Y_train = train.ix[:, 0]
 
-        test = pandas.read_csv('../data/USPS/test.csv', header=None)
+        test = pandas.read_csv('data/USPS/test.csv', header=None)
         X_test = test.ix[:, 1:256]
         Y_test = test.ix[:, 0]
         return X_train, Y_train[:, np.newaxis], X_test, Y_test[:, np.newaxis]
@@ -86,8 +86,8 @@ class DataSource:
     def boston_data():
         data = []
         for i in range(1, 6):
-            train = pandas.read_csv('../data/boston_housing/train_' + str(i) + '.csv', header=None)
-            test = pandas.read_csv('../data/boston_housing/test_' + str(i) + '.csv', header=None)
+            train = pandas.read_csv('data/boston_housing/train_' + str(i) + '.csv', header=None)
+            test = pandas.read_csv('data/boston_housing/test_' + str(i) + '.csv', header=None)
             data.append({
                 'train_Y': train.ix[:, 0].values[:, np.newaxis],
                 'train_X': train.ix[:, 1:].values,
