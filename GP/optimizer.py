@@ -142,16 +142,17 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun, verbose, method=None, epsilon=1e-4, opt_iter=200):
+    def optimize_model(model, max_fun_evals, verbose, method=None, epsilon=1e-4, iters_per_opt=15000, max_iters=200):
         if not method:
             method=['hyp', 'mog']
-        if not (max_fun is None):
-            opt_iter = min(max_fun, opt_iter)
+        if not (max_fun_evals is None):
+            iters_per_opt = min(max_fun_evals, iters_per_opt)
         converged=False
         start=time.time()
         total_evals = 0
         last_param = None
         obj_track = []
+        current_iter = 1
         try:
             while not converged:
                 if 'mog' in method:
@@ -162,7 +163,7 @@ class Optimizer:
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     # d = Optimizer.general(model, verbose=verbose)
@@ -186,7 +187,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
@@ -196,12 +197,18 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.LL
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=opt_iter, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
-                if not (max_fun is None) and total_evals > max_fun:
+                if not (max_fun_evals is None) and total_evals > max_fun_evals:
                     break
+
+                current_iter += 1
+
+                if not (max_iters is None) and current_iter > max_iters:
+                    break
+
 
         except KeyboardInterrupt:
             print 'interrupted by the user'
