@@ -54,7 +54,7 @@ class SAVIGP_Prediction:
                                           ], 0.001, True)
 
         # Optimizer.SGD(s1, 1e-16,  s1._get_params(), 2000, verbose=False, adaptive_alpha=False)
-        _, t1, t2 = Optimizer.optimize_model(s1, max_fun=max_fun, verbose=verbose, method=['mog', 'll', 'hyp'])
+        _, t1, t2 = Optimizer.optimize_model(s1, max_fun_evals=max_fun, verbose=verbose, method=['mog', 'll', 'hyp'])
         if verbose:
             print 'parameters:', s1.get_all_params()
             print 'num_input_samples', num_input_samples
