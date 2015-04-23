@@ -29,7 +29,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 20000
+        return 2000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain):
@@ -186,7 +186,8 @@ class Experiments:
             Ytest = d['test_Y']
             name = 'boston'
             kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-            gaussian_sigma = np.var(Ytrain)/4 + 1e-4
+            # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
+            gaussian_sigma = 1.0
 
             #number of inducing points
             num_inducing = int(Xtrain.shape[0] * sparsify_factor)
