@@ -4,7 +4,7 @@ from savigp_single_comp import SAVIGP_SingleComponent
 
 __author__ = 'AT'
 
-from savigp import SAVIGP
+from savigp import SAVIGP, Configuration
 import numpy as np
 
 class SAVIGP_Reparam(SAVIGP_SingleComponent):
@@ -111,3 +111,7 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
 
     def _db_dhyp(self, j, k, A, n, xn):
         return self.dKzxn_dhyper_mult_x(j, xn, self.MoG.m[k, j])
+
+    def calculate_dhyper(self):
+        return Configuration.HYPER in self.config_list
+

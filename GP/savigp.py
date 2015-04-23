@@ -346,7 +346,7 @@ class SAVIGP(Model):
         if Configuration.MoG in self.config_list or \
             Configuration.LL in self.config_list or \
             self.cached_ell is None or \
-            (Configuration.HYPER in self.config_list and self.sparse):
+            self.calculate_dhyper():
             A, Kzx, K = self._get_A_K(X)
             for n in range(len(X)):
                 # print 'ell for point #', n
@@ -380,7 +380,7 @@ class SAVIGP(Model):
                                 sigma_kj[k, j] ** -2 * (f[:, k, j] - mean_kj[k, j]) ** 2 - sigma_kj[k, j] ** -1, cond_ll)
 
                         # for calculating hyper parameters
-                        if self.sparse and Configuration.HYPER in self.config_list:
+                        if self.calculate_dhyper():
                             xn = X[np.newaxis, n, :]
                             Kxnz = Kzx[j, :, n]
                             d_sigma_d_hyper = self._dsigma_dhyp(j, k, A, Kxnz, n, xn)
@@ -418,8 +418,10 @@ class SAVIGP(Model):
         d_ell_d_hyper /= n_sample
         d_ell_d_ll /= n_sample
 
-
         return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+
+    def calculate_dhyper(self):
+        return self.sparse and Configuration.HYPER in self.config_list
 
     def _proj_m_grad(self, j, dl_dm):
         return cho_solve((self.chol[j, :, :], True), dl_dm)
