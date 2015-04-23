@@ -1,5 +1,6 @@
 from GPy.util.linalg import mdot
 import math
+from numpy.linalg import inv
 from savigp_single_comp import SAVIGP_SingleComponent
 
 __author__ = 'AT'
@@ -12,7 +13,7 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
 
     def init_mog(self):
         for j in range(self.num_latent_proc):
-            self.MoG.update_covariance(j, self.invZ[j])
+            self.MoG.update_covariance(j, inv(self.Kzz[j] + 0.001))
 
     def _proj_m_grad(self, j, dl_dm):
         return dl_dm
