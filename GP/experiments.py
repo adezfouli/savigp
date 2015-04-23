@@ -25,7 +25,7 @@ class Experiments:
 
     @staticmethod
     def get_output_path():
-        return '../../results/'
+        return '../results/'
 
     @staticmethod
     def get_number_samples():
