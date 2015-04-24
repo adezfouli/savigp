@@ -1,6 +1,6 @@
 import math
 from GPy.util.linalg import mdot
-import nlopt
+# import nlopt
 from numpy.ma import concatenate
 from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
@@ -104,26 +104,26 @@ class Optimizer:
         fmin_cg(f, start, f_grad, epsilon=1e-6,
                 callback=lambda x: update(x))
 
-    @staticmethod
-    def NLOPT(model, algorithm, opt_indices=None, verbose=False):
-        start = model.get_params()
-        if opt_indices is None:
-            opt_indices = range(0, len(start))
-
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
-
-        def myfunc(x, grad):
-            update(x)
-            if grad.size > 0:
-                grad[:] = f_grad()
-            return f()
-
-        opt = nlopt.opt(algorithm, len(model.get_params()))
-        opt.set_min_objective(myfunc)
-        opt.set_ftol_rel(1e-3)
-        opt_x = opt.optimize(model.get_params())
-        d = {'opt_params': opt_x, 'funcalls': 1}
-        return d
+    # @staticmethod
+    # def NLOPT(model, algorithm, opt_indices=None, verbose=False):
+    #     start = model.get_params()
+    #     if opt_indices is None:
+    #         opt_indices = range(0, len(start))
+    #
+    #     f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
+    #
+    #     def myfunc(x, grad):
+    #         update(x)
+    #         if grad.size > 0:
+    #             grad[:] = f_grad()
+    #         return f()
+    #
+    #     opt = nlopt.opt(algorithm, len(model.get_params()))
+    #     opt.set_min_objective(myfunc)
+    #     opt.set_ftol_rel(1e-3)
+    #     opt_x = opt.optimize(model.get_params())
+    #     d = {'opt_params': opt_x, 'funcalls': 1}
+    #     return d
 
     @staticmethod
     def general(model, opt_indices=None, verbose=False):
