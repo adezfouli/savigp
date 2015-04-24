@@ -19,12 +19,15 @@ for i in range(0, many):
     #command = "StartConda;python myfile.py %s" % (str(i))
     job_string = """#!/bin/bash
     #PBS -N %s
+    #PBS -l vmem=16gb
     #PBS -l walltime=%s
     #PBS -l %s
+    #PBS -q short48
     #PBS -o /home/z3510738/code/output/%s.out
     #PBS -e /home/z3510738/code/error/%s.err
     #PBS -M a.dezfouli@unsw.edu.au@unsw.edu.au
     cd $PBS_O_WORKDIR
+    chmod +x ./run_job.sh
     %s""" % (job_name, walltime, processors, job_name, job_name, command)
     #"\&".join([command_N"\n"]*N) amd change ppn to N
     # Send job_string to qsub
