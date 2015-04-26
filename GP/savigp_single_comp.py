@@ -12,7 +12,8 @@ class SAVIGP_SingleComponent(SAVIGP):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
                                                      kernels, n_samples, config_list, latent_noise, is_exact_ell)
 
-    def init_mog(self):
+    def init_mog(self, init_m):
+        super(SAVIGP_SingleComponent, self).init_mog(init_m)
         for j in range(self.num_latent_proc):
             self.MoG.update_covariance(j, self.Kzz[j])
 

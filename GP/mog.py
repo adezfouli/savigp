@@ -60,6 +60,11 @@ class MoG:
     def get_m_size(self):
         return self.num_comp * self.num_process * self.num_dim
 
+    def updata_mean(self, j, mj):
+        for k in range(self.num_comp):
+            self.m[k, j, :] = mj.copy()
+        self._update()
+
     def update_covariance(self, j, Sj):
         """ updates covariance matrix j using Sj """
         raise NotImplementedError
