@@ -9,5 +9,6 @@
 #PBS -M a.dezfouli@unsw.edu.au
 #PBS -m unsw_job_finished
 cd $PBS_O_WORKDIR
+cd /home/z3510738/code/savigp/clust/
 chmod +x ./run_job.sh
 ./run_job.sh 0
