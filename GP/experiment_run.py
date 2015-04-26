@@ -54,7 +54,7 @@ def run_config(config):
 
 def run_config_serial(config):
     for c in config:
-        getattr(Experiments, c['method_to_run'])(c)
+        run_config(c)
 
 if __name__ == '__main__':
     n_process = 48
