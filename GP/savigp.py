@@ -1,6 +1,7 @@
 import GPy
 from atom.enum import Enum
 from scipy.misc import logsumexp
+from sklearn.cluster import MiniBatchKMeans, KMeans
 from mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
 import math
@@ -63,6 +64,7 @@ class SAVIGP(Model):
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
         self.num_like_params = self.cond_likelihood.get_num_params()
         self.is_exact_ell = exact_ell
+        self.num_data_points = X.shape[0]
 
         self.cached_ell = None
         self.cached_ent = None
@@ -70,13 +72,24 @@ class SAVIGP(Model):
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
 
+        init_m = np.empty(self.num_inducing)
         np.random.seed(12000)
-        for j in range(self.num_latent_proc):
-            if self.num_inducing == X.shape[0]:
-                i = range(self.X.shape[0])
+
+        if self.num_inducing == X.shape[0]:
+            for j in range(self.num_latent_proc):
+                Z[j, :, :] = X.copy()
+            init_m = np.mean(Y, axis=1)
+        else:
+            if (self.num_inducing < self.num_data_points / 10) and self.num_data_points > 10000:
+                clst = MiniBatchKMeans(self.num_inducing)
             else:
-                i = np.random.permutation(X.shape[0])[:self.num_inducing]
-            Z[j, :, :] = X[i].copy()
+                clst = KMeans(self.num_inducing)
+            c = clst.fit_predict(X)
+            centers = clst.cluster_centers_
+            for zi in range(self.num_inducing):
+                init_m[zi] = Y[np.where(c == zi)[0], :].mean()
+            for j in range(self.num_latent_proc):
+                Z[j, :, :] = centers.copy()
 
         # Z is Q * M * D
         self.Z = Z
@@ -93,7 +106,7 @@ class SAVIGP(Model):
 
         self._update_inverses()
 
-        self.init_mog()
+        self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
 
@@ -102,8 +115,9 @@ class SAVIGP(Model):
         for j in range(len(self.kernels)):
             self.kernels_latent.append(self.kernels[j] + GPy.kern.White(self.X.shape[1], variance=self.latent_noise))
 
-    def init_mog(self):
-        pass
+    def init_mog(self, init_m):
+        for j in range(self.num_latent_proc):
+            self.MoG.updata_mean(j, init_m)
 
     def rand_init_mog(self):
         self.MoG.random_init()

@@ -178,24 +178,24 @@ class Experiments:
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
         data = DataSource.boston_data()
+        d = data[config['run_id'] - 1]
         names = []
-        for d in data:
-            Xtrain = d['train_X']
-            Ytrain = d['train_Y']
-            Xtest = d['test_X']
-            Ytest = d['test_Y']
-            name = 'boston'
-            kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-            # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
-            gaussian_sigma = 1.0
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'boston'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+        # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
+        gaussian_sigma = 1.0
 
-            #number of inducing points
-            num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-            num_samples = Experiments.get_number_samples()
-            cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
+        #number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+        cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-            names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                         num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation))
+        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation))
         return names
 
     @staticmethod

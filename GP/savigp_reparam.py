@@ -1,17 +1,17 @@
+__author__ = 'AT'
+
+
 from GPy.util.linalg import mdot
 import math
 from numpy.linalg import inv
 from savigp_single_comp import SAVIGP_SingleComponent
-
-__author__ = 'AT'
-
 from savigp import SAVIGP, Configuration
 import numpy as np
 
 class SAVIGP_Reparam(SAVIGP_SingleComponent):
 
-
-    def init_mog(self):
+    def init_mog(self, init_m):
+        super(SAVIGP_SingleComponent, self).init_mog(init_m)
         for j in range(self.num_latent_proc):
             self.MoG.update_covariance(j, inv(self.Kzz[j] + 0.001))
 
