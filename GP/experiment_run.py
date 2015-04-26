@@ -10,8 +10,8 @@ class ExperimentRunner:
         configs = []
         expr_names = [Experiments.boston_data.__name__]
         # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
-        methods = ['full']
-        sparse_factor = [1.0, 0.9, 0.8, 0.4, 0.1, 0.2]
+        methods = ['full', 'mix1', 'mix2']
+        sparse_factor = [1.0, 0.9, 0.8, 0.6, 0.4, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
             for m in methods:
@@ -52,7 +52,7 @@ def run_config(config):
     print 'finished config: ', config
 
 if __name__ == '__main__':
-    n_process = 4
+    n_process = 48
     p = Pool(n_process)
     p.map(run_config, ExperimentRunner.get_configs())
     # ExperimentRunner.boston_experiment()

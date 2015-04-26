@@ -1,12 +1,13 @@
 #!/bin/bash
 #PBS -N adezfouli_
-#PBS -l walltime=10:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -l vmem=8gb
+#PBS -l walltime=15:00:00
+#PBS -l nodes=1:ppn=48
+#PBS -l vmem=48gb
+#PBS -l mem=48gb
 #PBS -q short48
 #PBS -o /home/z3510738/code/output/adezfouli__test.out
 #PBS -e /home/z3510738/code/error/adezfouli__test.err
-#PBS -M a.dezfouli@unsw.edu.au@unsw.edu.au
+#PBS -M a.dezfouli@unsw.edu.au
 #PBS -m unsw_job_finished
 cd $PBS_O_WORKDIR
 chmod +x ./run_job.sh
