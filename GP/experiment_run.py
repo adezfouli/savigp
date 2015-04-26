@@ -8,20 +8,22 @@ class ExperimentRunner:
     @staticmethod
     def get_configs():
         configs = []
-        # expr_names = [Experiments.boston_data.__name__]
-        expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
-        methods = ['mix1', 'mix2', 'full']
-        sparse_factor = [1.0]
+        expr_names = [Experiments.boston_data.__name__]
+        # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
+        methods = ['full']
+        sparse_factor = [1.0, 0.9, 0.8, 0.4, 0.1, 0.2]
+        run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
             for m in methods:
                 for s in sparse_factor:
-                    configs.append({'method': m, 'sparse_factor': s, 'method_to_run': e})
+                    for run_id in run_ids:
+                        configs.append({'method': m, 'sparse_factor': s, 'method_to_run': e, 'run_id': run_id})
 
         return configs
 
     @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'full', 'sparse_factor': 1.0})
+        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3})
 
     @staticmethod
     def wisconsin_breast_experiment():
@@ -36,7 +38,7 @@ class ExperimentRunner:
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   None, False)
+                                   lambda x: x['method'] == 'full' , False)
         #
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
@@ -45,13 +47,15 @@ class ExperimentRunner:
         #                        lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
 
 def run_config(config):
+    print 'started config: ', config
     getattr(Experiments, config['method_to_run'])(config)
+    print 'finished config: ', config
 
 if __name__ == '__main__':
-    # n_process = 4
-    # p = Pool(n_process)
-    # p.map(run_config, ExperimentRunner.get_configs())
-    ExperimentRunner.boston_experiment()
+    n_process = 4
+    p = Pool(n_process)
+    p.map(run_config, ExperimentRunner.get_configs())
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.plot()
