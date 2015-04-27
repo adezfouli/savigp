@@ -1,10 +1,10 @@
 #!/bin/bash
-#PBS -N adezfouli_
+#PBS -N adezfouli_wisc
 #PBS -l walltime=15:00:00
 #PBS -l nodes=1:ppn=64
 #PBS -q short64
-#PBS -o /home/z3510738/code/output/adezfouli__test.out
-#PBS -e /home/z3510738/code/error/adezfouli__test.err
+#PBS -o /home/z3510738/code/output/adezfouli__wisconsin.out
+#PBS -e /home/z3510738/code/error/adezfouli__wisconsin.err
 #PBS -M a.dezfouli@unsw.edu.au
 #PBS -m unsw_job_finished
 cd $PBS_O_WORKDIR
