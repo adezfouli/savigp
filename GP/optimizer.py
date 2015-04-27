@@ -179,6 +179,16 @@ class Optimizer:
                     print 'diff:', np.mean(np.absolute(new_params - last_param))
                 last_param = new_params
 
+                if 'll' in method:
+                    print 'll params'
+                    model.set_configuration([
+                        Configuration.ELL,
+                        Configuration.LL
+                    ])
+                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
+                    obj_track += tracker
+                    total_evals += d['funcalls']
+
                 if 'hyp' in method:
                     print 'hyp params'
                     model.set_configuration([
@@ -191,15 +201,6 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
-                if 'll' in method:
-                    print 'll params'
-                    model.set_configuration([
-                        Configuration.ELL,
-                        Configuration.LL
-                    ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
-                    obj_track += tracker
-                    total_evals += d['funcalls']
 
                 if not (max_fun_evals is None) and total_evals > max_fun_evals:
                     break
