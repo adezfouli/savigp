@@ -27,7 +27,7 @@ class ExperimentRunner:
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0})
+        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1})
 
     @staticmethod
     def USPS_experiment():
@@ -64,8 +64,8 @@ if __name__ == '__main__':
     n_process = 64
     # p = Pool(n_process)
     # p.map(run_config, ExperimentRunner.get_configs())
-    run_config_serial(ExperimentRunner.get_configs())
+    # run_config_serial(ExperimentRunner.get_configs())
     # ExperimentRunner.boston_experiment()
-    # ExperimentRunner.wisconsin_breast_experiment()
+    ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.plot()
