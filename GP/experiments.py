@@ -29,7 +29,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 20000
+        return 2000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain):
