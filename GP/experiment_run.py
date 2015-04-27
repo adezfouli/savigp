@@ -57,10 +57,10 @@ def run_config_serial(config):
         run_config(c)
 
 if __name__ == '__main__':
-    n_process = 48
-    p = Pool(n_process)
-    p.map(run_config, ExperimentRunner.get_configs())
-    # run_config_serial(ExperimentRunner.get_configs())
+    # n_process = 48
+    # p = Pool(n_process)
+    # p.map(run_config, ExperimentRunner.get_configs())
+    run_config_serial(ExperimentRunner.get_configs())
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
