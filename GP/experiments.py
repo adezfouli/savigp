@@ -16,9 +16,7 @@ from optimizer import Optimizer
 from plot import plot_fit
 from savigp_prediction import SAVIGP_Prediction
 from matplotlib.pyplot import show
-from util import id_generator, check_dir_exists
-
-
+from util import id_generator, check_dir_exists, get_git
 
 
 class Experiments:
@@ -154,6 +152,8 @@ class Experiments:
                                 [transformer.untransform_Y_var(var_pred)], [''])
         if isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
+
+        git_hash, git_branch = get_git()
         Experiments.export_configuration(folder_name, {'method': method,
                                                 'sparsify_factor': sparsify_factor,
                                                 'sample_num': num_samples,
@@ -166,7 +166,9 @@ class Experiments:
                                                 'total_time': total_time,
                                                 'time_per_iter': timer_per_iter,
                                                 'max_iter': max_iter,
-                                                'latent_noise:': latent_noise
+                                                'latent_noise:': latent_noise,
+                                                'git_hash': git_hash,
+                                                'git_branch': git_branch
                                                 },
 
                                         )
