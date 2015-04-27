@@ -2,7 +2,6 @@
 #PBS -N adezfouli_
 #PBS -l walltime=15:00:00
 #PBS -l nodes=1:ppn=64
-#PBS -l vmem=48gb
 #PBS -q short64
 #PBS -o /home/z3510738/code/output/adezfouli__test.out
 #PBS -e /home/z3510738/code/error/adezfouli__test.err
