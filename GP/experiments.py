@@ -207,21 +207,21 @@ class Experiments:
         np.random.seed(12000)
         data = DataSource.wisconsin_breast_cancer_data()
         names = []
-        for d in data:
-            Xtrain = d['train_X']
-            Ytrain = d['train_Y']
-            Xtest = d['test_X']
-            Ytest = d['test_Y']
-            name = 'breast_cancer'
-            kernel = Experiments.get_kernels(Xtrain.shape[1], 1)
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'breast_cancer'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
 
-            #number of inducing points
-            num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-            num_samples = Experiments.get_number_samples()
-            cond_ll = LogisticLL()
+        #number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+        cond_ll = LogisticLL()
 
-            names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation))
+        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation))
         return names
 
 
