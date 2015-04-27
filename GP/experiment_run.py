@@ -47,9 +47,13 @@ class ExperimentRunner:
         #                        lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
 
 def run_config(config):
-    print 'started config: ', config
-    getattr(Experiments, config['method_to_run'])(config)
-    print 'finished config: ', config
+    try:
+        print 'started config: ', config
+        getattr(Experiments, config['method_to_run'])(config)
+        print 'finished config: ', config
+    except Exception as e:
+        e.args += ('config', config)
+        raise
 
 
 def run_config_serial(config):
