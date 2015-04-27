@@ -145,3 +145,22 @@ def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
 
 def tr_AB(a, b):
     return np.sum(inner1d(a, b.T))
+
+def get_git():
+    try:
+        from subprocess import Popen, PIPE
+
+        gitproc = Popen(['git', 'show-ref'], stdout = PIPE)
+        (stdout, stderr) = gitproc.communicate()
+
+        gitproc = Popen(['git', 'rev-parse',  '--abbrev-ref',  'HEAD'], stdout = PIPE)
+        (branch, stderr) = gitproc.communicate()
+        branch = branch.split('\n')[0]
+        for row in stdout.split('\n'):
+            if row.find(branch) != -1:
+                hash = row.split()[0]
+                break
+    except:
+        has = None
+        branch = None
+    return hash, branch
