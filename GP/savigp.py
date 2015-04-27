@@ -87,7 +87,11 @@ class SAVIGP(Model):
             c = clst.fit_predict(X)
             centers = clst.cluster_centers_
             for zi in range(self.num_inducing):
-                init_m[zi] = Y[np.where(c == zi)[0], :].mean()
+                yindx = np.where(c == zi)
+                if yindx[0].shape[0] == 0:
+                    init_m[zi] = Y[:, :].mean()
+                else:
+                    init_m[zi] = Y[yindx[0], :].mean()
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = centers.copy()
 
