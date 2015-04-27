@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N adezfouli_
 #PBS -l walltime=15:00:00
-#PBS -l nodes=1:ppn=48
+#PBS -l nodes=1:ppn=64
 #PBS -l vmem=48gb
 #PBS -q short48
 #PBS -o /home/z3510738/code/output/adezfouli__test.out
