@@ -8,8 +8,7 @@ class ExperimentRunner:
     @staticmethod
     def get_configs():
         configs = []
-        expr_names = [Experiments.boston_data.__name__]
-        # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
+        expr_names = ExperimentRunner.get_experiments()
         methods = ['full', 'mix1', 'mix2']
         sparse_factor = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
@@ -20,6 +19,15 @@ class ExperimentRunner:
                         configs.append({'method': m, 'sparse_factor': s, 'method_to_run': e, 'run_id': run_id})
 
         return configs
+
+    @staticmethod
+    def get_experiments():
+        return [Experiments.boston_data.__name__]
+        # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
+
+    @staticmethod
+    def get_expr_names():
+        return str(ExperimentRunner.get_experiments())[2:6]
 
     @staticmethod
     def boston_experiment():
@@ -61,11 +69,12 @@ def run_config_serial(config):
         run_config(c)
 
 if __name__ == '__main__':
-    n_process = 64
+    pass
+    # n_process = 64
     # p = Pool(n_process)
     # p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
     # ExperimentRunner.boston_experiment()
-    ExperimentRunner.wisconsin_breast_experiment()
+    # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.plot()

@@ -5,13 +5,15 @@ import time
 
 #many = int(sys.argv[1])
 from subprocess import Popen, PIPE, STDOUT
+from experiment_run import ExperimentRunner
+from util import check_dir_exists
 
 many=1
 for i in range(0, many):
 
     # Open a pipe to the qsub command.
 
-    name = 'boston'
+    name = ExperimentRunner.get_expr_names()
     # Customize your options here
     job_name = "adez%s_%s" % (str(i).zfill(3), name)
     walltime = "4:00:00"
@@ -30,12 +32,11 @@ cd $PBS_O_WORKDIR
 cd /home/z3510738/code/savigp/clust/
 chmod +x ./run_job.sh
 %s""" % (job_name, walltime, processors, job_name, job_name, command)
-    #"\&".join([command_N"\n"]*N) amd change ppn to N
-    # Send job_string to qsub
-    out = open('auto_run.pbs', 'w')
+    check_dir_exists('../qsub/')
+    out = open('../qsub/auto_run.pbs', 'w')
     out.write(job_string)
     out.close()
-    p = Popen(['qsub', 'auto_run.pbs'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+    p = Popen(['qsub', '../qsub/auto_run.pbs'], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
     output = p.communicate()[0]
     print output
     print job_string
