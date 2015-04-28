@@ -36,9 +36,8 @@ class SAVIGP(Model):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
-                 config_list=None, latent_noise=0, exact_ell=False):
+                 config_list=None, latent_noise=0, exact_ell=False, random_Z=False):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -70,30 +69,10 @@ class SAVIGP(Model):
         self.cached_ent = None
         self.cached_cross = None
 
-        Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
-
-        init_m = np.empty(self.num_inducing)
-        np.random.seed(12000)
-
-        if self.num_inducing == X.shape[0]:
-            for j in range(self.num_latent_proc):
-                Z[j, :, :] = X.copy()
-            init_m = np.mean(Y, axis=1)
+        if random_Z:
+            Z, init_m = self._random_inducing_points(X, Y)
         else:
-            if (self.num_inducing < self.num_data_points / 10) and self.num_data_points > 10000:
-                clst = MiniBatchKMeans(self.num_inducing)
-            else:
-                clst = KMeans(self.num_inducing)
-            c = clst.fit_predict(X)
-            centers = clst.cluster_centers_
-            for zi in range(self.num_inducing):
-                yindx = np.where(c == zi)
-                if yindx[0].shape[0] == 0:
-                    init_m[zi] = Y[:, :].mean()
-                else:
-                    init_m[zi] = Y[yindx[0], :].mean()
-            for j in range(self.num_latent_proc):
-                Z[j, :, :] = centers.copy()
+            Z, init_m = self._clust_inducing_points(X, Y)
 
         # Z is Q * M * D
         self.Z = Z
@@ -113,6 +92,46 @@ class SAVIGP(Model):
         self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
+
+    def _clust_inducing_points(self, X, Y):
+        Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
+        init_m = np.empty(self.num_inducing)
+        np.random.seed(12000)
+        if self.num_inducing == X.shape[0]:
+            for j in range(self.num_latent_proc):
+                Z[j, :, :] = X.copy()
+            init_m = np.mean(Y, axis=1)
+        else:
+            if (self.num_inducing < self.num_data_points / 10) and self.num_data_points > 10000:
+                clst = MiniBatchKMeans(self.num_inducing)
+            else:
+                clst = KMeans(self.num_inducing)
+            c = clst.fit_predict(X)
+            centers = clst.cluster_centers_
+            for zi in range(self.num_inducing):
+                yindx = np.where(c == zi)
+                if yindx[0].shape[0] == 0:
+                    init_m[zi] = Y[:, :].mean()
+                else:
+                    init_m[zi] = np.mean(Y[yindx[0], :], axis=1)
+            for j in range(self.num_latent_proc):
+                Z[j, :, :] = centers.copy()
+
+        return Z, init_m
+
+    def _random_inducing_points(self, X, Y):
+        np.random.seed(12000)
+        Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
+        init_m = np.empty(self.num_inducing)
+        for j in range(self.num_latent_proc):
+            if self.num_inducing == X.shape[0]:
+                i = range(self.X.shape[0])
+            else:
+                i = np.random.permutation(X.shape[0])[:self.num_inducing]
+            Z[j, :, :] = X[i].copy()
+            init_m = np.mean(Y[i, :], axis=1)
+
+        return Z, init_m
 
     def _update_latent_kernel(self):
         self.kernels_latent = []
