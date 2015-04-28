@@ -16,7 +16,7 @@ for i in range(0, many):
     name = 'bost_' + ''.join(random.choice(string.ascii_uppercase) for _ in range(3))
     # Customize your options here
     job_name = "adez_%s" %(name)
-    walltime = "4:00:00"
+    walltime = "20:00:00"
     processors = "nodes=1:ppn=64"
     command = "./run_job.sh %s" % (str(i))
     job_string = """#!/bin/bash
