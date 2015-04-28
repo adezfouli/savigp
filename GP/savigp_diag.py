@@ -11,9 +11,9 @@ from savigp import SAVIGP
 class SAVIGP_Diag(SAVIGP):
 
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list,
-                 latent_noise, is_exact_ell):
+                 latent_noise, is_exact_ell, random_Z):
         super(SAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood,
-                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell)
+                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
 
 
     def update_N_z(self):

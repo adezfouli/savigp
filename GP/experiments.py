@@ -103,7 +103,7 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
-                  sparsify_factor, to_optimize, trans_class):
+                  sparsify_factor, to_optimize, trans_class, random_Z):
 
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
         Ytrain = transformer.transform_Y(Ytrain)
@@ -122,17 +122,17 @@ class Experiments:
         tracker=None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                         kernel, num_samples, None, latent_noise, False)
+                                         kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                             kernel, num_samples, None, latent_noise, False)
+                             kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                             kernel, num_samples, None, latent_noise, False)
+                             kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'gp':
@@ -168,7 +168,8 @@ class Experiments:
                                                 'max_iter': max_iter,
                                                 'latent_noise:': latent_noise,
                                                 'git_hash': git_hash,
-                                                'git_branch': git_branch
+                                                'git_branch': git_branch,
+                                                'random_Z': random_Z
                                                 },
 
                                         )
@@ -197,7 +198,7 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation))
+                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation, True))
         return names
 
     @staticmethod
@@ -221,7 +222,7 @@ class Experiments:
         cond_ll = LogisticLL()
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation))
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True))
         return names
 
 
