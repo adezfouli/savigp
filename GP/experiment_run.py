@@ -10,9 +10,9 @@ class ExperimentRunner:
     def get_configs():
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['full', 'mix1', 'mix2']
-        sparse_factor = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1]
-        run_ids = [1, 2, 3, 4, 5]
+        methods = ['full']
+        sparse_factor = [1.0]
+        run_ids = [1, 2]
         for e in expr_names:
             for m in methods:
                 for s in sparse_factor:
@@ -68,12 +68,11 @@ class ExperimentRunner:
 
 def run_config(config):
     try:
-        print 'started config: ', config
+        logger.info('started config: ' + str(config))
         getattr(Experiments, config['method_to_run'])(config)
-        print 'finished config: ', config
+        logger.info('finished config: ' + str(config))
     except Exception as e:
-        e.args += ('config', config)
-        raise
+        logger.exception(config)
 
 
 def run_config_serial(config):
@@ -81,8 +80,8 @@ def run_config_serial(config):
         run_config(c)
 
 if __name__ == '__main__':
-    pass
-    n_process = 3
+    logger = Experiments.get_logger('general', logging.DEBUG)
+    n_process = 1
     p = Pool(n_process)
     p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
