@@ -245,7 +245,8 @@ class Experiments:
         cond_ll = LogisticLL()
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True))
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                 config['log_level']))
         return names
 
 
@@ -254,21 +255,24 @@ class Experiments:
         method = config['method']
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
-        Xtrain, Ytrain, Xtest, Ytest = DataSource.USPS_data()
-        Xtrain = preprocessing.scale(Xtrain)
-        Xtest = preprocessing.scale(Xtest)
-
-        name = 'USPS_' + Experiments.get_ID()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3)
+        data = DataSource.USPS_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'USPS'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = SoftmaxLL()
 
-        return Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp'])
-
+        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                 config['log_level']))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
