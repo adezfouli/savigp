@@ -126,8 +126,6 @@ class Experiments:
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level):
 
-        print 1 / 0
-
         folder_name =  name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
 
