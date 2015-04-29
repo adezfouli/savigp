@@ -1,3 +1,4 @@
+import logging
 from experiments import Experiments
 from plot_results import PlotOutput
 from multiprocessing.pool import ThreadPool, Pool
@@ -16,7 +17,12 @@ class ExperimentRunner:
             for m in methods:
                 for s in sparse_factor:
                     for run_id in run_ids:
-                        configs.append({'method': m, 'sparse_factor': s, 'method_to_run': e, 'run_id': run_id})
+                        configs.append({'method': m,
+                                        'sparse_factor': s,
+                                        'method_to_run': e,
+                                        'run_id': run_id,
+                                        'log_level': ExperimentRunner.get_log_level()
+                                        })
 
         return configs
 
@@ -24,6 +30,12 @@ class ExperimentRunner:
     def get_experiments():
         return [Experiments.boston_data.__name__]
         # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
+
+    @staticmethod
+    def get_log_level():
+        # return logging.DEBUG
+        return logging.INFO
+
 
     @staticmethod
     def get_expr_names():
@@ -70,9 +82,9 @@ def run_config_serial(config):
 
 if __name__ == '__main__':
     pass
-    # n_process = 64
-    # p = Pool(n_process)
-    # p.map(run_config, ExperimentRunner.get_configs())
+    n_process = 3
+    p = Pool(n_process)
+    p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()

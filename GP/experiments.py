@@ -1,3 +1,4 @@
+import logging
 from data_transformation import MeanTransformation, IdentityTransformation
 from plot_results import PlotOutput
 from savigp import SAVIGP
@@ -24,6 +25,26 @@ class Experiments:
     @staticmethod
     def get_output_path():
         return '../results/'
+
+    @staticmethod
+    def get_logger_path():
+        return '../logs/'
+
+    @staticmethod
+    def get_logger(name, level):
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+        check_dir_exists(Experiments.get_logger_path())
+        fh = logging.FileHandler(Experiments.get_logger_path() + name + '.log')
+        fh.setLevel(logging.DEBUG)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+        return logger
 
     @staticmethod
     def get_number_samples():
@@ -103,7 +124,12 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
-                  sparsify_factor, to_optimize, trans_class, random_Z):
+                  sparsify_factor, to_optimize, trans_class, random_Z, logging_level):
+
+
+
+        folder_name =  name + '_' + Experiments.get_ID()
+        logger = Experiments.get_logger(folder_name, logging_level)
 
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
         Ytrain = transformer.transform_Y(Ytrain)
@@ -118,30 +144,28 @@ class Experiments:
         tol=1e-4
         total_time = None
         timer_per_iter = None
-        verbose=False
         tracker=None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                          kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                              kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                              kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, verbose, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
                 m.optimize('bfgs')
 
         y_pred, var_pred = m.predict(Xtest)
-        folder_name =  name + '_' + Experiments.get_ID()
         if not (tracker is None):
             Experiments.export_track(folder_name, tracker)
         Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
@@ -198,7 +222,8 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation, True))
+                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation, True,
+                                     config['log_level']))
         return names
 
     @staticmethod

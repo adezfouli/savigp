@@ -49,7 +49,7 @@ class Optimizer:
         return d
 
     @staticmethod
-    def get_f_f_grad_from_model(model, x0, opt_indices, tracker, verbose=False):
+    def get_f_f_grad_from_model(model, x0, opt_indices, tracker, logger):
         last_x = np.empty((1, x0.shape[0]))
 
         def update(x):
@@ -73,9 +73,7 @@ class Optimizer:
 
             g = np.zeros(len(x0))
             g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
-            if verbose:
-                # print 'grad:', Optimizer.print_short(g)
-                print 'objective:', "%.4f" % model.objective_function()
+            logger.debug('objective:' + "%.4f" % model.objective_function())
             return g
 
         update(x0)
@@ -83,13 +81,13 @@ class Optimizer:
 
 
     @staticmethod
-    def BFGS(model, opt_indices=None, max_fun=None, verbose=False):
+    def BFGS(model, logger, opt_indices=None, max_fun=None):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
         tracker = []
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, verbose=verbose)
+        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
         return d, tracker
@@ -142,7 +140,7 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun_evals, verbose, method=None, epsilon=1e-4, iters_per_opt=15000, max_iters=200):
+    def optimize_model(model, max_fun_evals, logger, method=None, epsilon=1e-4, iters_per_opt=15000, max_iters=200):
         if not method:
             method=['hyp', 'mog']
         if not (max_fun_evals is None):
@@ -156,14 +154,14 @@ class Optimizer:
         try:
             while not converged:
                 if 'mog' in method:
-                    print 'mog params'
+                    logger.info('mog params')
                     model.set_configuration([
                         Configuration.MoG,
                         Configuration.ENTROPY,
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     # d = Optimizer.general(model, verbose=verbose)
@@ -174,30 +172,30 @@ class Optimizer:
                 new_params = model.get_params()
                 if last_param is not None:
                     if np.mean(np.absolute(new_params - last_param)) < epsilon:
-                        print 'best obj found: ', model.objective_function()
+                        logger.info('best obj found: ', model.objective_function())
                         break
-                    print 'diff:', np.mean(np.absolute(new_params - last_param))
+                    logger.info('diff:', np.mean(np.absolute(new_params - last_param)))
                 last_param = new_params
 
                 if 'll' in method:
-                    print 'll params'
+                    logger.info('ll params')
                     model.set_configuration([
                         Configuration.ELL,
                         Configuration.LL
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
                 if 'hyp' in method:
-                    print 'hyp params'
+                    logger.info('hyp params')
                     model.set_configuration([
                         Configuration.ENTROPY,
                         Configuration.CROSS,
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d, tracker = Optimizer.BFGS(model, max_fun=iters_per_opt, verbose=verbose)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
@@ -212,8 +210,8 @@ class Optimizer:
 
 
         except KeyboardInterrupt:
-            print 'interrupted by the user'
-            print 'last obj: ', model.objective_function()
+            logger.info('interrupted by the user')
+            logger.info('last obj: ' + str(model.objective_function()))
             if total_evals == 0:
                 total_evals = float('Nan')
         end=time.time()
