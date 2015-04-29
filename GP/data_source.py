@@ -72,14 +72,17 @@ class DataSource:
 
     @staticmethod
     def USPS_data():
+        def label_to_num(x):
+            return  (x[:, 1] + x[:, 2] * 2)[:, np.newaxis]
+
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/USPS/train_' + str(i) + '.csv', header=None)
             test = pandas.read_csv('data/USPS/test_' + str(i) + '.csv', header=None)
             data.append({
-                'train_Y': train.ix[:, 0:2].values,
+                'train_Y': label_to_num(train.ix[:, 0:2].values),
                 'train_X': train.ix[:, 3:].values,
-                'test_Y': test.ix[:, 0:2].values,
+                'test_Y': label_to_num(test.ix[:, 0:2].values),
                 'test_X': test.ix[:, 3:].values,
                 'id': i
             })
