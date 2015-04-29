@@ -80,7 +80,7 @@ def run_config_serial(config):
         run_config(c)
 
 if __name__ == '__main__':
-    logger = Experiments.get_logger('general', logging.DEBUG)
+    logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
     n_process = 1
     p = Pool(n_process)
     p.map(run_config, ExperimentRunner.get_configs())
