@@ -376,7 +376,6 @@ class SAVIGP(Model):
         raise Exception("method not implemented")
 
     def _ell(self, n_sample, X, Y, cond_log_likelihood):
-
         """
         calculating expected log-likelihood, and it's derivatives
         :returns ell, normal ell, dell / dm, dell / ds, dell/dpi
@@ -404,7 +403,6 @@ class SAVIGP(Model):
             A, Kzx, K = self._get_A_K(X)
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
-
             F = np.empty((self.n_samples, self.X.shape[0], self.num_latent_proc))
             for k in range(self.num_mog_comp):
                 for j in range(self.num_latent_proc):
@@ -415,94 +413,88 @@ class SAVIGP(Model):
                 cond_ll = cond_log_likelihood.ll_f_y(F, Y)
                 # print cond_ll.shape
                 for j in range(self.num_latent_proc):
-                    # print 'a1'
                     m = mdot(self.normal_samples[j,:], cond_ll / np.sqrt(sigma_kj[k,j]), Kzx[j].T)
-                    # print 'a2'
-                    d_ell_dm[k,j] =  self._proj_m_grad(j, m) * self.MoG.pi[k] / n_sample
-                    # print 'a3'
+                    d_ell_dm[k,j] = self._proj_m_grad(j, m) * self.MoG.pi[k] / n_sample
                     d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, n_sample, sigma_kj)
-                    # print 'a4'
-                    self.dA_dhyper_mult_x(self.Z[j], j, A[j], self.MoG.m[k,j])
                 sum_cond_ll = cond_ll.sum() / n_sample
                 total_ell +=  sum_cond_ll * self.MoG.pi[k]
                 d_ell_dPi[k] = sum_cond_ll
 
-            # print 'a5'
             self.cached_ell = total_ell
 
             total_ell = 0
 
-            for n in range(len(X)):
-                # print 'ell for point #', n
-                mean_kjn = np.empty((self.num_mog_comp, self.num_latent_proc))
-                sigma_kjn = np.empty((self.num_mog_comp, self.num_latent_proc))
-
-                s_dell_dm = np.zeros((self.num_mog_comp, self.num_latent_proc))
-                s_dell_ds = np.zeros((self.num_mog_comp, self.num_latent_proc))
-                #
-                f = np.empty((n_sample, self.num_mog_comp, self.num_latent_proc))
-                for j in range(self.num_latent_proc):
-                    mean_kjn[:, j] = self._b_n(n, j, A[j], Kzx[j].T)
-                    sigma_kjn[:, j] = self._sigma_n(n, j, K[j], A[j], Kzx[j].T)
-                    # print mean_kjn[:, j] - mean_kj[:, j, n]
-                    for k in range(self.num_mog_comp):
-                        f[:, k, j] = self.normal_samples[j, :] * math.sqrt(sigma_kjn[k, j]) + mean_kjn[k, j]
-
-
-                for k in range(self.num_mog_comp):
-                    cond_ll = cond_log_likelihood.ll(f[:, k, :], Y[n, :])
-                    sum_cond_ll = cond_ll.sum()
-                    d_ell_dPi[k] += sum_cond_ll
-                    if self.is_exact_ell:
-                        total_ell += self.cond_likelihood.ell(mean_kjn[k, :], sigma_kjn[k, :], Y[n, :]) * self.MoG.pi[k]
-                    else:
-                        total_ell += sum_cond_ll * self.MoG.pi[k]
-                    if Configuration.LL in self.config_list:
-                        d_ell_d_ll += self.MoG.pi[k] * self.cond_likelihood.ll_grad(f[:, k, :], Y[n, :]).sum()
-                    for j in range(self.num_latent_proc):
-                    #     if Configuration.MoG in self.config_list:
-                    #         s_dell_dm[k, j] += np.dot(f[:, k, j] - mean_kjn[k, j], cond_ll)
-                    #         s_dell_ds[k, j] += np.dot(
-                    #             sigma_kjn[k, j] ** -2 * (f[:, k, j] - mean_kjn[k, j]) ** 2 - sigma_kjn[k, j] ** -1, cond_ll)
-
-                        # for calculating hyper parameters
-                        if self.calculate_dhyper():
-                            xn = X[np.newaxis, n, :]
-                            Kxnz = Kzx[j, :, n]
-                            d_sigma_d_hyper = self._dsigma_n_dhyp(j, k, A, Kxnz, n, xn)
-
-                            d_b_d_hyper = self._db_n_dhyp(j, k, A, n, xn)
-
-                            # repeats f to aling it with the number of hyper params
-                            fr = np.repeat(f[:, k, j, np.newaxis], self.num_hyper_params, axis=1)
-                            tmp = 1. / sigma_kjn[k, j] * d_sigma_d_hyper \
-                                  - 2. * (fr - mean_kjn[k, j]) / sigma_kjn[k, j] * d_b_d_hyper \
-                                  - ((fr - mean_kjn[k, j]) ** 2) * sigma_kjn[k, j] ** (-2) * d_sigma_d_hyper
-
-                            d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array(
-                                [np.dot(tmp[:, hp], cond_ll) for hp in range(self.num_hyper_params)]).T
-
-            #     if Configuration.MoG in self.config_list:
-            #         for k in range(self.num_mog_comp):
-            #             for j in range(self.num_latent_proc):
-            #                 Kxnz = Kzx[j, :, n]
-            #                 d_ell_dm[k, j] += 1. / sigma_kjn[k, j] * s_dell_dm[k, j] * Kxnz
-            #                 d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis], Kxnz[:, np.newaxis].T) * s_dell_ds[k, j]
-            #
-            # if Configuration.MoG in self.config_list:
-            #     for k in range(self.num_mog_comp):
-            #         for j in range(self.num_latent_proc):
-            #             d_ell_dm[k, j, :] = self.MoG.pi[k] / n_sample * self._proj_m_grad(j, d_ell_dm[k, j, :])
-            #             d_ell_ds[k, j, :] = self.MoG.pi[k] / n_sample / 2. * d_ell_ds[k, j, :]
-            if not self.is_exact_ell:
-                total_ell /= n_sample
-
-            self.cached_ell = total_ell
-
-        d_ell_dPi = d_ell_dPi / n_sample
-
-        d_ell_d_hyper /= n_sample
-        d_ell_d_ll /= n_sample
+        #     for n in range(len(X)):
+        #         # print 'ell for point #', n
+        #         mean_kjn = np.empty((self.num_mog_comp, self.num_latent_proc))
+        #         sigma_kjn = np.empty((self.num_mog_comp, self.num_latent_proc))
+        #
+        #         s_dell_dm = np.zeros((self.num_mog_comp, self.num_latent_proc))
+        #         s_dell_ds = np.zeros((self.num_mog_comp, self.num_latent_proc))
+        #         #
+        #         f = np.empty((n_sample, self.num_mog_comp, self.num_latent_proc))
+        #         for j in range(self.num_latent_proc):
+        #             mean_kjn[:, j] = self._b_n(n, j, A[j], Kzx[j].T)
+        #             sigma_kjn[:, j] = self._sigma_n(n, j, K[j], A[j], Kzx[j].T)
+        #             # print mean_kjn[:, j] - mean_kj[:, j, n]
+        #             for k in range(self.num_mog_comp):
+        #                 f[:, k, j] = self.normal_samples[j, :] * math.sqrt(sigma_kjn[k, j]) + mean_kjn[k, j]
+        #
+        #
+        #         for k in range(self.num_mog_comp):
+        #             cond_ll = cond_log_likelihood.ll(f[:, k, :], Y[n, :])
+        #             sum_cond_ll = cond_ll.sum()
+        #             d_ell_dPi[k] += sum_cond_ll
+        #             if self.is_exact_ell:
+        #                 total_ell += self.cond_likelihood.ell(mean_kjn[k, :], sigma_kjn[k, :], Y[n, :]) * self.MoG.pi[k]
+        #             else:
+        #                 total_ell += sum_cond_ll * self.MoG.pi[k]
+        #             if Configuration.LL in self.config_list:
+        #                 d_ell_d_ll += self.MoG.pi[k] * self.cond_likelihood.ll_grad(f[:, k, :], Y[n, :]).sum()
+        #             for j in range(self.num_latent_proc):
+        #             #     if Configuration.MoG in self.config_list:
+        #             #         s_dell_dm[k, j] += np.dot(f[:, k, j] - mean_kjn[k, j], cond_ll)
+        #             #         s_dell_ds[k, j] += np.dot(
+        #             #             sigma_kjn[k, j] ** -2 * (f[:, k, j] - mean_kjn[k, j]) ** 2 - sigma_kjn[k, j] ** -1, cond_ll)
+        #
+        #                 # for calculating hyper parameters
+        #                 if self.calculate_dhyper():
+        #                     xn = X[np.newaxis, n, :]
+        #                     Kxnz = Kzx[j, :, n]
+        #                     d_sigma_d_hyper = self._dsigma_n_dhyp(j, k, A, Kxnz, n, xn)
+        #
+        #                     d_b_d_hyper = self._db_n_dhyp(j, k, A, n, xn)
+        #
+        #                     # repeats f to aling it with the number of hyper params
+        #                     fr = np.repeat(f[:, k, j, np.newaxis], self.num_hyper_params, axis=1)
+        #                     tmp = 1. / sigma_kjn[k, j] * d_sigma_d_hyper \
+        #                           - 2. * (fr - mean_kjn[k, j]) / sigma_kjn[k, j] * d_b_d_hyper \
+        #                           - ((fr - mean_kjn[k, j]) ** 2) * sigma_kjn[k, j] ** (-2) * d_sigma_d_hyper
+        #
+        #                     d_ell_d_hyper[j] += -0.5 * self.MoG.pi[k] * np.array(
+        #                         [np.dot(tmp[:, hp], cond_ll) for hp in range(self.num_hyper_params)]).T
+        #
+        #     #     if Configuration.MoG in self.config_list:
+        #     #         for k in range(self.num_mog_comp):
+        #     #             for j in range(self.num_latent_proc):
+        #     #                 Kxnz = Kzx[j, :, n]
+        #     #                 d_ell_dm[k, j] += 1. / sigma_kjn[k, j] * s_dell_dm[k, j] * Kxnz
+        #     #                 d_ell_ds[k, j] += self.mdot_Aj(A[j, n, np.newaxis], Kxnz[:, np.newaxis].T) * s_dell_ds[k, j]
+        #     #
+        #     # if Configuration.MoG in self.config_list:
+        #     #     for k in range(self.num_mog_comp):
+        #     #         for j in range(self.num_latent_proc):
+        #     #             d_ell_dm[k, j, :] = self.MoG.pi[k] / n_sample * self._proj_m_grad(j, d_ell_dm[k, j, :])
+        #     #             d_ell_ds[k, j, :] = self.MoG.pi[k] / n_sample / 2. * d_ell_ds[k, j, :]
+        #     if not self.is_exact_ell:
+        #         total_ell /= n_sample
+        #
+        #     self.cached_ell = total_ell
+        #
+        # d_ell_dPi = d_ell_dPi / n_sample
+        #
+        # d_ell_d_hyper /= n_sample
+        # d_ell_d_ll /= n_sample
 
         return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
