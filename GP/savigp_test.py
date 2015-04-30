@@ -58,7 +58,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = SAVIGP_Diag(X, Y, num_inducing, 3, ll,
-                     [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
+                     [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
         s1.rand_init_mog()
 
@@ -85,7 +85,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples
         X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
         s1 = SAVIGP_SingleComponent(X, Y, num_inducing, ll,
-                                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True)
+                                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
         s1.rand_init_mog()
 
@@ -153,9 +153,9 @@ class SAVIGP_Test:
             ]
         ]
 
-        sparse = [True, False]
-        models = ['full', 'diag']
-        ll = ['univariate_Gaussian', 'multi_Gaussian']
+        sparse = [False, True]
+        models = ['diag', 'full']
+        ll = ['univariate_Gaussian']
 
         for m in models:
             for s in sparse:
@@ -165,9 +165,9 @@ class SAVIGP_Test:
                         if not ('multi_Gaussian' == l and Configuration.LL in c):
                             e1 = None
                             if m == 'diag':
-                                e1 = SAVIGP_Test.test_grad_diag(c, False, s, l)
+                                e1 = SAVIGP_Test.test_grad_diag(c, True, s, l)
                             if m == 'full':
-                                e1 = SAVIGP_Test.test_grad_single(c, False, s, l)
+                                e1 = SAVIGP_Test.test_grad_single(c, True, s, l)
                             SAVIGP_Test.report_output(c, e1, 'model: ' + m + ', ' + ' sparse:' + str(s) + ', ' + ', '
                                                       + 'likelihood: ' + l)
 

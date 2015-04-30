@@ -79,10 +79,17 @@ class DataSource:
         for i in range(1, 6):
             train = pandas.read_csv('data/USPS/train_' + str(i) + '.csv', header=None)
             test = pandas.read_csv('data/USPS/test_' + str(i) + '.csv', header=None)
+            # data.append({
+            #     'train_Y': label_to_num(train.ix[:, 0:2].values),
+            #     'train_X': train.ix[:, 3:].values,
+            #     'test_Y': label_to_num(test.ix[:, 0:2].values),
+            #     'test_X': test.ix[:, 3:].values,
+            #     'id': i
+            # })
             data.append({
-                'train_Y': label_to_num(train.ix[:, 0:2].values),
+                'train_Y': train.ix[:, 0:2].values,
                 'train_X': train.ix[:, 3:].values,
-                'test_Y': label_to_num(test.ix[:, 0:2].values),
+                'test_Y': test.ix[:, 0:2].values,
                 'test_X': test.ix[:, 3:].values,
                 'id': i
             })

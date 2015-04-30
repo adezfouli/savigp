@@ -82,6 +82,10 @@ class MoG_Diag(MoG):
     def aSa(self, a, j):
         return mdot(self.s[:,j,:], (a ** 2))
 
+    def aSkja(self, a, k, j):
+        # return mdot(self.s[k, j, :], (a ** 2))
+        return np.diagonal(mdot(a, np.diag(self.s[k,j,:]), a.T))
+
     def mmTS(self, k, j):
         return mdot(self.m[k,j, np.newaxis].T, self.m[k,j, np.newaxis]) + np.diag(self.s[k,j])
 

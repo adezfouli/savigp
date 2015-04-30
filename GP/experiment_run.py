@@ -43,7 +43,7 @@ class ExperimentRunner:
 
     @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3})
+        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
@@ -51,7 +51,7 @@ class ExperimentRunner:
 
     @staticmethod
     def USPS_experiment():
-        Experiments.USPS_data({'method': 'full', 'sparse_factor': 1.0})
+        Experiments.USPS_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def plot():
@@ -81,11 +81,11 @@ def run_config_serial(config):
 
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
-    n_process = 1
-    p = Pool(n_process)
-    p.map(run_config, ExperimentRunner.get_configs())
+    # n_process = 1
+    # p = Pool(n_process)
+    # p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
-    # ExperimentRunner.boston_experiment()
+    ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.plot()

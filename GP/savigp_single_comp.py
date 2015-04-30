@@ -12,6 +12,14 @@ class SAVIGP_SingleComponent(SAVIGP):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
                                                      kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
 
+    def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
+        return np.einsum('i,ij,ki->jk', mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j])
+                                                  , A[j], A[j].T) * self.MoG.pi[k] / n_sample / 2.
+
+        # a bit faster but high memory
+        # return mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j]
+        #                                           , np.einsum('ij,ki->ijk', A[j], A[j].T)) * self.MoG.pi[k] / n_sample / 2.
+
     def init_mog(self, init_m):
         super(SAVIGP_SingleComponent, self).init_mog(init_m)
         for j in range(self.num_latent_proc):

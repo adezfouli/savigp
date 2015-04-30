@@ -21,14 +21,14 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
     def mdot_Aj(self, Ajn, Kxnz):
         return mdot(Kxnz.T, Kxnz)
 
-    def _b(self, n, j, Aj, Kzx):
+    def _b_n(self, n, j, Aj, Kzx):
         """
         calculating [b_k(n)]j for latent process j (eq 19) for all k
         returns: a
         """
         return mdot(Kzx[n, :], self.MoG.m[:, j, :].T)
 
-    def _sigma(self, n, j, Kj, Aj, Kzx):
+    def _sigma_n(self, n, j, Kj, Aj, Kzx):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
@@ -103,14 +103,14 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
             ent += self.log_detZ[j]
         return ent
 
-    def _dsigma_dhyp(self, j, k, A, Kxnz, n, xn):
+    def _dsigma_n_dhyp(self, j, k, A, Kxnz, n, xn):
         return self.dKx_dhyper(j, xn) \
-               - self.dA_dhyper_mult_x(xn, j, A[j, n], -Kxnz.T) \
+               - self.dA_dhyper_n_mult_x(xn, j, A[j, n], -Kxnz.T) \
                - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
                2 * self.dKzxn_dhyper_mult_x(j, xn, self.MoG.Sa(Kxnz, k, j))
 
 
-    def _db_dhyp(self, j, k, A, n, xn):
+    def _db_n_dhyp(self, j, k, A, n, xn):
         return self.dKzxn_dhyper_mult_x(j, xn, self.MoG.m[k, j])
 
     def calculate_dhyper(self):
