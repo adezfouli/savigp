@@ -13,8 +13,11 @@ class SAVIGP_SingleComponent(SAVIGP):
                                                      kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
 
     def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
-        return np.einsum('i,ij,ki->jk', mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j])
-                                                  , A[j], A[j].T) * self.MoG.pi[k] / n_sample / 2.
+        return mdot(A[j].T, np.diag(mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j])), A[j]) * self.MoG.pi[k] / n_sample / 2.
+
+        # a bit less memory intensive
+        # return np.einsum('i,ij,ki->jk', mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j])
+        #                                           , A[j], A[j].T) * self.MoG.pi[k] / n_sample / 2.
 
         # a bit faster but high memory
         # return mdot(self.normal_samples[j,:]**2 - 1, cond_ll / sigma_kj[k,j]
