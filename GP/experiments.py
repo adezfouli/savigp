@@ -269,7 +269,7 @@ class Experiments:
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
-        cond_ll = SoftmaxLL()
+        cond_ll = SoftmaxLL(3)
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
