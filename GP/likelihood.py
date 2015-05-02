@@ -185,8 +185,12 @@ class SoftmaxLL(Likelihood):
     p(y=c|f) = exp(f_c) / (f_1 + ... + f_N)
     """
 
-    def __init__(self):
+    def __init__(self, dim):
         Likelihood.__init__(self)
+        self.dim = dim
+        self.n_samples = 20000
+        self.normal_samples = np.random.normal(0, 1, self.n_samples * dim) \
+            .reshape((self.n_samples, self.dim))
 
     def ll(self, f, y):
         u = f.copy()
@@ -197,7 +201,13 @@ class SoftmaxLL(Likelihood):
         return -logsumexp(u, 1)
 
     def ll_f_y(self, F, Y):
-        return -logsumexp(F - F * Y, 2)
+        return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2)
+
+    def predict(self, mu, sigma):
+        F = self.normal_samples * np.sqrt(sigma) + mu
+        expF = np.exp(F)
+        mean = (expF / expF.sum(1)[:, np.newaxis]).mean(axis=0)
+        return mean, None
 
 
     def ll_grad(self, f, y):
