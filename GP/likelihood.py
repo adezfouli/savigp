@@ -22,6 +22,9 @@ class Likelihood:
     def ll_grad(self, f, y):
         raise Exception("not implemented yet")
 
+    def ll_grad_F_Y(self, F, Y):
+        raise Exception("not implemented yet")
+
     def get_num_params(self):
         raise Exception("not implemented yet")
 
@@ -75,10 +78,13 @@ class UnivariateGaussian(Likelihood):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
     def ll_f_y(self, F, Y):
-        return (self.const + -1.0 / 2 * (F - Y) ** 2 / self.sigma)[:, :, 0]
+        return (self.const + -1.0 / 2 * np.square(F - Y) / self.sigma)[:, :, 0]
 
     def ll_grad(self, f, y):
         return self.const_grad * self.sigma + 1.0 / 2 * inner1d(f-y, f-y) / self.sigma
+
+    def ll_grad_F_Y(self, F, Y):
+        return (self.const_grad * self.sigma + 1.0 / 2 * np.square(F - Y) / self.sigma)[:, :, 0]
 
     def set_params(self, p):
         self.sigma = math.exp(p[0])
@@ -99,8 +105,6 @@ class UnivariateGaussian(Likelihood):
 
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
-
-
 
 
 class LogGaussianCox(Likelihood):

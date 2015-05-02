@@ -1,6 +1,7 @@
 from GPy.util import datasets
 import pandas
 from pandas.util.testing import DataFrame
+from ExtRBF import ExtRBF
 
 __author__ = 'AT'
 
@@ -21,8 +22,8 @@ class DataSource:
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
         # X = preprocessing.scale(X)
         X.sort(axis=0)
-        rbf = GPy.kern.RBF(num_in, variance=0.5,
-                           lengthscale=np.array(np.random.uniform(low=0.1, high=0.5, size=num_in)), ARD=True)
+        rbf = ExtRBF(num_in, variance=0.5,
+                           lengthscale=np.array(np.random.uniform(low=0.1, high=3.0, size=num_in)), ARD=True)
         white = GPy.kern.White(num_in, variance=noise)
         kernel = rbf + white
         K = kernel.K(X)

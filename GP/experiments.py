@@ -1,4 +1,5 @@
 import logging
+from ExtRBF import ExtRBF
 from data_transformation import MeanTransformation, IdentityTransformation
 from plot_results import PlotOutput
 from savigp import SAVIGP
@@ -220,7 +221,7 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MeanTransformation, True,
+                                     num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
                                      config['log_level']))
         return names
 
@@ -276,7 +277,7 @@ class Experiments:
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
-        return [GPy.kern.RBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
+        return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
 
     @staticmethod
     def gaussian_1D_data():
