@@ -140,7 +140,7 @@ class Experiments:
         opt_per_iter = 15000
         max_iter = 200
         latent_noise = 0.001
-        tol=1e-4
+        tol=1e-3
         total_time = None
         timer_per_iter = None
         tracker=None

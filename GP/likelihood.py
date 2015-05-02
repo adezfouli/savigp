@@ -22,6 +22,9 @@ class Likelihood:
     def ll_grad(self, f, y):
         raise Exception("not implemented yet")
 
+    def ll_f_y(self, F, Y):
+        raise Exception("not implemented yet")
+
     def ll_grad_F_Y(self, F, Y):
         raise Exception("not implemented yet")
 
@@ -157,8 +160,8 @@ class LogisticLL(Likelihood):
         if y == -1:
             return (-(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f))))[:,0]
 
-    def ll_grad(self, f, y):
-        raise Exception("gradients not supported for logistic regression")
+    def ll_f_y(self, F, Y):
+        return -np.log(1 + np.exp(F * Y))[:, :, 0]
 
     def set_params(self, p):
         if p.shape[0] != 0:
