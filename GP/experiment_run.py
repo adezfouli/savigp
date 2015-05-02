@@ -11,8 +11,8 @@ class ExperimentRunner:
         configs = []
         expr_names = ExperimentRunner.get_experiments()
         methods = ['full']
-        sparse_factor = [1.0]
-        run_ids = [1, 2]
+        sparse_factor = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1]
+        run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
             for m in methods:
                 for s in sparse_factor:
@@ -28,8 +28,9 @@ class ExperimentRunner:
 
     @staticmethod
     def get_experiments():
-        return [Experiments.boston_data.__name__]
-        # expr_names = [Experiments.wisconsin_breast_cancer_data.__name__]
+        # return [Experiments.boston_data.__name__]
+        # return [Experiments.wisconsin_breast_cancer_data.__name__]
+        return [Experiments.USPS_data.__name__]
 
     @staticmethod
     def get_log_level():
@@ -81,11 +82,11 @@ def run_config_serial(config):
 
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
-    # n_process = 1
-    # p = Pool(n_process)
-    # p.map(run_config, ExperimentRunner.get_configs())
+    n_process = 1
+    p = Pool(n_process)
+    p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
-    ExperimentRunner.boston_experiment()
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.plot()
