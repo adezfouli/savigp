@@ -11,7 +11,7 @@ for iii =1:5
 end
 
 [x,y] = get_mine_data();
-csvwrite('../mining/data.csv', [y,x])
+csvwrite('../mining/data.csv', [y;x]')
 
 SEED = 1110;
 for iii=5:10
