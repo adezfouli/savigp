@@ -21,6 +21,7 @@ class ExtRBF(RBF):
         else:
             r = self._scaled_dist(X, X2)
             lengthscale_gradient = -np.sum(dL_dr*r, axis=1)/self.lengthscale
+            lengthscale_gradient = lengthscale_gradient[np.newaxis, :]
 
         return np.hstack((variance_gradient[:, np.newaxis], lengthscale_gradient.T))
 
@@ -36,6 +37,9 @@ class ExtRBF(RBF):
         if X2 is None: X2 = X
         rinv = self._inv_dist(X, X2)
         d =  X[:, None, :] - X2[None, :, :]
-        x_xl3 = np.square(d) * (rinv * self.dK_dr_via_X(X, X2))[:,:,None]
+        if self.ARD:
+            x_xl3 = np.square(d) * (rinv * self.dK_dr_via_X(X, X2))[:,:,None]
+        else:
+            x_xl3 = np.square(d).sum(axis=2)[:, :, np.newaxis] * (rinv * self.dK_dr_via_X(X, X2))[:,:,None]
         lengthscale_gradient = -np.tensordot(D, np.tensordot(S, x_xl3, (1,0)), (0,1)) / self.lengthscale**3
         return np.hstack((np.diagonal(variance_gradient)[:, np.newaxis], np.diagonal(lengthscale_gradient).T))
