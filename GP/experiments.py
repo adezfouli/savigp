@@ -1,10 +1,11 @@
 import logging
+
 from ExtRBF import ExtRBF
 from data_transformation import MeanTransformation, IdentityTransformation
-from plot_results import PlotOutput
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
+
 
 __author__ = 'AT'
 
@@ -22,7 +23,6 @@ from util import id_generator, check_dir_exists, get_git
 
 
 class Experiments:
-
     @staticmethod
     def get_output_path():
         return '../results/'
@@ -52,16 +52,18 @@ class Experiments:
         return 5000
 
     @staticmethod
-    def export_train(name, Xtrain, Ytrain):
-        path = Experiments.get_output_path() + name +'/'
+    def export_train(name, Xtrain, Ytrain, export_X=False):
+        path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'train_'
-        np.savetxt(path + file_name + '.csv', np.hstack((Ytrain, Xtrain))
-                   , header=''.join(
-                                    ['Y%d,'%(j) for j in range(Ytrain.shape[1])]+
-                                    ['X%d,'%(j) for j in range(Xtrain.shape[1])]
-                                    )
-                    , delimiter=',', comments='')
+        header =['Y%d,' % (j) for j in range(Ytrain.shape[1])]
+        data= None
+        if export_X:
+            data = np.hstack((Ytrain, Xtrain))
+            header += ['X%d,' % (j) for j in range(Xtrain.shape[1])]
+        else:
+            data = np.hstack((Ytrain))
+        np.savetxt(path + file_name + '.csv', data , header=''.join(header), delimiter=',', comments='')
 
 
     @staticmethod
@@ -71,11 +73,11 @@ class Experiments:
         file_name = 'obj_track_'
         np.savetxt(path + file_name + '.csv', np.array([track]).T,
                    header='objective'
-                    , delimiter=',', comments='')
+                   , delimiter=',', comments='')
 
     @staticmethod
     def export_model(model, name):
-        path = Experiments.get_output_path() + name +'/'
+        path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'model_'
         if model is not None:
@@ -89,29 +91,33 @@ class Experiments:
 
 
     @staticmethod
-    def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names):
-        path = Experiments.get_output_path() + name +'/'
+    def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names, export_X=False):
+        path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'test_'
         out = []
         out.append(Ytrue)
         out += Ypred
         out += Yvar_pred
-        out.append(X)
+        header =  ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
+            ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
+            ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])]
+
+
+        if export_X:
+            out.append(X)
+            header += ['X%d,' % (j) for j in range(X.shape[1])]
+
+        header = ''.join(header)
         out = np.hstack(out)
         np.savetxt(path + file_name + '.csv', out
-                   , header=''.join(
-                                    ['Ytrue%d,'%(j) for j in range(Ytrue.shape[1])] +
-                                    ['Ypred_%s_%d,'%(m, j) for m in pred_names for j in range(Ypred[0].shape[1])] +
-                                    ['Yvar_pred_%s_%d,'%(m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] +
-                                    ['X%d,'%(j) for j in range(X.shape[1])]
-                                    )
-                    , delimiter=',', comments='')
+                   , header=header
+                   , delimiter=',', comments='')
 
 
     @staticmethod
     def export_configuration(name, config):
-        path = Experiments.get_output_path() + name +'/'
+        path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = path + 'config_' + '.csv'
         with open(file_name, 'wb') as csvfile:
@@ -127,7 +133,7 @@ class Experiments:
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level):
 
-        folder_name =  name + '_' + Experiments.get_ID()
+        folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
 
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
@@ -140,23 +146,23 @@ class Experiments:
         opt_per_iter = 15000
         max_iter = 200
         latent_noise = 0.001
-        tol=1e-3
+        tol = 1e-3
         total_time = None
         timer_per_iter = None
-        tracker=None
+        tracker = None
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                         kernel, num_samples, None, latent_noise, False, random_Z)
+                                       kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                             kernel, num_samples, None, latent_noise, False, random_Z)
+                            kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                             kernel, num_samples, None, latent_noise, False, random_Z)
+                            kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
         if method == 'gp':
@@ -178,24 +184,24 @@ class Experiments:
 
         git_hash, git_branch = get_git()
         Experiments.export_configuration(folder_name, {'method': method,
-                                                'sparsify_factor': sparsify_factor,
-                                                'sample_num': num_samples,
-                                                'll': cond_ll.__class__.__name__,
-                                                'opt_max_evals': opt_max_fun_evals,
-                                                'opt_per_iter': opt_per_iter,
-                                                'tol': tol,
-                                                'run_id': run_id,
-                                                'experiment': name,
-                                                'total_time': total_time,
-                                                'time_per_iter': timer_per_iter,
-                                                'max_iter': max_iter,
-                                                'latent_noise:': latent_noise,
-                                                'git_hash': git_hash,
-                                                'git_branch': git_branch,
-                                                'random_Z': random_Z
-                                                },
+                                                       'sparsify_factor': sparsify_factor,
+                                                       'sample_num': num_samples,
+                                                       'll': cond_ll.__class__.__name__,
+                                                       'opt_max_evals': opt_max_fun_evals,
+                                                       'opt_per_iter': opt_per_iter,
+                                                       'tol': tol,
+                                                       'run_id': run_id,
+                                                       'experiment': name,
+                                                       'total_time': total_time,
+                                                       'time_per_iter': timer_per_iter,
+                                                       'max_iter': max_iter,
+                                                       'latent_noise:': latent_noise,
+                                                       'git_hash': git_hash,
+                                                       'git_branch': git_branch,
+                                                       'random_Z': random_Z
+                                                       },
 
-                                        )
+                                         )
         return folder_name, m
 
     @staticmethod
@@ -215,14 +221,15 @@ class Experiments:
         # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
         gaussian_sigma = 1.0
 
-        #number of inducing points
+        # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                     num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                     config['log_level']))
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
+                                  config['log_level']))
         return names
 
     @staticmethod
@@ -240,14 +247,15 @@ class Experiments:
         name = 'breast_cancer'
         kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
 
-        #number of inducing points
+        # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = LogisticLL()
 
-        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                 config['log_level']))
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                  config['log_level']))
         return names
 
 
@@ -266,14 +274,15 @@ class Experiments:
         name = 'USPS'
         kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
 
-        #number of inducing points
+        # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = SoftmaxLL(3)
 
-        names.append(Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                 config['log_level']))
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                  config['log_level']))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
@@ -289,7 +298,7 @@ class Experiments:
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         m = SAVIGP_SingleComponent(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                 kernel, 10000, None)
+                                   kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
         plot_fit(m)
         show(block=True)
@@ -304,7 +313,7 @@ class Experiments:
         Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 20)
         kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
         m = SAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
-                                 kernel, 10000, None)
+                        kernel, 10000, None)
         Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
         plot_fit(m)
         gp = SAVIGP_Prediction.gpy_prediction(X, Y, sigma, kernel[0])
@@ -316,7 +325,7 @@ class Experiments:
     def get_train_test(X, Y, n_train):
         data = np.hstack((X, Y))
         np.random.shuffle(data)
-        Xn = data[:,:X.shape[1]]
-        Yn = data[:,X.shape[1]:]
+        Xn = data[:, :X.shape[1]]
+        Yn = data[:, X.shape[1]:]
         return Xn[:n_train], Yn[:n_train], Xn[n_train:], Yn[n_train:]
 
