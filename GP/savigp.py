@@ -298,6 +298,9 @@ class SAVIGP(Model):
             params = np.hstack([params, self.cond_likelihood.get_params()])
         return params
 
+    def get_posterior_params(self):
+        return self.MoG.get_m_S_params()
+
     def get_all_params(self):
         """
         returns all the parameters in the model

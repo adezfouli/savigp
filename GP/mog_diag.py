@@ -111,3 +111,6 @@ class MoG_Diag(MoG):
     def _s_k_skl(self, k, l, j):
         a = np.maximum(self.log_s[k, j, :], self.log_s[l, j, :])
         return np.exp((-a + self.log_s[k, j, :])) / (np.exp((-a + self.log_s[l, j, :]))  + np.exp((-a + self.log_s[k, j, :])))
+
+    def get_m_S_params(self):
+        return self.m, self.log_s

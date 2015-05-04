@@ -105,6 +105,8 @@ class MoG_SingleComponent(MoG):
 
     # def tr_A_mult_S(self, A, k, j):
     #     return trace(cho_solve((A, True), self.s[k,j]))
+    def get_m_S_params(self):
+        return self.m, self.L_flatten
 
     def tr_Ainv_mult_S(self, L, k, j):
         a = solve_triangular(L, self.L[k, j, :], lower=True)

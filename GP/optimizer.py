@@ -148,7 +148,8 @@ class Optimizer:
         converged=False
         start=time.time()
         total_evals = 0
-        last_param = None
+        last_param_m = None
+        last_param_s = None
         obj_track = []
         current_iter = 1
         try:
@@ -169,13 +170,16 @@ class Optimizer:
                     total_evals += d['funcalls']
 
                 # check for convergence
-                new_params = model.get_params()
-                if last_param is not None:
-                    if np.mean(np.absolute(new_params - last_param)) < epsilon:
+                new_params_m, new_params_s = model.get_posterior_params()
+                if last_param_m is not None:
+                    delta_m = np.absolute(new_params_m - last_param_m).mean()
+                    delta_s = np.absolute(new_params_s - last_param_s).mean()
+                    if (delta_m + delta_s) / 2 < epsilon:
                         logger.info('best obj found: ' + str(model.objective_function()))
                         break
-                    logger.info('diff:' + str(np.mean(np.absolute(new_params - last_param))))
-                last_param = new_params
+                    logger.info('diff:' + 'm:' +  str(delta_m) + ' s:' + str(delta_s))
+                last_param_m = new_params_m
+                last_param_s = new_params_s
 
                 if 'll' in method:
                     logger.info('ll params')

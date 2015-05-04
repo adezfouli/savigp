@@ -133,3 +133,6 @@ class MoG:
     def _update(self):
         """ updates internal variables of the class """
         pass
+
+    def get_m_S_params(self):
+        raise NotImplementedError
