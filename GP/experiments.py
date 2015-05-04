@@ -12,7 +12,7 @@ __author__ = 'AT'
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL
+from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -131,7 +131,7 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
-                  sparsify_factor, to_optimize, trans_class, random_Z, logging_level):
+                  sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X):
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
@@ -174,12 +174,12 @@ class Experiments:
         y_pred, var_pred = m.predict(Xtest)
         if not (tracker is None):
             Experiments.export_track(folder_name, tracker)
-        Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain))
+        Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain), export_X)
         Experiments.export_test(folder_name,
                                 transformer.untransform_X(Xtest),
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
-                                [transformer.untransform_Y_var(var_pred)], [''])
+                                [transformer.untransform_Y_var(var_pred)], [''], export_X)
 
         if export_model and isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
@@ -231,7 +231,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level']))
+                                  config['log_level'], False))
         return names
 
     @staticmethod
@@ -257,7 +257,34 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level']))
+                                  config['log_level'], False))
+        return names
+
+
+    @staticmethod
+    def mining_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mining_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'mining'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+        cond_ll = LogGaussianCox(1)
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation, True,
+                                  config['log_level'], True))
         return names
 
 
@@ -284,7 +311,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level']))
+                                  config['log_level'], False))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):

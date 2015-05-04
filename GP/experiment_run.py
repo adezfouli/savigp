@@ -52,14 +52,18 @@ class ExperimentRunner:
 
     @staticmethod
     def USPS_experiment():
-        Experiments.USPS_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 3, 'log_level': logging.DEBUG})
+        Experiments.USPS_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 3, 'log_level': logging.DEBUG})
+
+    @staticmethod
+    def mining_experiment():
+        Experiments.mining_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def plot():
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   lambda x: x['method'] == 'full' , False)
+                                   lambda x: x['method'] == 'full', False)
         #
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
@@ -82,11 +86,12 @@ def run_config_serial(config):
 
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
-    # n_process = 1
+    # n_process = 2
     # p = Pool(n_process)
     # p.map(run_config, ExperimentRunner.get_configs())
     # run_config_serial(ExperimentRunner.get_configs())
-    ExperimentRunner.boston_experiment()
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
-    # ExperimentRunner.plot()
+    ExperimentRunner.mining_experiment()
+    ExperimentRunner.plot()

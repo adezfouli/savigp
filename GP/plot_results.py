@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 from matplotlib.pyplot import show, ion, savefig
 import pandas
 from pandas.util.testing import DataFrame, Series
-from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian
+from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox
 from util import check_dir_exists
 import numpy as np
 
@@ -18,6 +18,7 @@ class PlotOutput:
         graphs['SSE'] = {}
         graphs['NLPD'] = {}
         graphs['ER'] = {}
+        graphs['intensity'] = {}
         graph_n = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
@@ -59,6 +60,11 @@ class PlotOutput:
                     PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
                                            -np.log((Ytrue * Ypred).sum(axis=0)))
 
+                if data_config['ll'] in [LogGaussianCox.__name__]:
+                    X0 = np.array([data_test['X0']])
+                    PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
+                                           np.array([X0[0,:]/365+1851.2026, Ypred[0,:]]).T)
+
         for n, g in graphs.iteritems():
             if g:
                 ion()
@@ -77,6 +83,12 @@ class PlotOutput:
                     ax =m.plot(kind='bar', yerr=errors, title=n)
                     patches, labels = ax.get_legend_handles_labels()
                     ax.legend(patches, labels, loc='lower center')
+                if n in ['intensity']:
+                    X = g.values()[0][:, 0]
+                    g= DataFrame(dict([(k,Series(v[:, 1])) for k,v in g.iteritems()]))
+                    g['X'] = X
+                    g.plot(x='X',kind='line')
+
                 if export_pdf:
                     check_dir_exists(infile_path + name + '/graphs/')
                     savefig(infile_path + name + '/graphs/'+'n' + '.pdf')

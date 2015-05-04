@@ -99,6 +99,21 @@ class DataSource:
 
 
     @staticmethod
+    def mining_data():
+        data = []
+        train = pandas.read_csv('data/mining/data.csv', header=None)
+        data.append({
+            'train_Y': train.ix[:, 0].values[:, np.newaxis],
+            'train_X': train.ix[:, 1].values[:, np.newaxis],
+            'test_Y': train.ix[:, 0].values[:, np.newaxis],
+            'test_X': train.ix[:, 1].values[:, np.newaxis],
+            'id': 1
+        })
+
+        return data
+
+
+    @staticmethod
     def boston_data():
         data = []
         for i in range(1, 6):

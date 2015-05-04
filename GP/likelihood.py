@@ -77,9 +77,6 @@ class UnivariateGaussian(Likelihood):
     def ll(self, f, y):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
-    def ll(self, f, y):
-        return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
-
     def ll_f_y(self, F, Y):
         return (self.const + -1.0 / 2 * np.square(F - Y) / self.sigma)[:, :, 0]
 
@@ -125,10 +122,17 @@ class LogGaussianCox(Likelihood):
 
     def ll(self, f, y):
         _log_lambda = (f + self.offset)
-        return y * _log_lambda - np.exp(_log_lambda) - gammaln(y + 1)
+        return (y * _log_lambda - np.exp(_log_lambda) - gammaln(y + 1))
 
     def ll_grad(self, f, y):
         return y-np.exp(f+self.offset)
+
+    def ll_f_y(self, F, Y):
+        _log_lambda = (F + self.offset)
+        return (Y * _log_lambda - np.exp(_log_lambda) - gammaln(Y + 1))[:, :, 0]
+
+    def ll_grad_F_Y(self, F, Y):
+        return (Y-np.exp(F+self.offset))[:, :, 0]
 
     def set_params(self, p):
         self.offset = p[0]
@@ -139,6 +143,10 @@ class LogGaussianCox(Likelihood):
     def get_num_params(self):
         return 1
 
+    def predict(self, mu, sigma):
+        meanval = np.exp(mu + sigma/2) * np.exp(self.offset)
+        varval = (np.exp(sigma)-1) * np.exp(2*mu+sigma) * np.exp(2 * self.offset)
+        return meanval, varval
 
 class LogisticLL(Likelihood):
     """
