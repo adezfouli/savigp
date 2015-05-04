@@ -150,6 +150,7 @@ class Experiments:
         total_time = None
         timer_per_iter = None
         tracker = None
+        export_model = False
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z)
@@ -179,7 +180,8 @@ class Experiments:
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
                                 [transformer.untransform_Y_var(var_pred)], [''])
-        if isinstance(m, SAVIGP):
+
+        if export_model and isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
 
         git_hash, git_branch = get_git()
@@ -198,7 +200,7 @@ class Experiments:
                                                        'latent_noise:': latent_noise,
                                                        'git_hash': git_hash,
                                                        'git_branch': git_branch,
-                                                       'random_Z': random_Z
+                                                       'random_Z': random_Z,
                                                        },
 
                                          )
