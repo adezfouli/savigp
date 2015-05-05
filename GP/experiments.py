@@ -1,7 +1,7 @@
 import logging
 
 from ExtRBF import ExtRBF
-from data_transformation import MeanTransformation, IdentityTransformation
+from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
@@ -340,7 +340,7 @@ class Experiments:
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False))
 
     @staticmethod
