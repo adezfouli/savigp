@@ -152,7 +152,7 @@ class Experiments:
         export_model = False
         git_hash, git_branch = get_git()
 
-        configs = {'method': method,
+        properties = {'method': method,
                    'sparsify_factor': sparsify_factor,
                    'sample_num': num_samples,
                    'll': cond_ll.__class__.__name__,
@@ -167,7 +167,7 @@ class Experiments:
                    'random_Z': random_Z,
                    'latent_noise:': latent_noise,
                    }
-        logger.info('experiment started for:' + str(configs) )
+        logger.info('experiment started for:' + str(properties))
 
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
@@ -202,9 +202,9 @@ class Experiments:
         if export_model and isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
 
-        configs['total_time'] = total_time
-        configs['time_per_iter'] = timer_per_iter
-        Experiments.export_configuration(folder_name, configs)
+        properties['total_time'] = total_time
+        properties['time_per_iter'] = timer_per_iter
+        Experiments.export_configuration(folder_name, properties)
         return folder_name, m
 
     @staticmethod
