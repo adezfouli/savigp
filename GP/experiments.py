@@ -135,7 +135,6 @@ class Experiments:
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
-
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
         Ytrain = transformer.transform_Y(Ytrain)
         Ytest = transformer.transform_Y(Ytest)
@@ -151,6 +150,25 @@ class Experiments:
         timer_per_iter = None
         tracker = None
         export_model = False
+        git_hash, git_branch = get_git()
+
+        configs = {'method': method,
+                   'sparsify_factor': sparsify_factor,
+                   'sample_num': num_samples,
+                   'll': cond_ll.__class__.__name__,
+                   'opt_max_evals': opt_max_fun_evals,
+                   'opt_per_iter': opt_per_iter,
+                   'tol': tol,
+                   'run_id': run_id,
+                   'experiment': name,
+                   'max_iter': max_iter,
+                   'git_hash': git_hash,
+                   'git_branch': git_branch,
+                   'random_Z': random_Z,
+                   'latent_noise:': latent_noise,
+                   }
+        logger.info('experiment started for:' + str(configs) )
+
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z)
@@ -184,26 +202,9 @@ class Experiments:
         if export_model and isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
 
-        git_hash, git_branch = get_git()
-        Experiments.export_configuration(folder_name, {'method': method,
-                                                       'sparsify_factor': sparsify_factor,
-                                                       'sample_num': num_samples,
-                                                       'll': cond_ll.__class__.__name__,
-                                                       'opt_max_evals': opt_max_fun_evals,
-                                                       'opt_per_iter': opt_per_iter,
-                                                       'tol': tol,
-                                                       'run_id': run_id,
-                                                       'experiment': name,
-                                                       'total_time': total_time,
-                                                       'time_per_iter': timer_per_iter,
-                                                       'max_iter': max_iter,
-                                                       'latent_noise:': latent_noise,
-                                                       'git_hash': git_hash,
-                                                       'git_branch': git_branch,
-                                                       'random_Z': random_Z,
-                                                       },
-
-                                         )
+        configs['total_time'] = total_time
+        configs['time_per_iter'] = timer_per_iter
+        Experiments.export_configuration(folder_name, configs)
         return folder_name, m
 
     @staticmethod
