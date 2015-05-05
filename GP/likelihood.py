@@ -78,7 +78,8 @@ class UnivariateGaussian(Likelihood):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
     def ll_f_y(self, F, Y):
-        return (self.const + -1.0 / 2 * np.square(F - Y) / self.sigma)[:, :, 0]
+        c = 1.0 / 2 * np.square(F - Y) / self.sigma
+        return (self.const + -c)[:, :, 0], (self.const_grad * self.sigma + c)[:, :, 0]
 
     def ll_grad(self, f, y):
         return self.const_grad * self.sigma + 1.0 / 2 * inner1d(f-y, f-y) / self.sigma
@@ -129,7 +130,7 @@ class LogGaussianCox(Likelihood):
 
     def ll_f_y(self, F, Y):
         _log_lambda = (F + self.offset)
-        return (Y * _log_lambda - np.exp(_log_lambda) - gammaln(Y + 1))[:, :, 0]
+        return (Y * _log_lambda - np.exp(_log_lambda) - gammaln(Y + 1))[:, :, 0], (Y-np.exp(F+self.offset))[:, :, 0]
 
     def ll_grad_F_Y(self, F, Y):
         return (Y-np.exp(F+self.offset))[:, :, 0]
@@ -169,7 +170,7 @@ class LogisticLL(Likelihood):
             return (-(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f))))[:,0]
 
     def ll_f_y(self, F, Y):
-        return -np.log(1 + np.exp(F * Y))[:, :, 0]
+        return -np.log(1 + np.exp(F * Y))[:, :, 0], None
 
     def set_params(self, p):
         if p.shape[0] != 0:
@@ -209,7 +210,7 @@ class SoftmaxLL(Likelihood):
         return -logsumexp(u, 1)
 
     def ll_f_y(self, F, Y):
-        return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2)
+        return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2), None
 
     def predict(self, mu, sigma):
         F = self.normal_samples * np.sqrt(sigma) + mu
@@ -230,3 +231,36 @@ class SoftmaxLL(Likelihood):
 
     def get_num_params(self):
         return 0
+
+
+class WarpLL(Likelihood):
+
+    def __init__(self, ea, eb, c, log_s):
+        Likelihood.__init__(self)
+        self.set_params(np.hstack((ea, eb, c, [log_s])))
+
+    def ll_f_y(self, F, Y):
+        ea = np.exp(self.params[0, :])
+        eb = np.exp(self.params[1, :])
+        c = self.params[2, :]
+        tanhcb = np.tanh(np.add.outer(Y[:, 0], c) * eb)
+        t = (tanhcb * ea).sum(axis=1) + Y[:, 0]
+        w = ((1. - np.square(tanhcb)) * ea * eb).sum(axis=1) + 1
+        sq = 1.0 / 2 * np.square(F[:, :, 0] - t) / self.sigma
+        return self.const + -sq + np.log(w), \
+            (self.const_grad * self.sigma + sq)
+
+    def set_params(self, p):
+        self.sigma = np.exp(p[-1])
+        self.const = -1.0 / 2 * np.log(self.sigma) - 1.0 / 2 * np.log(2 * math.pi)
+        self.const_grad = -1.0 / 2 / self.sigma
+        if p.shape[0] > 1:
+            n = (p.shape[0] - 1) / 3
+            self.params = p[:-1].reshape(3, n)
+
+
+    def get_params(self):
+        return np.array(np.log([self.sigma]))
+
+    def get_num_params(self):
+        return 1

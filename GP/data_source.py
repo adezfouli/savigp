@@ -129,6 +129,23 @@ class DataSource:
 
         return data
 
+
+    @staticmethod
+    def abalone_data():
+        data = []
+        for i in range(5, 11):
+            train = pandas.read_csv('data/abalone/train_' + str(i) + '.csv', header=None)
+            test = pandas.read_csv('data/abalone/test_' + str(i) + '.csv', header=None)
+            data.append({
+                'train_Y': train.ix[:, 0].values[:, np.newaxis],
+                'train_X': train.ix[:, 1:].values,
+                'test_Y': test.ix[:, 0].values[:, np.newaxis],
+                'test_X': test.ix[:, 1:].values,
+                'id': i
+            })
+
+        return data
+
 if __name__ == '__main__':
     X, Y = DataSource.wisconsin_breast_cancer_data()
     pass

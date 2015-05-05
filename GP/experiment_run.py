@@ -48,7 +48,11 @@ class ExperimentRunner:
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1})
+        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+
+    @staticmethod
+    def abalone_experiment():
+        Experiments.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def USPS_experiment():

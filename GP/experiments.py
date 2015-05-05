@@ -12,7 +12,7 @@ __author__ = 'AT'
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox
+from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -307,6 +307,36 @@ class Experiments:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = Experiments.get_number_samples()
         cond_ll = SoftmaxLL(3)
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                  config['log_level'], False))
+
+
+    @staticmethod
+    def abalone_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.abalone_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'abalone'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+
+        cond_ll = WarpLL(np.array([-2.0485, 1.7991, 1.5814]),
+                         np.array([2.7421, 0.9426, 1.7804]),
+                         np.array([0.1856, 0.7024, -0.7421]),
+                         np.log(0.1))
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,

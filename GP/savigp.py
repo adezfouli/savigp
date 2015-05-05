@@ -413,7 +413,7 @@ class SAVIGP(Model):
                     sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
                     F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma_kj[k,j]))
                     F[:, :, j] = F[:, :, j] + mean_kj[k,j]
-                cond_ll = cond_log_likelihood.ll_f_y(F, Y)
+                cond_ll, grad_ll = cond_log_likelihood.ll_f_y(F, Y)
                 for j in range(self.num_latent_proc):
                     m = mdot(self.normal_samples[j,:], cond_ll / np.sqrt(sigma_kj[k,j]), Kzx[j].T)
                     d_ell_dm[k,j] = self._proj_m_grad(j, m) * self.MoG.pi[k] / n_sample
@@ -432,7 +432,7 @@ class SAVIGP(Model):
                 d_ell_dPi[k] = sum_cond_ll
 
                 if Configuration.LL in self.config_list:
-                    d_ell_d_ll += self.MoG.pi[k] * mdot(self.cond_likelihood.ll_grad_F_Y(F, Y)).sum() / n_sample
+                    d_ell_d_ll += self.MoG.pi[k] * grad_ll.sum() / n_sample
 
             self.cached_ell = total_ell
 
