@@ -48,7 +48,7 @@ class ExperimentRunner:
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        Experiments.wisconsin_breast_cancer_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def abalone_experiment():
@@ -60,7 +60,7 @@ class ExperimentRunner:
 
     @staticmethod
     def mining_experiment():
-        Experiments.mining_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        Experiments.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def plot():
@@ -97,5 +97,5 @@ if __name__ == '__main__':
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
-    ExperimentRunner.mining_experiment()
+    # ExperimentRunner.mining_experiment()
     ExperimentRunner.plot()

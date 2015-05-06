@@ -250,13 +250,23 @@ class WarpLL(Likelihood):
         Likelihood.__init__(self)
         self.set_params(np.hstack((ea, eb, c, [log_s])))
 
-    def ll_F_Y(self, F, Y):
+    def warp(self, Y):
         ea = np.exp(self.params[0, :])
         eb = np.exp(self.params[1, :])
         c = self.params[2, :]
         tanhcb = np.tanh(np.add.outer(Y[:, 0], c) * eb)
         t = (tanhcb * ea).sum(axis=1) + Y[:, 0]
         w = ((1. - np.square(tanhcb)) * ea * eb).sum(axis=1) + 1
+        return t, w
+
+    def warpinv(self, z, t0, N):
+        for n in range(N):
+            t1, dt1 = self.warp(t0)
+            t0 -= (t1 - z) / dt1
+        return t0
+
+    def ll_F_Y(self, F, Y):
+        t, w = self.warp(Y)
         sq = 1.0 / 2 * np.square(F[:, :, 0] - t) / self.sigma
         return self.const + -sq + np.log(w), \
             (self.const_grad * self.sigma + sq)
@@ -268,6 +278,34 @@ class WarpLL(Likelihood):
         if p.shape[0] > 1:
             n = (p.shape[0] - 1) / 3
             self.params = p[:-1].reshape(3, n)
+
+    def predict(self, mu, sigma):
+        s = sigma + self.sigma
+        H = [
+            7.6e-07,
+            0.0013436,
+            0.0338744,
+            0.2401386,
+            0.6108626,
+            0.6108626,
+            0.2401386,
+            0.0338744,
+            0.0013436,
+            7.6e-07
+        ]
+        quard = [
+            -3.4361591,
+            -2.5327317,
+            -1.7566836,
+            -1.0366108,
+            -0.3429013,
+            0.3429013,
+            1.0366108,
+            1.7566836,
+            2.5327317,
+            3.4361591
+         ]
+        pass
 
 
     def get_params(self):
