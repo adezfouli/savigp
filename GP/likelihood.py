@@ -37,8 +37,19 @@ class Likelihood:
     def get_params(self):
         raise Exception("not implemented yet")
 
-    def predict(self, mu, sigma):
-        raise Exception("not implemented yet")
+    # def predict(self, mu, sigma):
+    #     self.dim = mu.shape[0]
+    #     self.n_samples = 100000
+    #     self.normal_samples = np.random.normal(0, 1, self.n_samples * self.dim) \
+    #         .reshape((self.n_samples, self.dim))
+    #     F = self.normal_samples * np.sqrt(sigma) + mu
+    #     Y = self._get_y_range()
+    #     mean  = (np.exp((self.ll_F_Y(F[:, np.newaxis, :], Y)[0])).mean(0)*Y.T).sum(1)
+    #     return mean, None
+    #
+    # def _get_y_range(self):
+    #     raise Exception("not implemented yet")
+
 
     def ell(self, mu, sigma, Y):
         raise Exception("not implemented yet")
@@ -149,7 +160,7 @@ class LogGaussianCox(Likelihood):
         varval = (np.exp(sigma)-1) * np.exp(2*mu+sigma) * np.exp(2 * self.offset)
         return meanval, varval
 
-class LogisticLL(Likelihood):
+class LogisticLL(object, Likelihood):
     """
     Logistic likelihood
 
