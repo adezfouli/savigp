@@ -142,7 +142,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_per_iter = 15000
+        opt_per_iter = 25
         max_iter = 200
         latent_noise = 0.001
         tol = 1e-3
