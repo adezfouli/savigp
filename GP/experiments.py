@@ -49,7 +49,7 @@ class Experiments:
 
     @staticmethod
     def get_number_samples():
-        return 5000
+        return 10000
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain, export_X=False):
@@ -142,7 +142,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_per_iter = 25
+        opt_per_iter = 35
         max_iter = 1000
         latent_noise = 0.001
         tol = 1e-3
