@@ -22,7 +22,7 @@ class Likelihood:
     def ll_grad(self, f, y):
         raise Exception("not implemented yet")
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         raise Exception("not implemented yet")
 
     def ll_grad_F_Y(self, F, Y):
@@ -77,7 +77,7 @@ class UnivariateGaussian(Likelihood):
     def ll(self, f, y):
         return self.const + -1.0 / 2 * inner1d(f-y, f-y) / self.sigma
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         c = 1.0 / 2 * np.square(F - Y) / self.sigma
         return (self.const + -c)[:, :, 0], (self.const_grad * self.sigma + c)[:, :, 0]
 
@@ -128,7 +128,7 @@ class LogGaussianCox(Likelihood):
     def ll_grad(self, f, y):
         return y-np.exp(f+self.offset)
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         _log_lambda = (F + self.offset)
         return (Y * _log_lambda - np.exp(_log_lambda) - gammaln(Y + 1))[:, :, 0], (Y-np.exp(F+self.offset))[:, :, 0]
 
@@ -169,7 +169,7 @@ class LogisticLL(Likelihood):
         if y == -1:
             return (-(-f + np.abs(-f)) / 2 - np.log(1 + np.exp(-np.abs(-f))))[:,0]
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         return -np.log(1 + np.exp(F * Y))[:, :, 0], None
 
     def set_params(self, p):
@@ -209,7 +209,7 @@ class SoftmaxLL(Likelihood):
 
         return -logsumexp(u, 1)
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2), None
 
     def predict(self, mu, sigma):
@@ -239,7 +239,7 @@ class WarpLL(Likelihood):
         Likelihood.__init__(self)
         self.set_params(np.hstack((ea, eb, c, [log_s])))
 
-    def ll_f_y(self, F, Y):
+    def ll_F_Y(self, F, Y):
         ea = np.exp(self.params[0, :])
         eb = np.exp(self.params[1, :])
         c = self.params[2, :]
