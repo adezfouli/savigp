@@ -595,16 +595,14 @@ class SAVIGP(Model):
 
         predicted_mu = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
         predicted_var = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
-        for n in range(len(t_X)):
-            mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
-            sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc))
 
+        mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, t_X.shape[0]))
+        sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, t_X.shape[0]))
+        for k in range(self.num_mog_comp):
             for j in range(self.num_latent_proc):
-                mean_kj[:, j] = self._b_n(n, j, A[j], Kzx[j].T)
-                sigma_kj[:, j] = self._sigma_n(n, j, K[j], A[j], Kzx[j].T)
-
-            for k in range(self.num_mog_comp):
-                predicted_mu[n, :, :], predicted_var[n, :, :] = self.cond_likelihood.predict(mean_kj[k, :], sigma_kj[k, :])
+                mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
+                sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
+            predicted_mu[:, k, :], predicted_var[:, k, :] = self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T)
 
         return predicted_mu, predicted_var
 

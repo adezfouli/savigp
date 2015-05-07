@@ -15,15 +15,15 @@ class DataSource:
         pass
 
     @staticmethod
-    def normal_generate_samples(n_samples, var):
+    def normal_generate_samples(n_samples, var, input_dim=3):
         num_samples = n_samples
         noise = var
-        num_in = 3
+        num_in = input_dim
         X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
         # X = preprocessing.scale(X)
         X.sort(axis=0)
         rbf = ExtRBF(num_in, variance=0.5,
-                           lengthscale=np.array(np.random.uniform(low=0.1, high=3.0, size=num_in)), ARD=True)
+                           lengthscale=np.array(np.random.uniform(low=0.1, high=3.0, size=input_dim)), ARD=True)
         white = GPy.kern.White(num_in, variance=noise)
         kernel = rbf + white
         K = kernel.K(X)

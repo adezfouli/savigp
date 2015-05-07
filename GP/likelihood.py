@@ -188,8 +188,8 @@ class LogisticLL(object, Likelihood):
             raise Exception("Logistic function does not have free parameters")
 
     def predict(self, mu, sigma):
-        f = self.normal_samples * math.sqrt(sigma) + mu
-        mean = np.exp(self.ll(f.T, 1)).mean()
+        f = self.normal_samples * np.sqrt(sigma) + mu
+        mean = np.exp(self.ll_F_Y(f.T[:, :, np.newaxis], np.array([[1]]))[0]).mean(axis=0)
         return mean, mean * (1 - mean)
 
     def get_params(self):
@@ -210,7 +210,7 @@ class SoftmaxLL(Likelihood):
         self.dim = dim
         self.n_samples = 20000
         self.normal_samples = np.random.normal(0, 1, self.n_samples * dim) \
-            .reshape((self.n_samples, self.dim))
+            .reshape((self.dim, self.n_samples))
 
     def ll(self, f, y):
         u = f.copy()
@@ -224,9 +224,11 @@ class SoftmaxLL(Likelihood):
         return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2), None
 
     def predict(self, mu, sigma):
-        F = self.normal_samples * np.sqrt(sigma) + mu
+        F = np.empty((self.n_samples, mu.shape[0], self.dim))
+        for j in range(self.dim):
+            F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma[:, j])) + mu[:, j]
         expF = np.exp(F)
-        mean = (expF / expF.sum(1)[:, np.newaxis]).mean(axis=0)
+        mean = (expF / expF.sum(2)[:, :, np.newaxis]).mean(axis=0)
         return mean, None
 
 
