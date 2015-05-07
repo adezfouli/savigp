@@ -54,30 +54,30 @@ class Likelihood:
     def ell(self, mu, sigma, Y):
         raise Exception("not implemented yet")
 
-class MultivariateGaussian(Likelihood):
-    def __init__(self, sigma):
-        Likelihood.__init__(self)
-        self.sigma = sigma
-        self.sigma_inv = inv(self.sigma)
-        self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
-
-    def ll(self, f, y):
-        return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
-
-    def ll_grad(self, f, y):
-        raise Exception("gradients not supported for multivariate Gaussian")
-
-    def get_sigma(self):
-        return self.sigma
-
-    def get_params(self):
-        return self.sigma.flatten()
-
-    def get_num_params(self):
-        return self.sigma.flatten().shape[0]
-
-    def ell(self, mu, sigma, Y):
-        return cross_ent_normal(mu, np.diag(sigma), Y, np.array(self.sigma))
+# class MultivariateGaussian(Likelihood):
+#     def __init__(self, sigma):
+#         Likelihood.__init__(self)
+#         self.sigma = sigma
+#         self.sigma_inv = inv(self.sigma)
+#         self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
+#
+#     def ll(self, f, y):
+#         return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
+#
+#     def ll_grad(self, f, y):
+#         raise Exception("gradients not supported for multivariate Gaussian")
+#
+#     def get_sigma(self):
+#         return self.sigma
+#
+#     def get_params(self):
+#         return self.sigma.flatten()
+#
+#     def get_num_params(self):
+#         return self.sigma.flatten().shape[0]
+#
+#     def ell(self, mu, sigma, Y):
+#         return cross_ent_normal(mu, np.diag(sigma), Y, np.array(self.sigma))
 
 
 class UnivariateGaussian(Likelihood):
@@ -112,8 +112,12 @@ class UnivariateGaussian(Likelihood):
     def get_num_params(self):
         return 1
 
-    def predict(self, mu, sigma):
-        return mu, sigma + self.sigma
+    def predict(self, mu, sigma, Ys):
+        var = sigma + self.sigma
+        lpd = None
+        if not (Ys is None):
+            lpd = -(np.square(0.5*(Ys-mu))/var+np.log(2.*math.pi*var))[:, 0]
+        return mu, var, lpd
 
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
@@ -155,10 +159,10 @@ class LogGaussianCox(Likelihood):
     def get_num_params(self):
         return 1
 
-    def predict(self, mu, sigma):
+    def predict(self, mu, sigma, Ys):
         meanval = np.exp(mu + sigma/2) * np.exp(self.offset)
         varval = (np.exp(sigma)-1) * np.exp(2*mu+sigma) * np.exp(2 * self.offset)
-        return meanval, varval
+        return meanval, varval, None
 
 class LogisticLL(object, Likelihood):
     """
@@ -187,10 +191,14 @@ class LogisticLL(object, Likelihood):
         if p.shape[0] != 0:
             raise Exception("Logistic function does not have free parameters")
 
-    def predict(self, mu, sigma):
+    def predict(self, mu, sigma, Ys):
         f = self.normal_samples * np.sqrt(sigma) + mu
-        mean = np.exp(self.ll_F_Y(f.T[:, :, np.newaxis], np.array([[1]]))[0]).mean(axis=0)
-        return mean, mean * (1 - mean)
+        mean = np.exp(self.ll_F_Y(f.T[:, :, np.newaxis], np.array([[1]]))[0]).mean(axis=0)[:, np.newaxis]
+        lpd = None
+        if not (Ys is None):
+            lpd = np.log((-Ys + 1) / 2 + Ys * mean)
+
+        return mean, mean * (1 - mean), lpd[:, 0]
 
     def get_params(self):
         return np.array([])
@@ -223,13 +231,16 @@ class SoftmaxLL(Likelihood):
     def ll_F_Y(self, F, Y):
         return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2), None
 
-    def predict(self, mu, sigma):
+    def predict(self, mu, sigma, Ys):
         F = np.empty((self.n_samples, mu.shape[0], self.dim))
         for j in range(self.dim):
             F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma[:, j])) + mu[:, j]
         expF = np.exp(F)
         mean = (expF / expF.sum(2)[:, :, np.newaxis]).mean(axis=0)
-        return mean, None
+        lpd = None
+        if not (Ys is None):
+            lpd = np.log((Ys * mean).sum(axis=1))
+        return mean, None, lpd
 
 
     def ll_grad(self, f, y):

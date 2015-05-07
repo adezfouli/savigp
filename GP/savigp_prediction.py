@@ -7,7 +7,7 @@ import numpy as np
 from data_source import DataSource
 from optimizer import Optimizer
 from savigp import Configuration
-from likelihood import MultivariateGaussian, UnivariateGaussian
+from likelihood import UnivariateGaussian
 from plot import plot_fit
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent

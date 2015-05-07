@@ -36,6 +36,7 @@ class PlotOutput:
                 Ypred = np.array([data_test['Ypred__%d' % (d)] for d in range(dim)])
                 Ytrue = np.array([data_test['Ytrue%d' % (d)] for d in range(dim)])
                 Yvar = np.array([data_test['Yvar_pred__%d' % (d)] for d in range(dim)])
+                NLPD = np.array(data_test['nlpd'])
 
                 if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
                     graph_n[PlotOutput.config_to_str(data_config)] = 0
@@ -44,21 +45,18 @@ class PlotOutput:
                 if data_config['ll'] in [UnivariateGaussian.__name__]:
                     PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config),
                                            (Ypred[0] - Ytrue[0])**2 / ((Y_mean - Ytrue[0]) **2).mean())
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
-                                           0.5*(Ytrue[0]-Ypred[0]) ** 2./Yvar[0]+np.log(2*math.pi*Yvar[0]))
+                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
                 if data_config['ll'] in [LogisticLL.__name__]:
                     PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array([(((Ypred[0] > 0.5) & (Ytrue[0] == -1))
                                                                  | ((Ypred[0] < 0.5) & (Ytrue[0] == 1))
                                                                  ).mean()]))
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
-                                           -np.log((-Ytrue[0] + 1) / 2 + Ytrue[0] * Ypred[0]))
+                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
                 if data_config['ll'] in [SoftmaxLL.__name__]:
                     PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array(
                         [(np.argmax(Ytrue, axis=0) != np.argmax(Ypred, axis=0)).mean()]))
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config),
-                                           -np.log((Ytrue * Ypred).sum(axis=0)))
+                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
                 if data_config['ll'] in [LogGaussianCox.__name__]:
                     X0 = np.array([data_test['X0']])

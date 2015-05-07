@@ -584,32 +584,41 @@ class SAVIGP(Model):
                    (self.MoG.C_m(j, k, l))
         return m_k
 
-    def _predict_comp(self, t_X):
+    def _predict_comp(self, Xs, Ys):
         """
         predicting at test points t_X
-        :param t_X: test point
+        :param Xs: test point
         """
 
         # print 'ell started'
-        A, Kzx, K = self._get_A_K(t_X)
+        A, Kzx, K = self._get_A_K(Xs)
 
-        predicted_mu = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
-        predicted_var = np.empty((t_X.shape[0], self.num_mog_comp, self.output_dim))
+        predicted_mu = np.empty((Xs.shape[0], self.num_mog_comp, self.output_dim))
+        predicted_var = np.empty((Xs.shape[0], self.num_mog_comp, self.output_dim))
+        nlpd = None
+        if not (Ys is None):
+            nlpd = np.empty((Xs.shape[0], self.num_mog_comp))
 
-        mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, t_X.shape[0]))
-        sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, t_X.shape[0]))
+        mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, Xs.shape[0]))
+        sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, Xs.shape[0]))
         for k in range(self.num_mog_comp):
             for j in range(self.num_latent_proc):
                 mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
                 sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
-            predicted_mu[:, k, :], predicted_var[:, k, :] = self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T)
 
-        return predicted_mu, predicted_var
+            if not (Ys is None):
+                predicted_mu[:, k, :], predicted_var[:, k, :], nlpd[:, k] = \
+                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys)
+            else:
+                predicted_mu[:, k, :], predicted_var[:, k, :], _ = \
+                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys)
 
-    def predict(self, Xnew):
-        mu, var = self._predict_comp(Xnew)
+        return predicted_mu, predicted_var, -logsumexp(nlpd, 1, self.MoG.pi)
+
+    def predict(self, Xs, Ys=None):
+        mu, var, nlpd = self._predict_comp(Xs, Ys)
         predicted_mu = np.average(mu, axis=1, weights=self.MoG.pi)
         predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
                         + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2
 
-        return predicted_mu, predicted_var
+        return predicted_mu, predicted_var, nlpd[:, np.newaxis]

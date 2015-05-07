@@ -12,7 +12,7 @@ __author__ = 'AT'
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import MultivariateGaussian, UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL
+from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -91,7 +91,7 @@ class Experiments:
 
 
     @staticmethod
-    def export_test(name, X, Ytrue, Ypred, Yvar_pred, pred_names, export_X=False):
+    def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names, export_X=False):
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'test_'
@@ -99,9 +99,11 @@ class Experiments:
         out.append(Ytrue)
         out += Ypred
         out += Yvar_pred
+        out += [nlpd]
         header =  ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
             ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
-            ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])]
+            ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] + \
+            ['nlpd']
 
 
         if export_X:
@@ -189,7 +191,7 @@ class Experiments:
             if 'll' in to_optimize and 'hyp' in to_optimize:
                 m.optimize('bfgs')
 
-        y_pred, var_pred = m.predict(Xtest)
+        y_pred, var_pred, nlpd = m.predict(Xtest, Ytest)
         if not (tracker is None):
             Experiments.export_track(folder_name, tracker)
         Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain), export_X)
@@ -197,7 +199,9 @@ class Experiments:
                                 transformer.untransform_X(Xtest),
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
-                                [transformer.untransform_Y_var(var_pred)], [''], export_X)
+                                [transformer.untransform_Y_var(var_pred)],
+                                nlpd,
+                                [''], export_X)
 
         if export_model and isinstance(m, SAVIGP):
             Experiments.export_model(m, folder_name)
