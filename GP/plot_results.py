@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 from matplotlib.pyplot import show, ion, savefig
 import pandas
 from pandas.util.testing import DataFrame, Series
-from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox
+from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL
 from util import check_dir_exists
 import numpy as np
 
@@ -42,7 +42,7 @@ class PlotOutput:
                     graph_n[PlotOutput.config_to_str(data_config)] = 0
                 graph_n[PlotOutput.config_to_str(data_config)] += 1
 
-                if data_config['ll'] in [UnivariateGaussian.__name__]:
+                if data_config['ll'] in [UnivariateGaussian.__name__, WarpLL.__name__]:
                     PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config),
                                            (Ypred[0] - Ytrue[0])**2 / ((Y_mean - Ytrue[0]) **2).mean())
                     PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)

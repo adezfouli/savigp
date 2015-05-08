@@ -1,14 +1,9 @@
 import logging
-
 from ExtRBF import ExtRBF
 from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
-
-
-__author__ = 'AT'
-
 import csv
 import GPy
 from sklearn import preprocessing
@@ -144,7 +139,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_per_iter = 35
+        opt_per_iter = 200
         max_iter = 10000
         latent_noise = 0.001
         tol = 1e-3
@@ -200,7 +195,7 @@ class Experiments:
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
                                 [transformer.untransform_Y_var(var_pred)],
-                                nlpd,
+                                transformer.untransform_NLPD(nlpd),
                                 [''], export_X)
 
         if export_model and isinstance(m, SAVIGP):

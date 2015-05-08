@@ -1,3 +1,5 @@
+import numpy as np
+
 class DataTransformation:
 
     def __init__(self):
@@ -18,6 +20,8 @@ class DataTransformation:
     def untransform_Y_var(self, Yvar):
         raise NotImplementedError()
 
+    def untransform_NLPD(self, NLPD):
+        raise NotImplementedError()
 
 class IdentityTransformation:
 
@@ -43,6 +47,10 @@ class IdentityTransformation:
     def get_transformation(Y, X):
         return IdentityTransformation()
 
+    def untransform_NLPD(self, NLPD):
+        return NLPD
+
+
 
 class MeanTransformation(object, DataTransformation):
 
@@ -64,6 +72,9 @@ class MeanTransformation(object, DataTransformation):
 
     def untransform_Y_var(self, Yvar):
         return Yvar
+
+    def untransform_NLPD(self, NLPD):
+        return NLPD
 
     @staticmethod
     def get_transformation(Y, X):
@@ -92,6 +103,9 @@ class MinTransformation(object, DataTransformation):
 
     def untransform_Y_var(self, Yvar):
         return Yvar * (self.max-self.min) ** 2
+
+    def untransform_NLPD(self, NLPD):
+        return NLPD + np.log(self.max - self.min)
 
     @staticmethod
     def get_transformation(Y, X):
