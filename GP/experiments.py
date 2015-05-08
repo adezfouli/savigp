@@ -343,42 +343,40 @@ class Experiments:
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False))
 
+
+    @staticmethod
+    def creep_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.creep_data()
+
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'creep'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = Experiments.get_number_samples()
+
+        cond_ll = WarpLL(np.array([3.8715, 3.8898, 2.8759]),
+                         np.array([1.5925, -1.3360, -2.0289]),
+                         np.array([0.7940, -4.1855, -3.0289]),
+                         np.log(0.1))
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                  config['log_level'], False))
+
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
         return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
-
-    @staticmethod
-    def gaussian_1D_data():
-        gaussian_sigma = 0.2
-        np.random.seed(12000)
-        X, Y = DataSource.normal_1D_data(1000, gaussian_sigma)
-        X = preprocessing.scale(X)
-        Y = preprocessing.scale(Y)
-        Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 300)
-        kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = SAVIGP_SingleComponent(Xtrain, Ytrain, Xtrain.shape[0], MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                   kernel, 10000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp'])
-        plot_fit(m)
-        show(block=True)
-
-    @staticmethod
-    def gaussian_1D_data_diag():
-        sigma = 0.2
-        np.random.seed(12000)
-        X, Y = DataSource.normal_1D_data(20, sigma)
-        X = preprocessing.scale(X)
-        Y = preprocessing.scale(Y)
-        Xtrain, Ytrain, Xtest, YTest = Experiments.get_train_test(X, Y, 20)
-        kernel = [GPy.kern.RBF(1, variance=0.5, lengthscale=np.array((0.2,)))]
-        m = SAVIGP_Diag(Xtrain, Ytrain, Xtrain.shape[0], 1, MultivariateGaussian(np.array([[sigma]])),
-                        kernel, 10000, None)
-        Optimizer.optimize_model(m, 10000, True, ['mog', 'hyp', 'll'])
-        plot_fit(m)
-        gp = SAVIGP_Prediction.gpy_prediction(X, Y, sigma, kernel[0])
-        gp.plot()
-        show(block=True)
-
 
     @staticmethod
     def get_train_test(X, Y, n_train):
