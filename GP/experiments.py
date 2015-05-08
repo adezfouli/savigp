@@ -332,7 +332,7 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'abalone'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)

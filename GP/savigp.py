@@ -608,10 +608,10 @@ class SAVIGP(Model):
 
             if not (Ys is None):
                 predicted_mu[:, k, :], predicted_var[:, k, :], nlpd[:, k] = \
-                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys)
+                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys, self)
             else:
                 predicted_mu[:, k, :], predicted_var[:, k, :], _ = \
-                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys)
+                    self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys, self)
 
         return predicted_mu, predicted_var, -logsumexp(nlpd, 1, self.MoG.pi)
 

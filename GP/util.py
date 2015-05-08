@@ -164,3 +164,9 @@ def get_git():
         has = None
         branch = None
     return hash, branch
+
+def drange(start, stop, step):
+    r = start
+    while r < stop:
+        yield r
+        r += step

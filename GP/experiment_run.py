@@ -98,4 +98,5 @@ if __name__ == '__main__':
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
-    ExperimentRunner.plot()
+    # ExperimentRunner.plot()
+    ExperimentRunner.abalone_experiment()
