@@ -320,7 +320,7 @@ class WarpLL(object, Likelihood):
         if not (Ys is None):
             ts, w = self.warp(Ys)
             lpd = -0.5*np.log(2*math.pi*s) - 0.5 * np.square(ts-mu)/s + np.log(w)
-        return var[:, np.newaxis], mean, lpd[:, 0]
+        return mean, var[:, np.newaxis], lpd[:, 0]
 
     def _get_y_range(self):
         return np.array([xrange(-1000, 2000, 1)]).T / 1000
@@ -334,7 +334,6 @@ class WarpLL(object, Likelihood):
                 elif q[j,k] < sortz[0]:
                     t0[j,k] = sortt[0]
                 else:
-                    pass
                     I = np.argmax(sortz > q[j,k])
                     I = np.array([I - 1, I])
                     t0[j,k] = sortt[I].mean()
