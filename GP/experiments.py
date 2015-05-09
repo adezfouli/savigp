@@ -139,7 +139,7 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        opt_per_iter = 200
+        opt_per_iter = 35
         max_iter = 10000
         latent_noise = 0.001
         tol = 1e-3
@@ -358,7 +358,10 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'creep'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
+        scaler = preprocessing.StandardScaler().fit(Xtrain)
+        Xtrain = scaler.transform(Xtrain)
+        Xtest = scaler.transform(Xtest)
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -367,7 +370,7 @@ class Experiments:
         cond_ll = WarpLL(np.array([3.8715, 3.8898, 2.8759]),
                          np.array([1.5925, -1.3360, -2.0289]),
                          np.array([0.7940, -4.1855, -3.0289]),
-                         np.log(0.1))
+                         np.log(0.01))
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
