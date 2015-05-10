@@ -140,7 +140,7 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun_evals, logger, method=None, epsilon=1e-4, iters_per_opt=15000, max_iters=200):
+    def optimize_model(model, max_fun_evals, logger, method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200, ftol =1e-5):
         if not method:
             method=['hyp', 'mog']
         if not (max_fun_evals is None):
@@ -152,6 +152,7 @@ class Optimizer:
         last_param_s = None
         obj_track = []
         current_iter = 1
+        last_obj = None
         try:
             while not converged:
                 if 'mog' in method:
@@ -174,12 +175,14 @@ class Optimizer:
                 if last_param_m is not None:
                     delta_m = np.absolute(new_params_m - last_param_m).mean()
                     delta_s = np.absolute(new_params_s - last_param_s).mean()
-                    if (delta_m + delta_s) / 2 < epsilon:
+                    if (delta_m + delta_s) / 2 < xtol or (last_obj - model.objective_function() < ftol):
                         logger.info('best obj found: ' + str(model.objective_function()))
                         break
+                    logger.debug('ftol: ' + str(last_obj - model.objective_function()))
                     logger.info('diff:' + 'm:' +  str(delta_m) + ' s:' + str(delta_s))
                 last_param_m = new_params_m
                 last_param_s = new_params_s
+                last_obj = model.objective_function()
 
                 if 'll' in method:
                     logger.info('ll params')

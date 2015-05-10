@@ -142,12 +142,13 @@ class Experiments:
         opt_per_iter = 35
         max_iter = 10000
         latent_noise = 0.001
-        tol = 1e-3
+        xtol = 1e-3
         total_time = None
         timer_per_iter = None
         tracker = None
         export_model = False
         git_hash, git_branch = get_git()
+        ftol = 1e-5
 
         properties = {'method': method,
                    'sparsify_factor': sparsify_factor,
@@ -155,7 +156,8 @@ class Experiments:
                    'll': cond_ll.__class__.__name__,
                    'opt_max_evals': opt_max_fun_evals,
                    'opt_per_iter': opt_per_iter,
-                   'tol': tol,
+                   'xtol': xtol,
+                   'ftol': ftol,
                    'run_id': run_id,
                    'experiment': name,
                    'max_iter': max_iter,
@@ -170,17 +172,17 @@ class Experiments:
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z)
             _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, tol, opt_per_iter, max_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
