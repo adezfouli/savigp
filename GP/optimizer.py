@@ -65,6 +65,7 @@ class Optimizer:
                 update(X)
             obj = model.objective_function()
             tracker.append(obj)
+            logger.debug('objective:' + "%.4f" % model.objective_function())
             return obj
 
         def f_grad(X=None):
@@ -73,7 +74,6 @@ class Optimizer:
 
             g = np.zeros(len(x0))
             g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
-            logger.debug('objective:' + "%.4f" % model.objective_function())
             return g
 
         update(x0)
@@ -90,6 +90,7 @@ class Optimizer:
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x))
+        update(x)
         return d, tracker
 
     @staticmethod
@@ -175,7 +176,8 @@ class Optimizer:
                 if last_param_m is not None:
                     delta_m = np.absolute(new_params_m - last_param_m).mean()
                     delta_s = np.absolute(new_params_s - last_param_s).mean()
-                    if (delta_m + delta_s) / 2 < xtol or (last_obj - model.objective_function() < ftol):
+                    if (delta_m + delta_s) / 2 < xtol or \
+                            ((last_obj > model.objective_function()) and (last_obj - model.objective_function() < ftol)):
                         logger.info('best obj found: ' + str(model.objective_function()))
                         break
                     logger.debug('ftol: ' + str(last_obj - model.objective_function()))
