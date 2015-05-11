@@ -114,7 +114,7 @@ class UnivariateGaussian(Likelihood):
     def get_num_params(self):
         return 1
 
-    def predict(self, mu, sigma, Ys):
+    def predict(self, mu, sigma, Ys, model=None):
         var = sigma + self.sigma
         lpd = None
         if not (Ys is None):
@@ -161,7 +161,7 @@ class LogGaussianCox(Likelihood):
     def get_num_params(self):
         return 1
 
-    def predict(self, mu, sigma, Ys):
+    def predict(self, mu, sigma, Ys, model=None):
         meanval = np.exp(mu + sigma / 2) * np.exp(self.offset)
         varval = (np.exp(sigma) - 1) * np.exp(2 * mu + sigma) * np.exp(2 * self.offset)
         return meanval, varval, None
@@ -193,7 +193,7 @@ class LogisticLL(object, Likelihood):
         if p.shape[0] != 0:
             raise Exception("Logistic function does not have free parameters")
 
-    def predict(self, mu, sigma, Ys):
+    def predict(self, mu, sigma, Ys, model=None):
         f = self.normal_samples * np.sqrt(sigma) + mu
         mean = np.exp(self.ll_F_Y(f.T[:, :, np.newaxis], np.array([[1]]))[0]).mean(axis=0)[:, np.newaxis]
         lpd = None
@@ -236,7 +236,7 @@ class SoftmaxLL(Likelihood):
     def ll_F_Y(self, F, Y):
         return -logsumexp(F - (F * Y).sum(2)[:, :, np.newaxis], 2), None
 
-    def predict(self, mu, sigma, Ys):
+    def predict(self, mu, sigma, Ys, model=None):
         F = np.empty((self.n_samples, mu.shape[0], self.dim))
         for j in range(self.dim):
             F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma[:, j])) + mu[:, j]
