@@ -10,7 +10,7 @@ class ExperimentRunner:
     def get_configs():
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['full']
+        methods = ['full', 'mix1', 'mix2']
         sparse_factor = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
@@ -30,7 +30,9 @@ class ExperimentRunner:
     def get_experiments():
         # return [Experiments.boston_data.__name__]
         # return [Experiments.wisconsin_breast_cancer_data.__name__]
-        return [Experiments.USPS_data.__name__]
+        # return [Experiments.USPS_data.__name__]
+        # return [Experiments.creep_data.__name__]
+        return [Experiments.abalone_data.__name__]
 
     @staticmethod
     def get_log_level():
@@ -53,6 +55,10 @@ class ExperimentRunner:
     @staticmethod
     def abalone_experiment():
         Experiments.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+
+    @staticmethod
+    def creep_experiment():
+        Experiments.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def USPS_experiment():
@@ -98,5 +104,5 @@ if __name__ == '__main__':
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
-    # ExperimentRunner.plot()
     ExperimentRunner.abalone_experiment()
+    # ExperimentRunner.plot()
