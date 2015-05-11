@@ -231,7 +231,7 @@ class SAVIGP_Test:
 
         #number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = Experiments.get_number_samples()
+        num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         n1, _ = Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
