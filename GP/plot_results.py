@@ -110,6 +110,15 @@ class PlotOutput:
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         PlotOutput.plot_output(name, path, dir, filter, export_pdf)
 
+
+    @staticmethod
+    def find_all(path, filter):
+        dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+        for m in dir:
+            data_config = PlotOutput.read_config(path + m + '/' + 'config_' + '.csv')
+            if filter is None or filter(data_config):
+                print m
+
     @staticmethod
     def read_config(path):
         with open(path) as csvfile:
