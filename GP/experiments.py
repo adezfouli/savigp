@@ -257,7 +257,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False,  opt_per_iter=15000, max_iter=200))
         return names
 
 
@@ -286,7 +286,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True))
+                                  config['log_level'], True, opt_per_iter=15000, max_iter=1))
         return names
 
 
@@ -313,7 +313,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False,  opt_per_iter=30, max_iter=200))
 
 
     @staticmethod
@@ -343,7 +343,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
 
 
     @staticmethod
@@ -377,7 +377,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
