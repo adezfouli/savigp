@@ -81,15 +81,20 @@ class Optimizer:
 
 
     @staticmethod
-    def BFGS(model, logger, opt_indices=None, max_fun=None):
+    def BFGS(model, logger, opt_indices=None, max_fun=None, apply_bound=False):
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
 
         tracker = []
+        bounds = None
+        if apply_bound:
+            bounds = []
+            for x in range(start.shape[0]):
+                bounds.append((None, math.log(1e+10)))
         f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
-                      callback=lambda x: update(x))
+                      callback=lambda x: update(x), bounds=bounds)
         update(x)
         return d, tracker
 
@@ -204,7 +209,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt, apply_bound=True)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
