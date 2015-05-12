@@ -125,7 +125,7 @@ class Experiments:
 
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
-                  sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X):
+                  sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X, latent_noise=0.001):
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
@@ -138,7 +138,6 @@ class Experiments:
         opt_max_fun_evals = None
         opt_per_iter = 40
         max_iter = 200
-        latent_noise = 0.005
         xtol = 1e-3
         total_time = None
         timer_per_iter = None
@@ -230,7 +229,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False, 0.005))
         return names
 
     @staticmethod
