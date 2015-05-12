@@ -225,7 +225,7 @@ class Experiments:
         num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        if sparsify_factor < 0.7:
+        if sparsify_factor < 1.0:
             num_samples = 20000
 
         names.append(
