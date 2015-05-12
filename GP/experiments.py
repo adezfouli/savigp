@@ -138,7 +138,7 @@ class Experiments:
         opt_max_fun_evals = None
         opt_per_iter = 40
         max_iter = 200
-        latent_noise = 0.001
+        latent_noise = 0.002
         xtol = 1e-3
         total_time = None
         timer_per_iter = None
