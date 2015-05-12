@@ -73,7 +73,7 @@ class ExperimentRunner:
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   lambda x: x['method'] == 'mix2', False)
+                                   lambda x: x['method'] == 'mix1', False)
         #
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
         #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
@@ -105,4 +105,4 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.plot()
+    ExperimentRunner.plot()

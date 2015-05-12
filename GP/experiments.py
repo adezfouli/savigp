@@ -226,7 +226,7 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         if sparsify_factor < 1.0:
-            num_samples = 20000
+            num_samples = 30000
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
@@ -257,7 +257,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False,  opt_per_iter=15000, max_iter=200))
         return names
 
 
@@ -278,10 +278,7 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        if method == 'full':
-            num_samples = 10000
-        else:
-            num_samples = 50000
+        num_samples = 50000
         cond_ll = LogGaussianCox(math.log(191./811))
         kernel[0].variance= 1.0
         kernel[0].lengthscale= 13516.
@@ -289,7 +286,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True))
+                                  config['log_level'], True, opt_per_iter=15000, max_iter=1))
         return names
 
 
@@ -316,7 +313,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False,  opt_per_iter=30, max_iter=200))
 
 
     @staticmethod
@@ -346,7 +343,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
 
 
     @staticmethod
@@ -380,7 +377,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False))
+                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
