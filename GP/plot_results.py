@@ -9,6 +9,7 @@ from pandas.util.testing import DataFrame, Series
 from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL
 from util import check_dir_exists
 import numpy as np
+import matplotlib.pyplot as plt
 
 class PlotOutput:
 
@@ -62,8 +63,9 @@ class PlotOutput:
 
                 if data_config['ll'] in [LogGaussianCox.__name__]:
                     X0 = np.array([data_test['X0']])
+
                     PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
-                                           np.array([X0[0,:]/365+1851.2026, Ypred[0,:]]).T)
+                                           np.array([X0[0,:]/365+1851.2026, Ypred[0,:], Yvar[0,:]] ).T)
 
         for n, g in graphs.iteritems():
             if g:
@@ -85,9 +87,15 @@ class PlotOutput:
                     ax.legend(patches, labels, loc='lower center')
                 if n in ['intensity']:
                     X = g.values()[0][:, 0]
-                    g= DataFrame(dict([(k,Series(v[:, 1])) for k,v in g.iteritems()]))
-                    g['X'] = X
-                    g.plot(x='X',kind='line')
+                    # g= DataFrame(dict([(k,Series(v[:, 1])) for k,v in g.iteritems()]))
+                    plt.figure()
+                    color = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                    c = 0
+                    for k,v in g.iteritems():
+                        plt.plot(X, v[:, 1], hold=True, color=color[c], label=k)
+                        plt.fill_between(X, v[:, 1] - 2 * np.sqrt(v[:, 2]), v[:, 1] + 2 * np.sqrt(v[:, 2]), alpha=0.2, facecolor=color[c])
+                        c += 1
+                    plt.legend(loc='upper center')
 
                 if export_pdf:
                     check_dir_exists(infile_path + name + '/graphs/')
