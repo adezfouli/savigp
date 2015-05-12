@@ -278,10 +278,7 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        if method == 'full':
-            num_samples = 10000
-        else:
-            num_samples = 50000
+        num_samples = 50000
         cond_ll = LogGaussianCox(math.log(191./811))
         kernel[0].variance= 1.0
         kernel[0].lengthscale= 13516.
