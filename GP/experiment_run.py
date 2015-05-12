@@ -105,4 +105,4 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.plot()
+    # ExperimentRunner.plot()
