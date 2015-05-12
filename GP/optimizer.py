@@ -51,6 +51,8 @@ class Optimizer:
     @staticmethod
     def get_f_f_grad_from_model(model, x0, opt_indices, tracker, logger):
         last_x = np.empty((1, x0.shape[0]))
+        best_f = {'f': None}
+        best_x = np.empty((1, x0.shape[0]))
 
         def update(x):
             if np.array_equal(x, last_x[0]):
@@ -59,6 +61,12 @@ class Optimizer:
             p = x0.copy()
             p[opt_indices] = x[opt_indices]
             model.set_params(x)
+            if best_f['f'] is None:
+                best_f['f'] = model.objective_function()
+            else:
+                if model.objective_function() < best_f['f']:
+                    best_f['f'] = model.objective_function()
+                    best_x[0] = x.copy()
 
         def f(X=None):
             if X is not None:
@@ -76,8 +84,11 @@ class Optimizer:
             g[opt_indices] = model.objective_function_gradients().copy()[opt_indices]
             return g
 
+        def min_x():
+            return best_x[0]
+
         update(x0)
-        return f, f_grad, update
+        return f, f_grad, update, min_x
 
 
     @staticmethod
@@ -92,10 +103,10 @@ class Optimizer:
             bounds = []
             for x in range(start.shape[0]):
                 bounds.append((None, math.log(1e+10)))
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
+        f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
         x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
                       callback=lambda x: update(x), bounds=bounds)
-        update(x)
+        update(best_x())
         return d, tracker
 
     @staticmethod
