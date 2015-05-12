@@ -219,7 +219,7 @@ class Experiments:
         kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
         # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
         gaussian_sigma = 1.0
-
+        lantet_noise=0.005
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 10000
@@ -228,10 +228,13 @@ class Experiments:
         if sparsify_factor < 1.0:
             num_samples = 30000
 
+        if sparsify_factor < 0.2:
+            lantet_noise=0.01
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, 0.005, 15000, 200))
+                                  config['log_level'], False, lantet_noise, 15000, 200))
         return names
 
     @staticmethod
@@ -251,13 +254,13 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 10000
+        num_samples = 15000
         cond_ll = LogisticLL()
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  opt_per_iter=15000, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.005, opt_per_iter=15000, max_iter=200))
         return names
 
 
