@@ -226,6 +226,9 @@ class Experiments:
         num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
+        if sparsify_factor < 0.7:
+            num_samples = 20000
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
