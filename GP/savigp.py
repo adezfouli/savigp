@@ -100,7 +100,7 @@ class SAVIGP(Model):
         if self.num_inducing == X.shape[0]:
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = X.copy()
-            init_m = np.mean(Y, axis=1)
+                init_m[:, j] = Y[:, j].copy()
         else:
             if (self.num_inducing < self.num_data_points / 10) and self.num_data_points > 10000:
                 clst = MiniBatchKMeans(self.num_inducing)
