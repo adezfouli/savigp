@@ -55,6 +55,8 @@ class Optimizer:
         last_x = np.empty((1, x0.shape[0]))
         best_f = {'f': None}
         best_x = np.empty((1, x0.shape[0]))
+        best_x[0] = x0.copy()
+        best_f['f'] = model.objective_function()
 
         def update(x):
             if np.array_equal(x, last_x[0]):
