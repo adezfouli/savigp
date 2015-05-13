@@ -95,7 +95,7 @@ class SAVIGP(Model):
 
     def _clust_inducing_points(self, X, Y):
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
-        init_m = np.empty(self.num_inducing)
+        init_m = np.empty((self.num_inducing, self.num_latent_proc))
         np.random.seed(12000)
         if self.num_inducing == X.shape[0]:
             for j in range(self.num_latent_proc):
@@ -140,7 +140,7 @@ class SAVIGP(Model):
 
     def init_mog(self, init_m):
         for j in range(self.num_latent_proc):
-            self.MoG.updata_mean(j, init_m)
+            self.MoG.updata_mean(j, init_m[:, j])
 
     def rand_init_mog(self):
         self.MoG.random_init()
