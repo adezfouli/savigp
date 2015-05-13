@@ -219,7 +219,7 @@ class Experiments:
         kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
         # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
         gaussian_sigma = 1.0
-        lantet_noise=0.01
+        lantet_noise=0.001
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
