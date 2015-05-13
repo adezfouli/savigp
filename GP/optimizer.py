@@ -1,3 +1,5 @@
+__author__ = 'AT'
+
 import math
 from GPy.util.linalg import mdot
 # import nlopt
@@ -6,9 +8,9 @@ from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
 import numpy as np
 import time
+from util import JitChol
 from savigp import Configuration
 
-__author__ = 'AT'
 
 
 class Optimizer:
@@ -62,7 +64,7 @@ class Optimizer:
             try:
                 model.set_params(x)
                 last_x[0] = x
-            except ValueError as e:
+            except (ValueError, JitChol) as e:
                 best_x[0] = last_x[0].copy()
                 raise OptTermination(e)
             if best_f['f'] is None:
