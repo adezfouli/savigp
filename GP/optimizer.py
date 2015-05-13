@@ -1,3 +1,5 @@
+__author__ = 'AT'
+
 import math
 from GPy.util.linalg import mdot
 # import nlopt
@@ -6,9 +8,9 @@ from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
 import numpy as np
 import time
+from util import JitChol
 from savigp import Configuration
 
-__author__ = 'AT'
 
 
 class Optimizer:
@@ -57,10 +59,14 @@ class Optimizer:
         def update(x):
             if np.array_equal(x, last_x[0]):
                 return
-            last_x[0] = x
-            p = x0.copy()
-            p[opt_indices] = x[opt_indices]
-            model.set_params(x)
+            # p = x0.copy()
+            # p[opt_indices] = x[opt_indices]
+            try:
+                model.set_params(x)
+                last_x[0] = x
+            except (ValueError, JitChol) as e:
+                best_x[0] = last_x[0].copy()
+                raise OptTermination(e)
             if best_f['f'] is None:
                 best_f['f'] = model.objective_function()
             else:
@@ -103,10 +109,17 @@ class Optimizer:
             bounds = []
             for x in range(start.shape[0]):
                 bounds.append((None, math.log(1e+10)))
+        init_x = model.get_params().copy()
         f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
-        x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
-                      callback=lambda x: update(x), bounds=bounds)
-        update(best_x())
+        try:
+            x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
+                          callback=lambda x: update(x), bounds=bounds)
+            update(best_x())
+        except OptTermination as e:
+            logger.warning('invalid value encountered. Opt terminated')
+            update(init_x)
+        d = {}
+        d['funcalls'] = 1
         return d, tracker
 
     @staticmethod
@@ -241,3 +254,6 @@ class Optimizer:
                 total_evals = float('Nan')
         end=time.time()
         return model, (end - start) / total_evals, (end - start), obj_track
+
+class OptTermination(Exception):
+    pass

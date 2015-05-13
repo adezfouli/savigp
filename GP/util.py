@@ -34,7 +34,7 @@ def jitchol(A, maxtries=5):
     else:
         diagA = np.diag(A)
         if np.any(diagA <= 0.):
-            raise linalg.LinAlgError, "not pd: non-positive diagonal elements"
+            raise JitChol, "not pd: non-positive diagonal elements"
         jitter = diagA.mean() * 1e-6
         while maxtries > 0 and np.isfinite(jitter):
             try:
@@ -44,7 +44,7 @@ def jitchol(A, maxtries=5):
                 jitter *= 10
             finally:
                 maxtries -= 1
-        raise linalg.LinAlgError, "not positive definite, even with jitter."
+        raise JitChol, "not positive definite, even with jitter."
 
 def pddet(L):
     """
@@ -170,3 +170,7 @@ def drange(start, stop, step):
     while r < stop:
         yield r
         r += step
+
+
+class JitChol(Exception):
+    pass

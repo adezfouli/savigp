@@ -219,11 +219,11 @@ class Experiments:
         kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
         # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
         gaussian_sigma = 1.0
-        lantet_noise=0.01
+        lantet_noise=0.001
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
-        num_samples = 50000
+        num_samples = 10000
         # if sparsify_factor < 0.2:
         #     lantet_noise=0.01
 
@@ -250,13 +250,13 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 15000
+        num_samples = 10000
         cond_ll = LogisticLL()
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False, latent_noise=0.005, opt_per_iter=15000, max_iter=200))
+                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
         return names
 
 
