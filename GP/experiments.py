@@ -223,7 +223,7 @@ class Experiments:
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
-        num_samples = 50000
+        num_samples = 2000
         # if sparsify_factor < 0.2:
         #     lantet_noise=0.01
 
