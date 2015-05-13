@@ -161,7 +161,7 @@ def get_git():
                 hash = row.split()[0]
                 break
     except:
-        has = None
+        hash = None
         branch = None
     return hash, branch
 
