@@ -122,14 +122,14 @@ class SAVIGP(Model):
     def _random_inducing_points(self, X, Y):
         np.random.seed(12000)
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
-        init_m = np.empty(self.num_inducing)
+        init_m = np.empty((self.num_inducing, self.num_latent_proc))
         for j in range(self.num_latent_proc):
             if self.num_inducing == X.shape[0]:
                 i = range(self.X.shape[0])
             else:
                 i = np.random.permutation(X.shape[0])[:self.num_inducing]
             Z[j, :, :] = X[i].copy()
-            init_m = np.mean(Y[i, :], axis=1)
+            init_m[:, j] = Y[i, j]
 
         return Z, init_m
 
