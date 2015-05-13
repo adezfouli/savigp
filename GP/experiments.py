@@ -256,7 +256,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False, opt_per_iter=15000, max_iter=200))
+                                  config['log_level'], False, opt_per_iter=40, max_iter=200))
         return names
 
 
