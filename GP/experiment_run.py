@@ -28,8 +28,8 @@ class ExperimentRunner:
 
     @staticmethod
     def get_experiments():
-        return [Experiments.boston_data.__name__]
-        # return [Experiments.wisconsin_breast_cancer_data.__name__]
+        # return [Experiments.boston_data.__name__]
+        return [Experiments.wisconsin_breast_cancer_data.__name__]
         # return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
