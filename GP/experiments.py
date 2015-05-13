@@ -226,7 +226,7 @@ class Experiments:
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
         if sparsify_factor < 1.0:
-            num_samples = 30000
+            num_samples = 50000
 
         # if sparsify_factor < 0.2:
         #     lantet_noise=0.01
