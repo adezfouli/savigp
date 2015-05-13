@@ -113,7 +113,7 @@ class SAVIGP(Model):
                 if yindx[0].shape[0] == 0:
                     init_m[zi] = Y[:, :].mean()
                 else:
-                    init_m[zi] = np.mean(Y[yindx[0], :], axis=1)
+                    init_m[zi] = np.mean(Y[yindx[0], :], axis=0)
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = centers.copy()
 
