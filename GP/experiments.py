@@ -228,8 +228,8 @@ class Experiments:
         if sparsify_factor < 1.0:
             num_samples = 30000
 
-        if sparsify_factor < 0.2:
-            lantet_noise=0.01
+        # if sparsify_factor < 0.2:
+        #     lantet_noise=0.01
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
