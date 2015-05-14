@@ -1,13 +1,16 @@
 import logging
 from experiments import Experiments
 from plot_results import PlotOutput
-from multiprocessing.pool import ThreadPool, Pool
-
+from multiprocessing.pool import Pool
 
 class ExperimentRunner:
 
     @staticmethod
     def get_configs():
+        """
+        Builds an array of configuration for running
+        """
+
         configs = []
         expr_names = ExperimentRunner.get_experiments()
         methods = ['full', 'mix1', 'mix2']
@@ -28,11 +31,36 @@ class ExperimentRunner:
 
     @staticmethod
     def get_experiments():
+        """
+        Builds an array of experiments to run
+        """
+
+        # uncomment to run desired experiment
         # return [Experiments.boston_data.__name__]
-        return [Experiments.wisconsin_breast_cancer_data.__name__]
+        # return [Experiments.wisconsin_breast_cancer_data.__name__]
         # return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
-        # return [Experiments.abalone_data.__name__]
+        return [Experiments.abalone_data.__name__]
+
+
+    @staticmethod
+    def run_parallel(n_process):
+        """
+        :param n_process number of processes to run in parallel
+        Runs experiments in parallel.
+        """
+
+        p = Pool(n_process)
+        p.map(run_config, ExperimentRunner.get_configs())
+
+    @staticmethod
+    def run_serial():
+        """
+        Runs experiments in serial.
+        """
+        for c in ExperimentRunner.get_configs():
+            run_config(c)
+
 
     @staticmethod
     def get_log_level():
@@ -46,11 +74,12 @@ class ExperimentRunner:
 
     @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.4, 'run_id': 3, 'log_level': logging.DEBUG})
+        Experiments.boston_data({'method': 'mix2', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        Experiments.wisconsin_breast_cancer_data(
+            {'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def abalone_experiment():
@@ -70,16 +99,16 @@ class ExperimentRunner:
 
     @staticmethod
     def plot():
-        # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                            lambda x: 'experiment' in x.keys() and x['experiment']== 'breast_cancer', False)
         PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
                                    lambda x: x['method'] == 'mix1', False)
-        #
+
+        # plots all the files
         # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                            lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
-        #
-        # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                        lambda x: x['c'] == '1' and (x['m'] in ['mix2', 'mix1', 'full', 'gp']), False)
+        #                            None, False)
+
+        # plots for an specific experiment
+        # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
+        #                            lambda x: x['experiment'] == 'abalone', False)
 
 def run_config(config):
     try:
@@ -90,19 +119,18 @@ def run_config(config):
         logger.exception(config)
 
 
-def run_config_serial(config):
-    for c in config:
-        run_config(c)
-
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
-    n_process = 36
-    p = Pool(n_process)
-    p.map(run_config, ExperimentRunner.get_configs())
+
+    ExperimentRunner.run_parallel(36)
     # run_config_serial(ExperimentRunner.get_configs())
+
+    # runs an individual configuration
+
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
+
     # ExperimentRunner.plot()
