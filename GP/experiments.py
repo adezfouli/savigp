@@ -250,15 +250,13 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 8000
-        if method in ['mix1', 'mix2']:
-            num_samples = 12000
+        num_samples = 4000
         cond_ll = LogisticLL()
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False, opt_per_iter=40, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.005, opt_per_iter=40, max_iter=200))
         return names
 
 
@@ -308,13 +306,13 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
+        num_samples = 4000
         cond_ll = SoftmaxLL(3)
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  opt_per_iter=10, max_iter=120))
+                                  config['log_level'], False,  latent_noise=0.005, opt_per_iter=20, max_iter=200))
 
 
     @staticmethod
