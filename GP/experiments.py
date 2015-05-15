@@ -251,6 +251,8 @@ class Experiments:
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 8000
+        if method in ['mix1', 'mix2']:
+            num_samples = 12000
         cond_ll = LogisticLL()
 
         names.append(
