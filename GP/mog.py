@@ -30,8 +30,7 @@ class MoG:
 
     def _fixed_init(self):
         self.m = np.random.uniform(low=0.0, high=0.0, size=(self.num_comp, self.num_process, self.num_dim))
-        self.pi = np.random.uniform(low=1.0, high=5.0, size=self.num_comp)
-        self.pi = self.pi / sum(self.pi)
+        self.pi_from_array(np.random.uniform(low=1.0, high=5.0, size=self.num_comp))
 
     def transform_S_grad(self, g):
         """ transforms gradients to expose to the optimizer  """
@@ -39,8 +38,7 @@ class MoG:
 
     def _random_init(self):
         self.m = np.random.uniform(low=-5.1, high=5.1, size=(self.num_comp, self.num_process, self.num_dim))
-        self.pi = np.random.uniform(low=1.0, high=10.0, size=self.num_comp)
-        self.pi = self.pi / sum(self.pi)
+        self.pi_from_array(np.random.uniform(low=1.0, high=10.0, size=self.num_comp))
 
     def random_init(self):
         self._random_init()
@@ -49,6 +47,7 @@ class MoG:
     def pi_from_array(self, p):
         pis = np.exp(p)
         self.pi = pis / sum(pis)
+        self.pi_untrans = p.copy()
 
     def dpi_dx(self):
         pit = np.repeat(np.array([self.pi.T]), self.num_comp, 0)

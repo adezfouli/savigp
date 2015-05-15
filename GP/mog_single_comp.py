@@ -53,7 +53,7 @@ class MoG_SingleComponent(MoG):
         return grad.flatten()
 
     def get_parameters(self):
-        return np.hstack([self.m.flatten(), self.L_flatten.flatten(), self.pi])
+        return np.hstack([self.m.flatten(), self.L_flatten.flatten(), self.pi_untrans])
 
     def update_covariance(self, j, Sj):
         Sj = Sj.copy()
