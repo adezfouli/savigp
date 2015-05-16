@@ -37,7 +37,7 @@ class MoG:
         raise NotImplementedError
 
     def _random_init(self):
-        self.m = np.random.uniform(low=-5.1, high=5.1, size=(self.num_comp, self.num_process, self.num_dim))
+        self.m = np.random.uniform(low=-15.1, high=15.1, size=(self.num_comp, self.num_process, self.num_dim))
         self.pi_from_array(np.random.uniform(low=1.0, high=10.0, size=self.num_comp))
 
     def random_init(self):
