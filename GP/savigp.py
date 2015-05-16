@@ -82,8 +82,8 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
-        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc) \
-            .reshape((self.num_latent_proc, self.n_samples))
+        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.X.shape[0]) \
+            .reshape((self.num_latent_proc, self.n_samples, self.X.shape[0]))
 
         self._update_latent_kernel()
 
@@ -411,22 +411,23 @@ class SAVIGP(Model):
                 for j in range(self.num_latent_proc):
                     mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
                     sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
-                    F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma_kj[k,j]))
+                    F[:, :, j] = (self.normal_samples[j, :, :] * np.sqrt(sigma_kj[k,j]))
                     F[:, :, j] = F[:, :, j] + mean_kj[k,j]
                 cond_ll, grad_ll = cond_log_likelihood.ll_F_Y(F, Y)
                 for j in range(self.num_latent_proc):
-                    m = mdot(self.normal_samples[j,:], cond_ll / np.sqrt(sigma_kj[k,j]), Kzx[j].T)
-                    d_ell_dm[k,j] = self._proj_m_grad(j, m) * self.MoG.pi[k] / n_sample
+                    m = self._average(cond_ll, self.normal_samples[j, :, :] / np.sqrt(sigma_kj[k,j]), True)
+                    d_ell_dm[k,j] = self._proj_m_grad(j, mdot(m, Kzx[j].T)) * self.MoG.pi[k]
                     d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, n_sample, sigma_kj)
                     if self.calculate_dhyper():
                         ds_dhyp = self._dsigma_dhyp(j, k, A[j], Kzx, X)
-                        d_ell_d_hyper[j] += -1./2 * self.MoG.pi[k] * (
-                                            np.mean(mdot(cond_ll / sigma_kj[k,j], ds_dhyp), 0) +
-                                            -2 * mdot(self.normal_samples[j,:],
-                                                      cond_ll / np.sqrt(sigma_kj[k,j]), self._db_dhyp(j, k, A[j], X)) / n_sample
-                                            - mdot(np.square(self.normal_samples[j,:]),
-                                                      cond_ll / sigma_kj[k,j], ds_dhyp) / n_sample
-                                                     )
+                        db_dhyp = self._db_dhyp(j, k, A[j], X)
+                        for h in range(self.num_hyper_params):
+                            d_ell_d_hyper[j, h] += -1./2 * self.MoG.pi[k] * (
+                                                self._average(cond_ll,
+                                                np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dhyp[:, h] +
+                                                -2. * self.normal_samples[j] / np.sqrt(sigma_kj[k,j]) * db_dhyp[:, h]
+                                                - np.square(self.normal_samples[j])/sigma_kj[k, j] * ds_dhyp[:, h], False)).sum()
+
                 sum_cond_ll = cond_ll.sum() / n_sample
                 total_ell += sum_cond_ll * self.MoG.pi[k]
                 d_ell_dPi[k] = sum_cond_ll
@@ -443,6 +444,23 @@ class SAVIGP(Model):
                             total_ell += self.cond_likelihood.ell([mean_kj[k, j, n]], [sigma_kj[k, j, n]], Y[n, :]) * self.MoG.pi[k]
 
         return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+
+    def _average(self, condll, X, variance_reduction):
+        if variance_reduction:
+            X = X.T
+            condll = condll.T
+            cvsamples = self.n_samples / 10
+            pz = X[:, 0:cvsamples]
+            py = np.multiply(condll[:, 0:cvsamples], pz)
+            above = np.multiply((py.T-py.mean(1)), pz.T).sum(axis=0)/(cvsamples-1)
+            below = np.square(pz).sum(axis=1)/(cvsamples-1)
+            cvopt = np.divide(above, below)
+
+            grads = np.multiply(condll, X) - np.multiply(cvopt, X.T).T
+        else:
+            grads = np.multiply(condll, X)
+        return grads.mean(axis=1)
+
 
     def calculate_dhyper(self):
         return self.sparse and Configuration.HYPER in self.config_list

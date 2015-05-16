@@ -18,8 +18,8 @@ class SAVIGP_Diag(SAVIGP):
                                                      kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
 
     def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
-        return mdot(self.normal_samples[j, :] ** 2 - 1, cond_ll / sigma_kj[k, j], A[j] ** 2) * \
-               self.MoG.pi[k] / n_sample / 2.
+        s = self._average(cond_ll, (np.square(self.normal_samples[j, :]) - 1)/ sigma_kj[k, j], True)
+        return (mdot(s, np.square(A[j])) * self.MoG.pi[k] / 2.)
 
 
     def update_N_z(self):
