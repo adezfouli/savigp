@@ -426,7 +426,7 @@ class SAVIGP(Model):
                                                 self._average(cond_ll,
                                                 np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dhyp[:, h] +
                                                 -2. * self.normal_samples[j] / np.sqrt(sigma_kj[k,j]) * db_dhyp[:, h]
-                                                - np.square(self.normal_samples[j])/sigma_kj[k, j] * ds_dhyp[:, h], False)).sum()
+                                                - np.square(self.normal_samples[j])/sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
 
                 sum_cond_ll = cond_ll.sum() / n_sample
                 total_ell += sum_cond_ll * self.MoG.pi[k]
@@ -455,6 +455,7 @@ class SAVIGP(Model):
             above = np.multiply((py.T-py.mean(1)), pz.T).sum(axis=0)/(cvsamples-1)
             below = np.square(pz).sum(axis=1)/(cvsamples-1)
             cvopt = np.divide(above, below)
+            cvopt = np.nan_to_num(cvopt)
 
             grads = np.multiply(condll, X) - np.multiply(cvopt, X.T).T
         else:
