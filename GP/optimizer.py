@@ -113,13 +113,26 @@ class Optimizer:
                 bounds.append((None, math.log(1e+10)))
         init_x = model.get_params().copy()
         f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
-        try:
-            x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
-                          callback=lambda x: update(x), bounds=bounds)
-            update(best_x())
-        except OptTermination as e:
-            logger.warning('invalid value encountered. Opt terminated')
-            update(init_x)
+        restart_opt = True
+        opt_tries = 0
+        while restart_opt:
+            try:
+                x, f, d = fmin_l_bfgs_b(f, start, f_grad, factr=5, epsilon=1e-3, maxfun=max_fun,
+                              callback=lambda x: update(x), bounds=bounds)
+                update(best_x())
+                restart_opt = False
+            except OptTermination as e:
+                logger.warning('invalid value encountered. Opt restarted')
+                update(init_x)
+                opt_tries += 1
+                max_fun = 2
+                if opt_tries < 3:
+                    restart_opt = True
+                    max_fun = 3 - opt_tries
+                else:
+                    logger.warning('cannot restart opt. Opt terminated')
+                    restart_opt = False
+
         d = {}
         d['funcalls'] = 1
         return d, tracker
