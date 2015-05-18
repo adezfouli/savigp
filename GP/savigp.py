@@ -101,6 +101,9 @@ class SAVIGP(Model):
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = X.copy()
                 init_m[:, j] = Y[:, j].copy()
+            for i in range(self.num_inducing):
+                init_m[i] = self.cond_likelihood.map_Y_to_f(np.array([Y[i]])).copy()
+
         else:
             if (self.num_inducing < self.num_data_points / 10) and self.num_data_points > 10000:
                 clst = MiniBatchKMeans(self.num_inducing)
@@ -111,9 +114,9 @@ class SAVIGP(Model):
             for zi in range(self.num_inducing):
                 yindx = np.where(c == zi)
                 if yindx[0].shape[0] == 0:
-                    init_m[zi] = Y[:, :].mean()
+                    init_m[zi] = self.cond_likelihood.map_Y_to_f(Y).copy()
                 else:
-                    init_m[zi] = np.mean(Y[yindx[0], :], axis=0)
+                    init_m[zi] = self.cond_likelihood.map_Y_to_f(Y[yindx[0], :]).copy()
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = centers.copy()
 
@@ -125,11 +128,13 @@ class SAVIGP(Model):
         init_m = np.empty((self.num_inducing, self.num_latent_proc))
         for j in range(self.num_latent_proc):
             if self.num_inducing == X.shape[0]:
-                i = range(self.X.shape[0])
+                inducing_index = range(self.X.shape[0])
             else:
-                i = np.random.permutation(X.shape[0])[:self.num_inducing]
-            Z[j, :, :] = X[i].copy()
-            init_m[:, j] = Y[i, j]
+                inducing_index = np.random.permutation(X.shape[0])[:self.num_inducing]
+            Z[j, :, :] = X[inducing_index].copy()
+            init_m[:, j] = Y[inducing_index, j]
+        for i in range(self.num_inducing):
+            init_m[i] = self.cond_likelihood.map_Y_to_f(np.array([Y[inducing_index[i]]])).copy()
 
         return Z, init_m
 
