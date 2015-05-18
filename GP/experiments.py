@@ -387,8 +387,8 @@ class Experiments:
         Ytrain = d['train_Y']
         Xtest = d['test_X']
         Ytest = d['test_Y']
-        name = 'USPS'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 10, False)
+        name = 'mnist'
+        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=False) for j in range(10)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -398,7 +398,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=2, max_iter=200))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
