@@ -299,11 +299,11 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'USPS'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
+        kernel = [ExtRBF(Xtrain.shape[0], variance=2, lengthscale=np.array((4.,)), ARD=False) for _ in range(3)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 4000
+        num_samples = 2000
         cond_ll = SoftmaxLL(3)
 
         names.append(

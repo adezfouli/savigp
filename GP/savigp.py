@@ -454,7 +454,7 @@ class SAVIGP(Model):
         if variance_reduction:
             X = X.T
             condll = condll.T
-            cvsamples = self.n_samples / 20
+            cvsamples = self.n_samples / 10
             pz = X[:, 0:cvsamples]
             py = np.multiply(condll[:, 0:cvsamples], pz)
             above = np.multiply((py.T-py.mean(1)), pz.T).sum(axis=0)/(cvsamples-1)
