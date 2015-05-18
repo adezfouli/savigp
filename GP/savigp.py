@@ -82,8 +82,26 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
-        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.X.shape[0]) \
-            .reshape((self.num_latent_proc, self.n_samples, self.X.shape[0]))
+        self.X_paritions = []
+        self.Y_paritions = []
+        if 0 == (X.shape[0] % self._max_parition_size()):
+            self.n_partitions = X.shape[0] / self._max_parition_size()
+        else:
+            self.n_partitions = X.shape[0] / self._max_parition_size() + 1
+        if X.shape[0] > self._max_parition_size():
+            paritions = np.array_split(np.hstack((X, Y)), self.n_partitions)
+            self.partition_size = self._max_parition_size()
+
+            for p in paritions:
+                self.X_paritions.append(p[:, :X.shape[1]])
+                self.Y_paritions.append(p[:, X.shape[1]:X.shape[1] + Y.shape[1]])
+        else:
+            self.X_paritions = ([X])
+            self.Y_paritions = ([Y])
+            self.partition_size = X.shape[0]
+
+        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
+            .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
 
         self._update_latent_kernel()
 
@@ -92,6 +110,10 @@ class SAVIGP(Model):
         self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
+
+
+    def _max_parition_size(self):
+        return 200
 
     def _clust_inducing_points(self, X, Y):
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
@@ -230,8 +252,7 @@ class SAVIGP(Model):
 
 
         if Configuration.ELL in self.config_list:
-            pX, pY = self._get_data_partition()
-            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell(self.n_samples, pX, pY, self.cond_likelihood)
+            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell()
             self.ll += xell
             if Configuration.MoG in self.config_list:
                 grad_m += xdell_dm
@@ -383,7 +404,17 @@ class SAVIGP(Model):
     def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
         raise Exception("method not implemented")
 
-    def _ell(self, n_sample, X, Y, cond_log_likelihood):
+    def _ell(self):
+        total_out = self._parition_ell(self.X_paritions[0], self.Y_paritions[0])
+        total_out = list(total_out)
+        for p in range(1, self.n_partitions):
+            out = self._parition_ell(self.X_paritions[p], self.Y_paritions[p])
+            for o in range(len(out)):
+                total_out[o] += out[o]
+        return total_out
+
+
+    def _parition_ell(self, X, Y):
         """
         calculating expected log-likelihood, and it's derivatives
         :returns ell, normal ell, dell / dm, dell / ds, dell/dpi
@@ -411,18 +442,19 @@ class SAVIGP(Model):
             A, Kzx, K = self._get_A_K(X)
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
-            F = np.empty((self.n_samples, self.X.shape[0], self.num_latent_proc))
+            F = np.empty((self.n_samples, X.shape[0], self.num_latent_proc))
             for k in range(self.num_mog_comp):
                 for j in range(self.num_latent_proc):
+                    norm_samples = self.normal_samples[j, :, :X.shape[0]]
                     mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
                     sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
-                    F[:, :, j] = (self.normal_samples[j, :, :] * np.sqrt(sigma_kj[k,j]))
+                    F[:, :, j] = (norm_samples * np.sqrt(sigma_kj[k,j]))
                     F[:, :, j] = F[:, :, j] + mean_kj[k,j]
-                cond_ll, grad_ll = cond_log_likelihood.ll_F_Y(F, Y)
+                cond_ll, grad_ll = self.cond_likelihood.ll_F_Y(F, Y)
                 for j in range(self.num_latent_proc):
-                    m = self._average(cond_ll, self.normal_samples[j, :, :] / np.sqrt(sigma_kj[k,j]), True)
+                    m = self._average(cond_ll, norm_samples / np.sqrt(sigma_kj[k,j]), True)
                     d_ell_dm[k,j] = self._proj_m_grad(j, mdot(m, Kzx[j].T)) * self.MoG.pi[k]
-                    d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, n_sample, sigma_kj)
+                    d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, sigma_kj, norm_samples)
                     if self.calculate_dhyper():
                         ds_dhyp = self._dsigma_dhyp(j, k, A[j], Kzx, X)
                         db_dhyp = self._db_dhyp(j, k, A[j], X)
@@ -430,15 +462,15 @@ class SAVIGP(Model):
                             d_ell_d_hyper[j, h] += -1./2 * self.MoG.pi[k] * (
                                                 self._average(cond_ll,
                                                 np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dhyp[:, h] +
-                                                -2. * self.normal_samples[j] / np.sqrt(sigma_kj[k,j]) * db_dhyp[:, h]
-                                                - np.square(self.normal_samples[j])/sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
+                                                -2. * norm_samples / np.sqrt(sigma_kj[k,j]) * db_dhyp[:, h]
+                                                - np.square(norm_samples)/sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
 
-                sum_cond_ll = cond_ll.sum() / n_sample
+                sum_cond_ll = cond_ll.sum() / self.n_samples
                 total_ell += sum_cond_ll * self.MoG.pi[k]
                 d_ell_dPi[k] = sum_cond_ll
 
                 if Configuration.LL in self.config_list:
-                    d_ell_d_ll += self.MoG.pi[k] * grad_ll.sum() / n_sample
+                    d_ell_d_ll += self.MoG.pi[k] * grad_ll.sum() / self.n_samples
 
             self.cached_ell = total_ell
 
