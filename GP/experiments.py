@@ -222,7 +222,7 @@ class Experiments:
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
-        num_samples = 4000
+        num_samples = 2000
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
@@ -247,7 +247,7 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 4000
+        num_samples = 2000
         cond_ll = LogisticLL()
 
         names.append(
@@ -274,7 +274,7 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 4000
+        num_samples = 2000
         cond_ll = LogGaussianCox(math.log(191./811))
         kernel[0].variance= 1.0
         kernel[0].lengthscale= 13516.
@@ -328,7 +328,7 @@ class Experiments:
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 4000
+        num_samples = 2000
 
         cond_ll = WarpLL(np.array([-2.0485, 1.7991, 1.5814]),
                          np.array([2.7421, 0.9426, 1.7804]),
