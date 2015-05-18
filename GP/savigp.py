@@ -496,7 +496,7 @@ class SAVIGP(Model):
 
             grads = np.multiply(condll, X) - np.multiply(cvopt, X.T).T
         else:
-            grads = np.multiply(condll, X)
+            grads = np.multiply(condll.T, X.T)
         return grads.mean(axis=1)
 
 
