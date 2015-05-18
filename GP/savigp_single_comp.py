@@ -12,8 +12,8 @@ class SAVIGP_SingleComponent(SAVIGP):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
                                                      kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
 
-    def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
-        return  mdot(A[j].T * self._average(cond_ll, (self.normal_samples[j, :, :]**2 - 1)/sigma_kj[k,j], True), A[j]) \
+    def _dell_ds(self, k, j, cond_ll, A, sigma_kj, norm_samples):
+        return  mdot(A[j].T * self._average(cond_ll, (norm_samples**2 - 1)/sigma_kj[k,j], True), A[j]) \
                                                 * self.MoG.pi[k] / 2.
 
         # a bit less memory intensive
