@@ -13,8 +13,8 @@ class ExperimentRunner:
 
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['mix1', 'mix2']
-        sparse_factor = [0.2, 0.1]
+        methods = ['full', 'mix1', 'mix2']
+        sparse_factor = [1.0, 0.5, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
             for m in methods:
@@ -35,10 +35,14 @@ class ExperimentRunner:
         Builds an array of experiments to run
         """
 
+        return [Experiments.boston_data.__name__,
+                Experiments.wisconsin_breast_cancer_data.__name__,
+                Experiments.abalone_data.__name__,
+                Experiments.creep_data.__name__]
         # uncomment to run desired experiment
         # return [Experiments.boston_data.__name__]
         # return [Experiments.wisconsin_breast_cancer_data.__name__]
-        return [Experiments.USPS_data.__name__]
+        # return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
 
