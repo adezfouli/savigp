@@ -375,6 +375,32 @@ class Experiments:
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
 
+
+    @staticmethod
+    def MNIST_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mnist_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'USPS'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 10, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = SoftmaxLL(10)
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=50, max_iter=200))
+
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
         return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
