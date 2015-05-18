@@ -227,7 +227,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=15, max_iter=200))
         return names
 
     @staticmethod
@@ -253,7 +253,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=15, max_iter=200))
         return names
 
 
@@ -308,7 +308,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=15, max_iter=200))
 
 
     @staticmethod
@@ -338,7 +338,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=15, max_iter=200))
 
 
     @staticmethod
@@ -372,7 +372,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=15, max_iter=200))
 
 
     @staticmethod
