@@ -126,14 +126,14 @@ def run_config(config):
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
 
-    # ExperimentRunner.run_parallel(30)
+    ExperimentRunner.run_parallel(30)
     # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
 
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
-    ExperimentRunner.USPS_experiment()
+    # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
     # ExperimentRunner.mnist_experiment()
