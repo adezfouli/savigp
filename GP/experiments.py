@@ -299,11 +299,11 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'USPS'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
+        kernel = [ExtRBF(Xtrain.shape[0], variance=2, lengthscale=np.array((4.,)), ARD=False) for _ in range(3)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 4000
+        num_samples = 2000
         cond_ll = SoftmaxLL(3)
 
         names.append(
@@ -374,6 +374,32 @@ class Experiments:
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001, opt_per_iter=50, max_iter=200))
+
+
+    @staticmethod
+    def MNIST_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mnist_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'USPS'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 10, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = SoftmaxLL(10)
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=50, max_iter=200))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):

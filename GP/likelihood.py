@@ -39,6 +39,14 @@ class Likelihood:
     def get_params(self):
         raise Exception("not implemented yet")
 
+    def map_Y_to_f(self, Y):
+        """
+            Used of init of posterior mean.
+            By default return mean of the Ys
+        """
+        return np.mean(Y, axis=0)
+
+
     # def predict(self, mu, sigma):
     #     self.dim = mu.shape[0]
     #     self.n_samples = 100000
