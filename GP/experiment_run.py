@@ -83,7 +83,7 @@ class ExperimentRunner:
     @staticmethod
     def wisconsin_breast_experiment():
         Experiments.wisconsin_breast_cancer_data(
-            {'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+            {'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def abalone_experiment():
@@ -95,7 +95,7 @@ class ExperimentRunner:
 
     @staticmethod
     def USPS_experiment():
-        Experiments.USPS_data({'method': 'mix1', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
+        Experiments.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def mining_experiment():
@@ -107,12 +107,12 @@ class ExperimentRunner:
 
     @staticmethod
     def plot():
-        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-                                   lambda x: x['method'] == 'mix1', False)
+        # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+        #                            lambda x: x['method'] == 'mix1', False)
 
         # plots all the files
-        # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                            None, False)
+        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+                                   None, False)
 
         # plots for an specific experiment
         # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),

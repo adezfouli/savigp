@@ -1,5 +1,6 @@
 from GPy.util.linalg import mdot
 from numpy.ma import argsort, sort
+from scipy.linalg import inv, det
 from scipy.misc import logsumexp
 from scipy.special import erfinv
 from scipy.special._ufuncs import gammaln
@@ -64,30 +65,34 @@ class Likelihood:
     def ell(self, mu, sigma, Y):
         raise Exception("not implemented yet")
 
-# class MultivariateGaussian(Likelihood):
-#     def __init__(self, sigma):
-#         Likelihood.__init__(self)
-#         self.sigma = sigma
-#         self.sigma_inv = inv(self.sigma)
-#         self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
-#
-#     def ll(self, f, y):
-#         return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
-#
-#     def ll_grad(self, f, y):
-#         raise Exception("gradients not supported for multivariate Gaussian")
-#
-#     def get_sigma(self):
-#         return self.sigma
-#
-#     def get_params(self):
-#         return self.sigma.flatten()
-#
-#     def get_num_params(self):
-#         return self.sigma.flatten().shape[0]
-#
-#     def ell(self, mu, sigma, Y):
-#         return cross_ent_normal(mu, np.diag(sigma), Y, np.array(self.sigma))
+class MultivariateGaussian(Likelihood):
+    def __init__(self, sigma):
+        Likelihood.__init__(self)
+        self.sigma = sigma
+        self.sigma_inv = inv(self.sigma)
+        self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
+
+    def ll(self, f, y):
+        return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
+
+    def ll_F_Y(self, F, Y):
+        c = 1.0 / 2 * (mdot((F-Y), self.sigma_inv) * (F-Y)).sum(axis=2)
+        return (self.const + -c), None
+
+    def ll_grad(self, f, y):
+        raise Exception("gradients not supported for multivariate Gaussian")
+
+    def get_sigma(self):
+        return self.sigma
+
+    def get_params(self):
+        return self.sigma.flatten()
+
+    def get_num_params(self):
+        return self.sigma.flatten().shape[0]
+
+    def ell(self, mu, sigma, Y):
+        return cross_ent_normal(mu, np.diag(sigma), Y, self.sigma)
 
 
 class UnivariateGaussian(Likelihood):

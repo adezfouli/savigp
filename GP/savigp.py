@@ -322,7 +322,7 @@ class SAVIGP(Model):
             params = np.hstack([params, np.log(self.hyper_params.flatten())])
         if Configuration.LL in self.config_list:
             params = np.hstack([params, self.cond_likelihood.get_params()])
-        return params
+        return params.copy()
 
     def get_posterior_params(self):
         return self.MoG.get_m_S_params()
@@ -452,6 +452,7 @@ class SAVIGP(Model):
                     F[:, :, j] = F[:, :, j] + mean_kj[k,j]
                 cond_ll, grad_ll = self.cond_likelihood.ll_F_Y(F, Y)
                 for j in range(self.num_latent_proc):
+                    norm_samples = self.normal_samples[j, :, :X.shape[0]]
                     m = self._average(cond_ll, norm_samples / np.sqrt(sigma_kj[k,j]), True)
                     d_ell_dm[k,j] = self._proj_m_grad(j, mdot(m, Kzx[j].T)) * self.MoG.pi[k]
                     d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, sigma_kj, norm_samples)
@@ -473,12 +474,12 @@ class SAVIGP(Model):
                     d_ell_d_ll += self.MoG.pi[k] * grad_ll.sum() / self.n_samples
 
             self.cached_ell = total_ell
-
             total_ell = 0
             if self.is_exact_ell:
                 for n in range(len(X)):
                     for k in range(self.num_mog_comp):
-                            total_ell += self.cond_likelihood.ell([mean_kj[k, j, n]], [sigma_kj[k, j, n]], Y[n, :]) * self.MoG.pi[k]
+                            total_ell += self.cond_likelihood.ell(np.array(mean_kj[k, :, n]), np.array(sigma_kj[k, :, n]), Y[n, :]) * self.MoG.pi[k]
+                self.cached_ell = total_ell
 
         return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
@@ -496,7 +497,7 @@ class SAVIGP(Model):
 
             grads = np.multiply(condll, X) - np.multiply(cvopt, X.T).T
         else:
-            grads = np.multiply(condll, X)
+            grads = np.multiply(condll.T, X.T)
         return grads.mean(axis=1)
 
 

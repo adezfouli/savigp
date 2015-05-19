@@ -243,13 +243,20 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'breast_cancer'
+
+        # uncomment these lines to use softmax
+        # kernel = Experiments.get_kernels(Xtrain.shape[1], 2, False)
+        # Ytrain = np.array([(Ytrain[:,0] + 1) / 2, (-Ytrain[:,0] + 1) / 2]).T
+        # Ytest = np.array([(Ytest[:,0] + 1) / 2, (-Ytest[:,0] + 1) / 2]).T
+        # cond_ll = SoftmaxLL(2)
+
+        # uncomment these lines to use logistic
+        cond_ll = LogisticLL()
         kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
-        cond_ll = LogisticLL()
-
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,

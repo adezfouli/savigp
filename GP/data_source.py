@@ -27,10 +27,12 @@ class DataSource:
         X.sort(axis=0)
         rbf = ExtRBF(num_in, variance=0.5,
                            lengthscale=np.array(np.random.uniform(low=0.1, high=3.0, size=input_dim)), ARD=True)
-        white = GPy.kern.White(num_in, variance=noise)
+        white = GPy.kern.White(num_in, variance=var[0,0])
         kernel = rbf + white
         K = kernel.K(X)
-        y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
+        y = np.empty((num_samples, var.shape[0]))
+        for j in range(var.shape[0]):
+            y[:, j] = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples))
         return X, y, rbf
 
 
