@@ -35,14 +35,14 @@ class ExperimentRunner:
         Builds an array of experiments to run
         """
 
-        # return [Experiments.boston_data.__name__,
-        #         Experiments.wisconsin_breast_cancer_data.__name__,
-        #         Experiments.abalone_data.__name__,
-        #         Experiments.creep_data.__name__]
+        return [Experiments.boston_data.__name__,
+                Experiments.wisconsin_breast_cancer_data.__name__,
+                Experiments.abalone_data.__name__,
+                Experiments.creep_data.__name__]
         # uncomment to run desired experiment
         # return [Experiments.boston_data.__name__]
         # return [Experiments.wisconsin_breast_cancer_data.__name__]
-        return [Experiments.USPS_data.__name__]
+        # return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
 
