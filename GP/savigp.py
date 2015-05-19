@@ -84,23 +84,7 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
-        self.X_paritions = []
-        self.Y_paritions = []
-        if 0 == (X.shape[0] % self._max_parition_size()):
-            self.n_partitions = X.shape[0] / self._max_parition_size()
-        else:
-            self.n_partitions = X.shape[0] / self._max_parition_size() + 1
-        if X.shape[0] > self._max_parition_size():
-            paritions = np.array_split(np.hstack((X, Y)), self.n_partitions)
-            self.partition_size = self._max_parition_size()
-
-            for p in paritions:
-                self.X_paritions.append(p[:, :X.shape[1]])
-                self.Y_paritions.append(p[:, X.shape[1]:X.shape[1] + Y.shape[1]])
-        else:
-            self.X_paritions = ([X])
-            self.Y_paritions = ([Y])
-            self.partition_size = X.shape[0]
+        self.X_paritions, self.Y_paritions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
 
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
             .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
@@ -118,6 +102,26 @@ class SAVIGP(Model):
         self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
+
+    def _partition_data(self, X, Y):
+        X_paritions = []
+        Y_paritions = []
+        if 0 == (X.shape[0] % self._max_parition_size()):
+            n_partitions = X.shape[0] / self._max_parition_size()
+        else:
+            n_partitions = X.shape[0] / self._max_parition_size() + 1
+        if X.shape[0] > self._max_parition_size():
+            paritions = np.array_split(np.hstack((X, Y)), n_partitions)
+            partition_size = self._max_parition_size()
+
+            for p in paritions:
+                X_paritions.append(p[:, :X.shape[1]])
+                Y_paritions.append(p[:, X.shape[1]:X.shape[1] + Y.shape[1]])
+        else:
+            X_paritions = ([X])
+            Y_paritions = ([Y])
+            partition_size = X.shape[0]
+        return X_paritions, Y_paritions, n_partitions, partition_size
 
 
     def _max_parition_size(self):
@@ -466,7 +470,7 @@ class SAVIGP(Model):
         """
 
         # print 'ell started'
-        total_ell = 0
+        total_ell = self.cached_ell
         d_ell_dm = np.zeros((self.num_mog_comp, self.num_latent_proc, self.num_inducing))
         d_ell_ds = np.zeros((self.num_mog_comp, self.num_latent_proc) + self.MoG.S_dim())
         d_ell_dPi = np.zeros(self.num_mog_comp)
@@ -484,6 +488,7 @@ class SAVIGP(Model):
             Configuration.LL in self.config_list or \
             self.cached_ell is None or \
             self.calculate_dhyper():
+            total_ell = 0
             A, Kzx, K = self._get_A_K(X)
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
             sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
@@ -716,7 +721,16 @@ class SAVIGP(Model):
         return predicted_mu, predicted_var, -logsumexp(nlpd, 1, self.MoG.pi)
 
     def predict(self, Xs, Ys=None):
-        mu, var, nlpd = self._predict_comp(Xs, Ys)
+
+        X_paritions, Y_paritions, n_partitions, partition_size = self._partition_data(Xs, Ys)
+
+        mu, var, nlpd = self._predict_comp(X_paritions[0], Y_paritions[0])
+        for p in range(1, len(X_paritions)):
+            p_mu, p_var, p_nlpd = self._predict_comp(X_paritions[p], Y_paritions[p])
+            mu = np.concatenate((mu, p_mu), axis=0)
+            var = np.concatenate((var, p_var), axis=0)
+            nlpd = np.concatenate((nlpd, p_nlpd), axis=0)
+
         predicted_mu = np.average(mu, axis=1, weights=self.MoG.pi)
         predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
                         + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2
