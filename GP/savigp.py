@@ -1,3 +1,4 @@
+import threading
 import GPy
 from atom.enum import Enum
 from scipy.misc import logsumexp
@@ -102,6 +103,12 @@ class SAVIGP(Model):
 
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
             .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
+
+        # uncomment to use sample samples for all data points
+        # self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc) \
+        #     .reshape((self.num_latent_proc, self.n_samples))
+        #
+        # self.normal_samples = np.repeat(self.normal_samples[:, :, np.newaxis], self.partition_size, 2)
 
         self._update_latent_kernel()
 
@@ -406,13 +413,49 @@ class SAVIGP(Model):
         raise Exception("method not implemented")
 
     def _ell(self):
-        total_out = self._parition_ell(self.X_paritions[0], self.Y_paritions[0])
-        total_out = list(total_out)
-        for p in range(1, self.n_partitions):
-            out = self._parition_ell(self.X_paritions[p], self.Y_paritions[p])
-            for o in range(len(out)):
-                total_out[o] += out[o]
-        return total_out
+
+        threadLimiter = threading.BoundedSemaphore(3)
+
+        lock = threading.Lock()
+
+        class MyThread(threading.Thread):
+            def __init__(self, savigp, X, Y, output):
+                super(MyThread, self).__init__()
+                self.output = output
+                self.X = X
+                self.Y = Y
+                self.savigp = savigp
+
+            def run(self):
+                threadLimiter.acquire()
+                try:
+                    self.Executemycode()
+                finally:
+                    threadLimiter.release()
+            def Executemycode(self):
+                out = self.savigp._parition_ell(self.X, self.Y)
+                lock.acquire()
+                try:
+                    if not self.output:
+                        self.output.append(list(out))
+                    else:
+                        for o in range(len(out)):
+                            self.output[0][o] += out[o]
+                finally:
+                    lock.release()
+
+
+        total_out = []
+        threads = []
+        for p in range(0, self.n_partitions):
+            t = MyThread(self, self.X_paritions[p], self.Y_paritions[p], total_out)
+            threads.append(t)
+            t.start()
+
+        for thread in threads:
+            thread.join()
+
+        return total_out[0]
 
 
     def _parition_ell(self, X, Y):
