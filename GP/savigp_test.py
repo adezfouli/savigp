@@ -1,4 +1,6 @@
 import logging
+from numpy.random import random
+from scipy.stats import uniform
 from data_source import DataSource
 from data_transformation import MeanTransformation, IdentityTransformation
 from experiments import Experiments
@@ -19,7 +21,7 @@ from GPy.util.linalg import mdot
 import numpy as np
 from optimizer import *
 from savigp import Configuration
-from likelihood import UnivariateGaussian
+from likelihood import UnivariateGaussian, MultivariateGaussian
 from grad_checker import GradChecker
 from plot import plot_fit
 from util import chol_grad, jitchol, bcolors
@@ -35,11 +37,11 @@ class SAVIGP_Test:
         num_process = -1
         ll = None
         gaussian_sigma = None
-        # if likelihood == 'multi_Gaussian':
-        #     gaussian_sigma = 0.5
-        #     num_process = 3
-        #     cov = np.eye(num_process) * gaussian_sigma
-        #     ll = MultivariateGaussian(np.array(cov))
+        if likelihood == 'multi_Gaussian':
+            gaussian_sigma = 0.5
+            num_process = 2
+            cov = np.diag(np.random.uniform(1, 5, num_process))
+            ll = MultivariateGaussian(np.array(cov))
         if likelihood == 'univariate_Gaussian':
             gaussian_sigma = 0.5
             num_process = 1
@@ -50,7 +52,7 @@ class SAVIGP_Test:
     @staticmethod
     def test_grad_diag(config, verbose, sparse, likelihood_type):
         num_input_samples = 3
-        num_samples = 100000
+        num_samples = 200000
         cov, gaussian_sigma, ll, num_process = SAVIGP_Test.get_cond_ll(likelihood_type)
         np.random.seed(1212)
         if sparse:
@@ -84,7 +86,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_SingleComponent(X, Y, num_inducing, ll,
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
@@ -156,7 +158,7 @@ class SAVIGP_Test:
 
         sparse = [False, True]
         models = ['diag', 'full']
-        ll = ['univariate_Gaussian']
+        ll = ['univariate_Gaussian', 'multi_Gaussian']
 
         for m in models:
             for s in sparse:
@@ -301,5 +303,5 @@ class SAVIGP_Test:
 if __name__ == '__main__':
     # SAVIGP_Test.test_gp(True, method='full')
     # SAVIGP_Test.init_test()
-    # SAVIGP_Test.test_grad()
-    SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})
+    SAVIGP_Test.test_grad()
+    # SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})
