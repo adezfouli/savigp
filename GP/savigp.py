@@ -38,7 +38,7 @@ class SAVIGP(Model):
     :rtype: model object
     """
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
-                 config_list=None, latent_noise=0, exact_ell=False, random_Z=False):
+                 config_list=None, latent_noise=0, exact_ell=False, random_Z=False, n_threads =1):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -65,6 +65,7 @@ class SAVIGP(Model):
         self.num_like_params = self.cond_likelihood.get_num_params()
         self.is_exact_ell = exact_ell
         self.num_data_points = X.shape[0]
+        self.n_threads=n_threads
 
         self.cached_ell = None
         self.cached_ent = None
@@ -414,7 +415,7 @@ class SAVIGP(Model):
 
     def _ell(self):
 
-        threadLimiter = threading.BoundedSemaphore(3)
+        threadLimiter = threading.BoundedSemaphore(self.n_threads)
 
         lock = threading.Lock()
 
