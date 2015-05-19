@@ -126,7 +126,7 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=40, max_iter=200):
+                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1):
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
@@ -165,17 +165,17 @@ class Experiments:
 
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                       kernel, num_samples, None, latent_noise, False, random_Z)
+                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
             _, timer_per_iter, total_time, tracker = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
         if method == 'gp':
@@ -405,7 +405,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=2, max_iter=200))
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=2, max_iter=200, n_threads=4))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):

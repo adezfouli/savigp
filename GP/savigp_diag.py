@@ -13,9 +13,9 @@ from savigp import SAVIGP
 class SAVIGP_Diag(SAVIGP):
 
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list,
-                 latent_noise, is_exact_ell, random_Z):
+                 latent_noise, is_exact_ell, random_Z, n_threads =1):
         super(SAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood,
-                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z)
+                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell, random_Z, n_threads)
 
     def _dell_ds(self, k, j, cond_ll, A, sigma_kj, norm_samples):
         s = self._average(cond_ll, (np.square(norm_samples) - 1)/ sigma_kj[k, j], True)
