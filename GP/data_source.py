@@ -220,7 +220,7 @@ class DataSource:
                 'train_Y': train_Y,
                 'train_X': train_set[0],
                 'test_Y': test_Y,
-                'test_X': train_set[0],
+                'test_X': test_set[0],
                 'id': 0
             })
 
