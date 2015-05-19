@@ -78,7 +78,7 @@ class ExperimentRunner:
 
     @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'mix2', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
+        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
@@ -140,6 +140,6 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_experiment()
+    ExperimentRunner.mnist_experiment()
 
     # ExperimentRunner.plot()
