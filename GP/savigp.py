@@ -322,7 +322,7 @@ class SAVIGP(Model):
             params = np.hstack([params, np.log(self.hyper_params.flatten())])
         if Configuration.LL in self.config_list:
             params = np.hstack([params, self.cond_likelihood.get_params()])
-        return params
+        return params.copy()
 
     def get_posterior_params(self):
         return self.MoG.get_m_S_params()

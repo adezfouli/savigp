@@ -64,7 +64,7 @@ class Optimizer:
             # p = x0.copy()
             # p[opt_indices] = x[opt_indices]
             try:
-                model.set_params(x)
+                model.set_params(x.copy())
                 last_x[0] = x
             except (ValueError, JitChol) as e:
                 best_x[0] = last_x[0].copy()
