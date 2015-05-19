@@ -59,7 +59,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_Diag(X, Y, num_inducing, 3, ll,
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 

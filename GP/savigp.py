@@ -253,6 +253,7 @@ class SAVIGP(Model):
 
         if Configuration.ELL in self.config_list:
             xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell()
+            self.cached_ell = xell
             self.ll += xell
             if Configuration.MoG in self.config_list:
                 grad_m += xdell_dm
@@ -473,15 +474,13 @@ class SAVIGP(Model):
                 if Configuration.LL in self.config_list:
                     d_ell_d_ll += self.MoG.pi[k] * grad_ll.sum() / self.n_samples
 
-            self.cached_ell = total_ell
-            total_ell = 0
             if self.is_exact_ell:
+                total_ell = 0
                 for n in range(len(X)):
                     for k in range(self.num_mog_comp):
                             total_ell += self.cond_likelihood.ell(np.array(mean_kj[k, :, n]), np.array(sigma_kj[k, :, n]), Y[n, :]) * self.MoG.pi[k]
-                self.cached_ell = total_ell
 
-        return self.cached_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+        return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
     def _average(self, condll, X, variance_reduction):
         if variance_reduction:
