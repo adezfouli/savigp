@@ -405,7 +405,7 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=2, max_iter=200, n_threads=30))
+                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=3, max_iter=200, n_threads=30))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
