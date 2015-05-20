@@ -84,6 +84,7 @@ class SAVIGP(Model):
         self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.log_detZ = np.zeros(self.num_latent_proc)
 
+        # self._sub_parition()
         self.X_paritions, self.Y_paritions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
 
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
@@ -123,6 +124,15 @@ class SAVIGP(Model):
             partition_size = X.shape[0]
         return X_paritions, Y_paritions, n_partitions, partition_size
 
+    def _sub_parition(self):
+        self.partition_size = 50
+        inducing_index = np.random.permutation(self.X.shape[0])[:self.partition_size]
+        self.X_paritions = []
+        self.Y_paritions = []
+        self.X_paritions.append(self.X[inducing_index])
+        self.Y_paritions.append(self.Y[inducing_index])
+        self.cached_ell = None
+        self.n_partitions = 1
 
     def _max_parition_size(self):
         return 2000
