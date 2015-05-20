@@ -370,12 +370,6 @@ class SAVIGP(Model):
         """
         return self.kernels_latent[j].Kdiag(p_X) - mdiag_dot(A, K)
 
-    def _b_n(self, n, j, Aj, Kzx):
-        """
-        calculating [b_k(n)]j for latent process j (eq 19) for all k
-        returns: a
-        """
-        return mdot(Aj[n, :], self.MoG.m[:, j, :].T)
 
     def _b(self, k, j, Aj, Kzx):
         """
@@ -384,24 +378,11 @@ class SAVIGP(Model):
         """
         return mdot(Aj, self.MoG.m[k, j, :].T)
 
-
-    def _sigma_n(self, n, j, Kj, Aj, Kzx):
-        """
-        calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
-        """
-        if Kj[n] < 0:
-            Kj[n] = 0
-        return Kj[n] + self.MoG.aSa(Aj[n, :], j)
-
-
     def _sigma(self, k, j, Kj, Aj, Kzx):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
         return Kj + self.MoG.aSkja(Aj, k, j)
-
-    def dK_dtheta(self, j):
-        return self.kernels_latent[j].gradient
 
     # @profile
     def _get_A_K(self, p_X):
@@ -555,20 +536,11 @@ class SAVIGP(Model):
     def _proj_m_grad(self, j, dl_dm):
         return cho_solve((self.chol[j, :, :], True), dl_dm)
 
-    def _dsigma_n_dhyp(self, j, k, A, Kxnz, n, xn):
-        return self.dKx_dhyper(j, xn) \
-               - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
-               2 * self.dA_dhyper_n_mult_x(xn, j, A[j, n],
-                                         self.MoG.Sa(A[j, n], k, j) - Kxnz.T / 2)
-
     def _dsigma_dhyp(self, j, k, Aj, Kzx, X):
         return self.kernels[j].get_gradients_Kdiagn(X) \
                - self.kernels[j].get_gradients_Kn(Aj, X, self.Z[j]) + \
                2 * self.dA_dhyper_mult_x(j, X, Aj,
                                          self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
-
-    def _db_n_dhyp(self, j, k, A, n, xn):
-        return self.dA_dhyper_n_mult_x(xn, j, A[j, n], self.MoG.m[k, j])
 
     def _db_dhyp(self, j, k, Aj, X):
         return self.dA_dhyper_mult_x(j, X, Aj, np.repeat(self.MoG.m[k,j][:, np.newaxis], X.shape[0], axis=1))
@@ -581,14 +553,6 @@ class SAVIGP(Model):
     def dKx_dhyper(self, j, x_n):
         self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
         return self.kernels[j].gradient.copy()
-
-    def dA_dhyper_n_mult_x(self, x_n, j, Ajn, x):
-        w = mdot(self.invZ[j], x)[:, np.newaxis]
-        self.kernels[j].update_gradients_full(w.T, x_n, self.Z[j])
-        g1 = self.kernels[j].gradient.copy()
-        self.kernels[j].update_gradients_full(mdot(Ajn[:, np.newaxis], w.T), self.Z[j])
-        g2 = self.kernels[j].gradient.copy()
-        return g1 - g2
 
     def dA_dhyper_mult_x(self, j, X, Aj, m):
         w = mdot(self.invZ[j], m)

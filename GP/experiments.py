@@ -12,9 +12,6 @@ from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
-from plot import plot_fit
-from savigp_prediction import SAVIGP_Prediction
-from matplotlib.pyplot import show
 from util import id_generator, check_dir_exists, get_git
 
 
