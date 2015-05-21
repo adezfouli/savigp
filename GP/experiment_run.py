@@ -13,7 +13,7 @@ class ExperimentRunner:
 
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['mix1']
+        methods = ['mix2']
         sparse_factor = [1.0, 0.5, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
