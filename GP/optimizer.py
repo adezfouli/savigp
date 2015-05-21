@@ -53,10 +53,12 @@ class Optimizer:
     @staticmethod
     def get_f_f_grad_from_model(model, x0, opt_indices, tracker, logger):
         last_x = np.empty((1, x0.shape[0]))
+        last_x[0] = x0
         best_f = {'f': None}
         best_x = np.empty((1, x0.shape[0]))
-        best_x[0] = x0.copy()
+        best_x[0] = x0
         best_f['f'] = model.objective_function()
+
 
         def update(x):
             if np.array_equal(x, last_x[0]):
@@ -74,7 +76,7 @@ class Optimizer:
             else:
                 if model.objective_function() < best_f['f']:
                     best_f['f'] = model.objective_function()
-                    best_x[0] = x.copy()
+                    best_x[0] = x
 
         def f(X=None):
             if X is not None:
@@ -111,8 +113,8 @@ class Optimizer:
             bounds = []
             for x in range(start.shape[0]):
                 bounds.append((None, math.log(1e+10)))
-        init_x = model.get_params().copy()
-        f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, tracker, logger)
+        init_x = model.get_params()
+        f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, init_x, opt_indices, tracker, logger)
         restart_opt = True
         opt_tries = 0
         while restart_opt:
