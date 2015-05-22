@@ -225,17 +225,22 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
+                if callback is not None:
+                    logger.info('callback...')
+                    callback(model, current_iter + 1, total_evals, delta_m, delta_s, obj_track)
+                    logger.info('callback finished')
+
                 # check for convergence
                 new_params_m, new_params_s = model.get_posterior_params()
                 if last_param_m is not None:
                     delta_m = np.absolute(new_params_m - last_param_m).mean()
                     delta_s = np.absolute(new_params_s - last_param_s).mean()
+                    logger.debug('ftol: ' + str(last_obj - model.objective_function()))
+                    logger.info('diff:' + 'm:' +  str(delta_m) + ' s:' + str(delta_s))
                     if (delta_m + delta_s) / 2 < xtol or \
                             ((last_obj > model.objective_function()) and (last_obj - model.objective_function() < ftol)):
                         logger.info('best obj found: ' + str(model.objective_function()))
                         break
-                    logger.debug('ftol: ' + str(last_obj - model.objective_function()))
-                    logger.info('diff:' + 'm:' +  str(delta_m) + ' s:' + str(delta_s))
                 last_param_m = new_params_m
                 last_param_s = new_params_s
                 last_obj = model.objective_function()
@@ -261,11 +266,6 @@ class Optimizer:
                     d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt, apply_bound=True)
                     obj_track += tracker
                     total_evals += d['funcalls']
-
-                if callback is not None:
-                    logger.info('callback...')
-                    callback(model, current_iter + 1, total_evals, delta_m, delta_s, obj_track)
-                    logger.info('callback finished')
 
 
                 if not (max_fun_evals is None) and total_evals > max_fun_evals:
