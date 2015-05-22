@@ -186,6 +186,7 @@ class SAVIGP(Model):
         self.kernels_latent = []
         for j in range(len(self.kernels)):
             self.kernels_latent.append(self.kernels[j] + GPy.kern.White(self.X.shape[1], variance=self.latent_noise))
+        self.hypers_changed= True
 
     def init_mog(self, init_m):
         for j in range(self.num_latent_proc):
@@ -227,6 +228,7 @@ class SAVIGP(Model):
             self.chol[j, :, :] = jitchol(self.Kzz[j, :, :])
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
+        self.hypers_changed = False
 
     def kernel_hyp_params(self):
         hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
@@ -235,9 +237,6 @@ class SAVIGP(Model):
         return hyper_params
 
     def _update(self):
-
-        if Configuration.HYPER in self.config_list:
-            self._update_inverses()
 
         self.ll = 0
 
@@ -249,6 +248,9 @@ class SAVIGP(Model):
         if Configuration.HYPER in self.config_list:
             self.hyper_params = self.kernel_hyp_params()
             grad_hyper = np.zeros(self.hyper_params.shape)
+
+        if self.hypers_changed:
+            self._update_inverses()
 
         if Configuration.ENTROPY in self.config_list or (self.cached_ent is None):
             self.cached_ent = self._l_ent()
@@ -303,7 +305,6 @@ class SAVIGP(Model):
 
     def set_configuration(self, config_list):
         self.config_list = config_list
-        self._clear_cache()
         self._update()
 
     def _clear_cache(self):
@@ -332,6 +333,26 @@ class SAVIGP(Model):
         if Configuration.LL in self.config_list:
             self.cond_likelihood.set_params(p[index:index + self.num_like_params])
 
+        self._clear_cache()
+        self._update()
+
+
+    def set_all_params(self, p):
+        """
+        receives parameter from optimizer and transforms them
+        :param p: input parameters
+        """
+        self.last_param = p
+        self.MoG.update_parameters(p[:self.MoG.num_parameters()])
+        index = self.MoG.num_parameters()
+        self.hyper_params = np.exp(p[index:(index + self.num_latent_proc * self.num_hyper_params)].
+                                   reshape((self.num_latent_proc, self.num_hyper_params)))
+        for j in range(self.num_latent_proc):
+            self.kernels[j].param_array[:] = self.hyper_params[j]
+        index += self.num_latent_proc * self.num_hyper_params
+        self._update_latent_kernel()
+        self.cond_likelihood.set_params(p[index:index + self.num_like_params])
+        self._clear_cache()
         self._update()
 
     def get_params(self):
