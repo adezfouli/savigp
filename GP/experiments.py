@@ -1,5 +1,6 @@
 import logging
 import math
+import pickle
 from ExtRBF import ExtRBF
 from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
 from savigp import SAVIGP
@@ -120,10 +121,29 @@ class Experiments:
     def get_ID():
         return id_generator(size=6)
 
+
+    @staticmethod
+    def opt_callback(name):
+        def callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
+            path = Experiments.get_output_path() + name + '/'
+            check_dir_exists(path)
+            pickle.dump(model.get_all_params(), open(path + 'model.dump', 'w'))
+            pickle.dump({
+                'current_iter': current_iter,
+                'total_evals': total_evals,
+                'delta_m': delta_m,
+                'delta_s': delta_s,
+                'obj_track': obj_track,
+                'obj_fun': model.objective_function()
+            },
+                        open(path + 'opt.dump', 'w'))
+        return callback
+
+
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1):
+                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1, init_model=None):
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
@@ -157,24 +177,36 @@ class Experiments:
                    'git_branch': git_branch,
                    'random_Z': random_Z,
                    'latent_noise:': latent_noise,
+                   'model_init': init_model
                    }
         logger.info('experiment started for:' + str(properties))
+
+        init_params = None
+        current_iter = None
+        if init_model is not None:
+            init_params = pickle.load(open(init_model + 'model.dump'))
+            opt_params = pickle.load(open(init_model + 'opt.dump'))
+            current_iter = opt_params['current_iter']
 
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
-            _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
+            if init_params is not None:
+                m.set_all_params(init_params)
+                logger.info('loaded model - iteration started from: ' + str(opt_params['current_iter']) +
+                            ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
+            _, timer_per_iter, total_time, tracker, total_evals = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
-            _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
+            _, timer_per_iter, total_time, tracker, total_evals = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
-            _, timer_per_iter, total_time, tracker = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol)
+            _, timer_per_iter, total_time, tracker, total_evals = \
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
@@ -197,6 +229,7 @@ class Experiments:
 
         properties['total_time'] = total_time
         properties['time_per_iter'] = timer_per_iter
+        properties['total_evals'] = total_evals
         Experiments.export_configuration(folder_name, properties)
         return folder_name, m
 

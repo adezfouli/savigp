@@ -13,9 +13,9 @@ class ExperimentRunner:
 
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['mix2']
+        methods = ['full', 'mix1']
         sparse_factor = [1.0, 0.5, 0.2, 0.1]
-        run_ids = [1, 2, 3, 4, 5]
+        run_ids = [1]
         for e in expr_names:
             for m in methods:
                 for s in sparse_factor:
@@ -45,6 +45,7 @@ class ExperimentRunner:
         return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
+        return [Experiments.mining_data.__name__]
     #
 
     @staticmethod
@@ -130,7 +131,7 @@ def run_config(config):
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
 
-    ExperimentRunner.run_parallel(20)
+    ExperimentRunner.run_parallel(3)
     # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
