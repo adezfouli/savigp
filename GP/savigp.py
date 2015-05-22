@@ -305,6 +305,7 @@ class SAVIGP(Model):
 
     def set_configuration(self, config_list):
         self.config_list = config_list
+        self._clear_cache()
         self._update()
 
     def _clear_cache(self):
@@ -332,8 +333,6 @@ class SAVIGP(Model):
 
         if Configuration.LL in self.config_list:
             self.cond_likelihood.set_params(p[index:index + self.num_like_params])
-
-        self._clear_cache()
         self._update()
 
 
