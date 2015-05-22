@@ -58,7 +58,7 @@ class Optimizer:
         best_x = np.empty((1, x0.shape[0]))
         best_x[0] = x0
         best_f['f'] = model.objective_function()
-
+        total_f_evals = np.array([0])
 
         def update(x):
             if np.array_equal(x, last_x[0]):
@@ -67,6 +67,7 @@ class Optimizer:
             # p[opt_indices] = x[opt_indices]
             try:
                 model.set_params(x.copy())
+                total_f_evals[0] += 1
                 last_x[0] = x
             except (ValueError, JitChol) as e:
                 best_x[0] = last_x[0].copy()
@@ -97,8 +98,11 @@ class Optimizer:
         def min_x():
             return best_x[0]
 
+        def total_evals():
+            return total_f_evals[0]
+
         update(x0)
-        return f, f_grad, update, min_x
+        return f, f_grad, update, min_x, total_evals
 
 
     @staticmethod
@@ -114,7 +118,7 @@ class Optimizer:
             for x in range(start.shape[0]):
                 bounds.append((None, math.log(1e+10)))
         init_x = model.get_params()
-        f, f_grad, update, best_x = Optimizer.get_f_f_grad_from_model(model, init_x, opt_indices, tracker, logger)
+        f, f_grad, update, best_x, total_evals = Optimizer.get_f_f_grad_from_model(model, init_x, opt_indices, tracker, logger)
         restart_opt = True
         opt_tries = 0
         while restart_opt:
@@ -136,7 +140,7 @@ class Optimizer:
                     restart_opt = False
 
         d = {}
-        d['funcalls'] = 1
+        d['funcalls'] = total_evals()
         return d, tracker
 
     @staticmethod
@@ -187,7 +191,7 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun_evals, logger, method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200, ftol =1e-5):
+    def optimize_model(model, max_fun_evals, logger, method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200, ftol =1e-5, callback=None, current_iter=None):
         if not method:
             method=['hyp', 'mog']
         if not (max_fun_evals is None):
@@ -198,11 +202,14 @@ class Optimizer:
         last_param_m = None
         last_param_s = None
         obj_track = []
-        current_iter = 1
+        if current_iter is None:
+            current_iter = 0
         last_obj = None
+        delta_m = None
+        delta_s = None
         try:
-            while not converged:
-
+            while (max_iters is None) or current_iter < max_iters:
+                logger.info('iter started ' + str(current_iter))
                 if 'mog' in method:
                     logger.info('mog params')
                     model.set_configuration([
@@ -255,14 +262,16 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
+                if callback is not None:
+                    logger.info('callback...')
+                    callback(model, current_iter + 1, total_evals, delta_m, delta_s, obj_track)
+                    logger.info('callback finished')
+
 
                 if not (max_fun_evals is None) and total_evals > max_fun_evals:
                     break
 
                 current_iter += 1
-
-                if not (max_iters is None) and current_iter > max_iters:
-                    break
 
 
         except KeyboardInterrupt:
@@ -271,7 +280,11 @@ class Optimizer:
             if total_evals == 0:
                 total_evals = float('Nan')
         end=time.time()
-        return model, (end - start) / total_evals, (end - start), obj_track
+        if total_evals == 0:
+            avg_time = None
+        else:
+            avg_time = (end - start) / total_evals
+        return model, avg_time, (end - start), obj_track, total_evals
 
 class OptTermination(Exception):
     pass
