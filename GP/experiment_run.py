@@ -13,7 +13,7 @@ class ExperimentRunner:
 
         configs = []
         expr_names = ExperimentRunner.get_experiments()
-        methods = ['mix2']
+        methods = ['full']
         sparse_factor = [1.0, 0.5, 0.2, 0.1]
         run_ids = [1, 2, 3, 4, 5]
         for e in expr_names:
@@ -130,7 +130,7 @@ def run_config(config):
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
 
-    # ExperimentRunner.run_parallel(30)
+    ExperimentRunner.run_parallel(20)
     # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
@@ -140,6 +140,6 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.mnist_experiment()
+    # ExperimentRunner.mnist_experiment()
 
     # ExperimentRunner.plot()
