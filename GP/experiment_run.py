@@ -104,7 +104,7 @@ class ExperimentRunner:
 
     @staticmethod
     def mnist_experiment():
-        Experiments.MNIST_data({'method': 'full', 'sparse_factor': 0.02, 'run_id': 1, 'log_level': logging.DEBUG})
+        Experiments.MNIST_data({'method': 'full', 'sparse_factor': 0.004, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def plot():
