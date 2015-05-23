@@ -38,7 +38,7 @@ class SAVIGP(Model):
     :rtype: model object
     """
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
-                 config_list=None, latent_noise=0, exact_ell=False, random_Z=False, n_threads =1):
+                 config_list=None, latent_noise=0, exact_ell=False, inducing_on_Xs=False, n_threads=1, image=None):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -65,19 +65,21 @@ class SAVIGP(Model):
         self.num_like_params = self.cond_likelihood.get_num_params()
         self.is_exact_ell = exact_ell
         self.num_data_points = X.shape[0]
-        self.n_threads=n_threads
+        self.n_threads = n_threads
 
         self.cached_ell = None
         self.cached_ent = None
         self.cached_cross = None
 
-        if random_Z:
-            Z, init_m = self._random_inducing_points(X, Y)
+        if not image:
+            if inducing_on_Xs:
+                self.Z, init_m = self._random_inducing_points(X, Y)
+            else:
+                self.Z, init_m = self._clust_inducing_points(X, Y)
         else:
-            Z, init_m = self._clust_inducing_points(X, Y)
+            self.Z = image['Z']
 
         # Z is Q * M * D
-        self.Z = Z
         self.Kzz = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
         self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
@@ -87,6 +89,7 @@ class SAVIGP(Model):
         # self._sub_parition()
         self.X_paritions, self.Y_paritions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
 
+        np.random.seed(12000)
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
             .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
 
@@ -96,11 +99,14 @@ class SAVIGP(Model):
         #
         # self.normal_samples = np.repeat(self.normal_samples[:, :, np.newaxis], self.partition_size, 2)
 
-        self._update_latent_kernel()
+        if image:
+            self.set_all_params(image['params'])
+        else:
+            self._update_latent_kernel()
 
-        self._update_inverses()
+            self._update_inverses()
 
-        self.init_mog(init_m)
+            self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
 
@@ -220,6 +226,9 @@ class SAVIGP(Model):
         param_names += ['ll'] * self.num_like_params
 
         return param_names
+
+    def image(self):
+        return {'params': self.get_all_params(), 'Z': self.Z}
 
 
     def _update_inverses(self):

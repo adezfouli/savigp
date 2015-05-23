@@ -127,7 +127,7 @@ class Experiments:
         def callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
             path = Experiments.get_output_path() + name + '/'
             check_dir_exists(path)
-            pickle.dump(model.get_all_params(), open(path + 'model.dump', 'w'))
+            pickle.dump(model.image(), open(path + 'model.dump', 'w'))
             pickle.dump({
                 'current_iter': current_iter,
                 'total_evals': total_evals,
@@ -181,18 +181,17 @@ class Experiments:
                    }
         logger.info('experiment started for:' + str(properties))
 
-        init_params = None
+        model_image = None
         current_iter = None
         if init_model is not None:
-            init_params = pickle.load(open(init_model + 'model.dump'))
+            model_image = pickle.load(open(init_model + 'model.dump'))
             opt_params = pickle.load(open(init_model + 'opt.dump'))
             current_iter = opt_params['current_iter']
 
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
-            if init_params is not None:
-                m.set_all_params(init_params)
+                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
+            if model_image:
                 logger.info('loaded model - iteration started from: ' + str(opt_params['current_iter']) +
                             ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
             _, timer_per_iter, total_time, tracker, total_evals = \
