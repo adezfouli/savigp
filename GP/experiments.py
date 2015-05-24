@@ -453,7 +453,7 @@ class Experiments:
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 30, 'hyp': 3},
+                                  opt_per_iter={'mog': 10, 'hyp': 10},
                                   max_iter=300, n_threads=20,
                                    model_image_file=image))
 
