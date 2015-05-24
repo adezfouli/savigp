@@ -143,7 +143,7 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1, init_model=None):
+                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1, model_image=None):
 
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
@@ -177,15 +177,15 @@ class Experiments:
                    'git_branch': git_branch,
                    'random_Z': random_Z,
                    'latent_noise:': latent_noise,
-                   'model_init': init_model
+                   'model_init': model_image
                    }
         logger.info('experiment started for:' + str(properties))
 
         init_params = None
         current_iter = None
-        if init_model is not None:
-            init_params = pickle.load(open(init_model + 'model.dump'))
-            opt_params = pickle.load(open(init_model + 'opt.dump'))
+        if model_image is not None:
+            init_params = pickle.load(open(model_image + 'model.dump'))
+            opt_params = pickle.load(open(model_image + 'opt.dump'))
             current_iter = opt_params['current_iter']
 
         if method == 'full':
@@ -432,10 +432,18 @@ class Experiments:
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
 
+        if 'image' in config.keys():
+            image = config['image']
+        else:
+            image = None
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=3, max_iter=300, n_threads=20))
+                                  config['log_level'], False,
+                                  latent_noise=0.001, opt_per_iter=3, max_iter=300,
+                                  n_threads=20,
+                                  model_image=image))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
