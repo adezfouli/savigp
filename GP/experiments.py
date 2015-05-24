@@ -446,7 +446,7 @@ class Experiments:
         cond_ll = SoftmaxLL(10)
 
         image = None
-        if 'image' in config.key():
+        if 'image' in config.keys():
             image = config['image']
 
         names.append(
