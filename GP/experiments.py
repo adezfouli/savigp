@@ -179,7 +179,7 @@ class Experiments:
                    'git_branch': git_branch,
                    'random_Z': random_Z,
                    'latent_noise:': latent_noise,
-                   'model_init': model_image
+                   'model_init': init_model
                    }
         logger.info('experiment started for:' + str(properties))
 
@@ -444,11 +444,6 @@ class Experiments:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
-
-        if 'image' in config.keys():
-            image = config['image']
-        else:
-            image = None
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
