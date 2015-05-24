@@ -445,12 +445,17 @@ class Experiments:
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
 
+        image = None
+        if 'image' in config.key():
+            image = config['image']
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 30, 'hyp': 3},
-                                  max_iter=300, n_threads=20))
+                                  max_iter=300, n_threads=20,
+                                   init_model=image))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
