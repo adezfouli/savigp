@@ -191,7 +191,9 @@ class Optimizer:
         return ["%.2f" % a[j] for j in range(len(a))]
 
     @staticmethod
-    def optimize_model(model, max_fun_evals, logger, method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200, ftol =1e-5, callback=None, current_iter=None):
+    def optimize_model(model, max_fun_evals, logger,
+                       method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200,
+                       ftol =1e-5, callback=None, current_iter=None):
         if not method:
             method=['hyp', 'mog']
         if not (max_fun_evals is None):
@@ -218,7 +220,7 @@ class Optimizer:
                         Configuration.CROSS,
                         Configuration.ELL,
                     ])
-                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt['mog'])
                     # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
                     # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
                     # d = Optimizer.general(model, verbose=verbose)
@@ -251,7 +253,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.LL
                     ])
-                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt['ll'])
                     obj_track += tracker
                     total_evals += d['funcalls']
 
@@ -263,7 +265,7 @@ class Optimizer:
                         Configuration.ELL,
                         Configuration.HYPER
                     ])
-                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt, apply_bound=True)
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt['hyp'], apply_bound=True)
                     obj_track += tracker
                     total_evals += d['funcalls']
 

@@ -127,7 +127,7 @@ class Experiments:
         def callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
             path = Experiments.get_output_path() + name + '/'
             check_dir_exists(path)
-            pickle.dump(model.get_all_params(), open(path + 'model.dump', 'w'))
+            pickle.dump(model.image(), open(path + 'model.dump', 'w'))
             pickle.dump({
                 'current_iter': current_iter,
                 'total_evals': total_evals,
@@ -143,8 +143,10 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1, model_image=None):
+                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, init_model=None):
 
+        if opt_per_iter is None:
+            opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
@@ -181,30 +183,29 @@ class Experiments:
                    }
         logger.info('experiment started for:' + str(properties))
 
-        init_params = None
+        model_image = None
         current_iter = None
-        if model_image is not None:
-            init_params = pickle.load(open(model_image + 'model.dump'))
-            opt_params = pickle.load(open(model_image + 'opt.dump'))
+        if init_model is not None:
+            model_image = pickle.load(open(init_model + 'model.dump'))
+            opt_params = pickle.load(open(init_model + 'opt.dump'))
             current_iter = opt_params['current_iter']
 
+        if model_image:
+            logger.info('loaded model - iteration started from: ' + str(opt_params['current_iter']) +
+                        ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
-            if init_params is not None:
-                m.set_all_params(init_params)
-                logger.info('loaded model - iteration started from: ' + str(opt_params['current_iter']) +
-                            ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
+                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'gp':
@@ -257,7 +258,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
         return names
 
     @staticmethod
@@ -290,7 +293,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
         return names
 
 
@@ -319,7 +324,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True, latent_noise=0.001, opt_per_iter=15000, max_iter=1))
+                                  config['log_level'], True, latent_noise=0.001,
+                                  opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
+                                  max_iter=1))
         return names
 
 
@@ -345,7 +352,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=25, max_iter=300))
+                                  config['log_level'], False,  latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=300))
 
 
     @staticmethod
@@ -375,7 +384,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
 
 
     @staticmethod
@@ -409,7 +420,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
 
 
     @staticmethod
@@ -440,10 +453,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,
-                                  latent_noise=0.001, opt_per_iter=3, max_iter=300,
-                                  n_threads=20,
-                                  model_image=image))
+                                  config['log_level'], False,  latent_noise=0.001,
+                                  opt_per_iter={'mog': 30, 'hyp': 3},
+                                  max_iter=300, n_threads=20))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
