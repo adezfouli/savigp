@@ -143,7 +143,7 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image=None):
+                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None):
 
         if opt_per_iter is None:
             opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
@@ -179,15 +179,15 @@ class Experiments:
                    'git_branch': git_branch,
                    'random_Z': random_Z,
                    'latent_noise:': latent_noise,
-                   'model_init': model_image
+                   'model_init': model_image_file
                    }
         logger.info('experiment started for:' + str(properties))
 
         model_image = None
         current_iter = None
-        if model_image is not None:
-            model_image = pickle.load(open(model_image + 'model.dump'))
-            opt_params = pickle.load(open(model_image + 'opt.dump'))
+        if model_image_file is not None:
+            model_image = pickle.load(open(model_image_file + 'model.dump'))
+            opt_params = pickle.load(open(model_image_file + 'opt.dump'))
             current_iter = opt_params['current_iter']
 
         if model_image:
@@ -455,7 +455,7 @@ class Experiments:
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 30, 'hyp': 3},
                                   max_iter=300, n_threads=20,
-                                   model_image=image))
+                                   model_image_file=image))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
