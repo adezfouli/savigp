@@ -105,7 +105,7 @@ class ExperimentRunner:
     @staticmethod
     def mnist_experiment():
         Experiments.MNIST_data({'method': 'full',
-                                'sparse_factor': 0.0004, 'run_id': 1,
+                                'sparse_factor': 0.02, 'run_id': 1,
                                 'log_level': logging.DEBUG})
 
     @staticmethod
@@ -138,11 +138,11 @@ if __name__ == '__main__':
 
     # runs an individual configuration
 
-    ExperimentRunner.boston_experiment()
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_experiment()
+    ExperimentRunner.mnist_experiment()
 
     # ExperimentRunner.plot()
