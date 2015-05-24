@@ -143,8 +143,10 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=40, max_iter=200, n_threads=1, init_model=None):
+                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, init_model=None):
 
+        if opt_per_iter is None:
+            opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
         folder_name = name + '_' + Experiments.get_ID()
         logger = Experiments.get_logger(folder_name, logging_level)
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
@@ -256,7 +258,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
         return names
 
     @staticmethod
@@ -289,7 +293,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
         return names
 
 
@@ -318,7 +324,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True, latent_noise=0.001, opt_per_iter=15000, max_iter=1))
+                                  config['log_level'], True, latent_noise=0.001,
+                                  opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
+                                  max_iter=1))
         return names
 
 
@@ -344,7 +352,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=25, max_iter=300))
+                                  config['log_level'], False,  latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=300))
 
 
     @staticmethod
@@ -374,7 +384,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
 
 
     @staticmethod
@@ -408,7 +420,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001, opt_per_iter=25, max_iter=200))
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
 
 
     @staticmethod
@@ -434,7 +448,9 @@ class Experiments:
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001, opt_per_iter=3, max_iter=300, n_threads=20))
+                                  config['log_level'], False,  latent_noise=0.001,
+                                  opt_per_iter={'mog': 30, 'hyp': 3},
+                                  max_iter=300, n_threads=20))
 
     @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
