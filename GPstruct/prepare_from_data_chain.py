@@ -18,7 +18,7 @@ except ImportError as ie:
     native_implementation_found = False
 
 def learn_predict_gpstruct_wrapper(
-    data_indices_train=np.arange(0,10), 
+    data_indices_train=np.arange(0,2),
     data_indices_test=np.arange(10,20),
     task='basenp',
     data_folder=None,

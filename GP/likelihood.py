@@ -48,6 +48,9 @@ class Likelihood:
         """
         return np.mean(Y, axis=0)
 
+    def output_dim(self):
+        raise Exception("not implemented yet")
+
 
     # def predict(self, mu, sigma):
     #     self.dim = mu.shape[0]
@@ -95,6 +98,9 @@ class MultivariateGaussian(Likelihood):
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, self.sigma)
 
+    def output_dim(self):
+        return self.sigma.shape[0]
+
 
 class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):
@@ -138,6 +144,10 @@ class UnivariateGaussian(Likelihood):
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
 
+    def output_dim(self):
+        return 1
+
+
 
 class LogGaussianCox(Likelihood):
     """
@@ -179,6 +189,10 @@ class LogGaussianCox(Likelihood):
         meanval = np.exp(mu + sigma / 2) * np.exp(self.offset)
         varval = (np.exp(sigma) - 1) * np.exp(2 * mu + sigma) * np.exp(2 * self.offset)
         return meanval, varval, None
+
+    def output_dim(self):
+        return 1
+
 
 class LogisticLL(object, Likelihood):
     """
@@ -224,6 +238,10 @@ class LogisticLL(object, Likelihood):
 
     def get_num_params(self):
         return 0
+
+    def output_dim(self):
+        return 1
+
 
 class SoftmaxLL(Likelihood):
     """
@@ -274,6 +292,10 @@ class SoftmaxLL(Likelihood):
 
     def get_num_params(self):
         return 0
+
+    def output_dim(self):
+        return self.dim
+
 
 
 class WarpLL(object, Likelihood):
@@ -335,6 +357,10 @@ class WarpLL(object, Likelihood):
             ts, w = self.warp(Ys)
             lpd = -0.5*np.log(2*math.pi*s) - 0.5 * np.square(ts-mu)/s + np.log(w)
         return mean, var[:, np.newaxis], lpd[:, 0]
+
+    def output_dim(self):
+        return 1
+
 
     def _get_y_range(self):
         return np.array([xrange(-1000, 2000, 1)]).T / 1000
@@ -405,3 +431,6 @@ class StructLL(Likelihood):
 
     def predict(self, mu, sigma, Ys, model=None):
         pass
+
+    def output_dim(self):
+        return self.dataset.n_labels
