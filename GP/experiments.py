@@ -451,9 +451,9 @@ class Experiments:
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, False,
+                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 20, 'hyp': 0},
+                                  opt_per_iter={'mog': 20, 'hyp': 7},
                                   max_iter=300, n_threads=21,
                                    model_image_file=image))
 

@@ -107,6 +107,7 @@ class ExperimentRunner:
         Experiments.MNIST_data({'method': 'full',
                                 'sparse_factor': 0.02, 'run_id': 1,
                                 'log_level': logging.DEBUG,
+                                'image': '../results/mnist_1/'
                                 })
 
     @staticmethod
