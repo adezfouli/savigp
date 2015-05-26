@@ -219,8 +219,8 @@ class DataSource:
 
         data = []
         data.append({
-                'train_Y': np.hstack((train_Y, validation_Y)),
-                'train_X': np.hstack((train_set[0], valid_set[0])),
+                'train_Y': np.vstack((train_Y, validation_Y)),
+                'train_X': np.vstack((train_set[0], valid_set[0])),
                 'test_Y': test_Y,
                 'test_X': test_set[0],
                 'id': 0
