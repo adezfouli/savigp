@@ -2,6 +2,7 @@ import logging
 import math
 import pickle
 from ExtRBF import ExtRBF
+from gpstruct_wrapper import gpstruct_wrapper
 from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
