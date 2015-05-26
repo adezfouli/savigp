@@ -366,3 +366,41 @@ class WarpLL(object, Likelihood):
 
     def get_num_params(self):
         return 1
+
+class StructLL(Likelihood):
+    def __init__(self, ll_func, dataset):
+        Likelihood.__init__(self)
+        self.ll_func = ll_func
+        self.dataset = dataset
+        seq_size = dataset.object_size
+        last_pos = 0
+        self.seq_poses = np.empty((seq_size.shape[0] + 1))
+        for n in range(seq_size.shape[0]):
+            last_pos += seq_size[n]
+            self.seq_poses[n+1] = last_pos
+        self.seq_poses = self.seq_poses.astype(int)
+
+    def ll_F_Y(self, F, Y):
+
+        ll = np.empty((F.shape[0], self.dataset.object_size.sum()))
+        for s in range(F.shape[0]):
+            for n in range(self.dataset.N):
+                unaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], 0:self.dataset.n_labels]
+                binaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], self.dataset.n_labels:].reshape((self.dataset.object_size[n], self.dataset.n_labels, self.dataset.n_labels))
+                ll[s, self.seq_poses[n]: self.seq_poses[n+1]] = log_likelihood_function_numba(unaries, binaries, self.dataset.Y[n], self.dataset.object_size[n], self.dataset.n_labels)
+
+        return ll, None
+
+
+    def set_params(self, p):
+        if p.shape[0] != 0:
+            raise Exception("struct ll function does not have free parameters")
+
+    def get_params(self):
+        return []
+
+    def get_num_params(self):
+        return 0
+
+    def predict(self, mu, sigma, Ys, model=None):
+        pass
