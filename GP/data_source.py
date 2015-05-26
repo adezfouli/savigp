@@ -214,11 +214,13 @@ class DataSource:
         test_Y[np.arange(test_set[1].shape[0]), test_set[1]] = 1
         train_Y = np.zeros((train_set[1].shape[0], 10))
         train_Y[np.arange(train_set[1].shape[0]), train_set[1]] = 1
+        validation_Y = np.zeros((valid_set[1].shape[0], 10))
+        validation_Y[np.arange(valid_set[1].shape[0]), valid_set[1]] = 1
 
         data = []
         data.append({
-                'train_Y': train_Y,
-                'train_X': train_set[0],
+                'train_Y': np.hstack((train_Y, validation_Y)),
+                'train_X': np.hstack((train_set[0], valid_set[0])),
                 'test_Y': test_Y,
                 'test_X': test_set[0],
                 'id': 0
