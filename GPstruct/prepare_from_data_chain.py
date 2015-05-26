@@ -166,7 +166,7 @@ def loadData(dirName, n_labels, indexData, n_features_x):
 def log_likelihood_function_numba(log_node_pot, log_edge_pot, dataset_Y_n, object_size, n_labels):
         # log-likelihood for point n, for observed data dataset.Y[n], consists of 
         # "numerator": sum of potentials for  binaries (indexed (y_{t-1}, y_{t})) and unaries (indexed (t, y))
-        log_pot = log_edge_pot[dataset_Y_n[:-1], dataset_Y_n[1:]].sum() + log_node_pot[np.arange(object_size), dataset_Y_n].sum()
+        log_pot = log_edge_pot[:, dataset_Y_n[:-1], dataset_Y_n[1:]].sum() + log_node_pot[np.arange(object_size), dataset_Y_n].sum()
         # using array indexing in numpy 
         # nodes: for each position in the chain (np.arange(object_size)), select the correct unary factor corresponding to y (dataset_Y_n)
         # edges: select edge factors with tuples (y_{t-1}, y_{t}). Use as the first index, y_{t-1}, obtained by cutting off dataset_Y_n before the last position; and as the second index, y{t}, obtained by shifting dataset_Y_n to the left (ie [1:]).

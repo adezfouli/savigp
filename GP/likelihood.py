@@ -4,6 +4,7 @@ from scipy.linalg import inv, det
 from scipy.misc import logsumexp
 from scipy.special import erfinv
 from scipy.special._ufuncs import gammaln
+from GPstruct.prepare_from_data_chain import log_likelihood_function_numba
 
 from util import cross_ent_normal, drange
 
