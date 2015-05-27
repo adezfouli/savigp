@@ -15,7 +15,7 @@ from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
 from util import id_generator, check_dir_exists, get_git
-
+import Image
 
 class Experiments:
     @staticmethod
@@ -440,15 +440,35 @@ class Experiments:
         Ytest = d['test_Y']
         name = 'mnist'
 
-        features_rm = np.array([])
-        for n in range(Xtrain.shape[1]):
-            if Xtrain[:, n].sum() ==0:
-                features_rm = np.append(features_rm, n)
-        Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
-        Xtest = np.delete(Xtest, features_rm.astype(int), 1)
+        # un comment these lines to delete unused features
+        # features_rm = np.array([])
+        # for n in range(Xtrain.shape[1]):
+        #     if Xtrain[:, n].sum() ==0:
+        #         features_rm = np.append(features_rm, n)
+        # Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
+        # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
+
+
+        res = 12
+        current_res = int(np.sqrt(Xtrain.shape[1]))
+        X_train_resized = np.empty((Xtrain.shape[0], res * res))
+        X_test_resized = np.empty((Xtest.shape[0], res * res))
+        for n in range(Xtrain.shape[0]):
+            im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
+            im = im.resize((res, res))
+            X_train_resized[n] = np.array(im).flatten()
+
+        for n in range(Xtest.shape[0]):
+            im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
+            im = im.resize((res, res))
+            X_test_resized[n] = np.array(im).flatten()
+
+
+        Xtrain = X_train_resized
+        Xtest = X_test_resized
 
         kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=True) for j in range(10)]
-
+        print 'fisnished'
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
