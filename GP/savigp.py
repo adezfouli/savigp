@@ -140,7 +140,7 @@ class SAVIGP(Model):
         self.n_partitions = 1
 
     def _max_parition_size(self):
-        return 2000
+        return 200
 
     def _clust_inducing_points(self, X, Y):
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
