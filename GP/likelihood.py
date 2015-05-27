@@ -4,6 +4,7 @@ from scipy.linalg import inv, det
 from scipy.misc import logsumexp
 from scipy.special import erfinv
 from scipy.special._ufuncs import gammaln
+from GPstruct.prepare_from_data_chain import log_likelihood_function_numba
 
 from util import cross_ent_normal, drange
 
@@ -46,6 +47,9 @@ class Likelihood:
             By default return mean of the Ys
         """
         return np.mean(Y, axis=0)
+
+    def output_dim(self):
+        raise Exception("not implemented yet")
 
 
     # def predict(self, mu, sigma):
@@ -94,6 +98,9 @@ class MultivariateGaussian(Likelihood):
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, self.sigma)
 
+    def output_dim(self):
+        return self.sigma.shape[0]
+
 
 class UnivariateGaussian(Likelihood):
     def __init__(self, sigma):
@@ -137,6 +144,10 @@ class UnivariateGaussian(Likelihood):
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
 
+    def output_dim(self):
+        return 1
+
+
 
 class LogGaussianCox(Likelihood):
     """
@@ -178,6 +189,10 @@ class LogGaussianCox(Likelihood):
         meanval = np.exp(mu + sigma / 2) * np.exp(self.offset)
         varval = (np.exp(sigma) - 1) * np.exp(2 * mu + sigma) * np.exp(2 * self.offset)
         return meanval, varval, None
+
+    def output_dim(self):
+        return 1
+
 
 class LogisticLL(object, Likelihood):
     """
@@ -223,6 +238,10 @@ class LogisticLL(object, Likelihood):
 
     def get_num_params(self):
         return 0
+
+    def output_dim(self):
+        return 1
+
 
 class SoftmaxLL(Likelihood):
     """
@@ -273,6 +292,10 @@ class SoftmaxLL(Likelihood):
 
     def get_num_params(self):
         return 0
+
+    def output_dim(self):
+        return self.dim
+
 
 
 class WarpLL(object, Likelihood):
@@ -335,6 +358,10 @@ class WarpLL(object, Likelihood):
             lpd = -0.5*np.log(2*math.pi*s) - 0.5 * np.square(ts-mu)/s + np.log(w)
         return mean, var[:, np.newaxis], lpd[:, 0]
 
+    def output_dim(self):
+        return 1
+
+
     def _get_y_range(self):
         return np.array([xrange(-1000, 2000, 1)]).T / 1000
 
@@ -366,3 +393,44 @@ class WarpLL(object, Likelihood):
 
     def get_num_params(self):
         return 1
+
+class StructLL(Likelihood):
+    def __init__(self, ll_func, dataset):
+        Likelihood.__init__(self)
+        self.ll_func = ll_func
+        self.dataset = dataset
+        seq_size = dataset.object_size
+        last_pos = 0
+        self.seq_poses = np.empty((seq_size.shape[0] + 1))
+        for n in range(seq_size.shape[0]):
+            last_pos += seq_size[n]
+            self.seq_poses[n+1] = last_pos
+        self.seq_poses = self.seq_poses.astype(int)
+
+    def ll_F_Y(self, F, Y):
+
+        ll = np.empty((F.shape[0], self.dataset.object_size.sum()))
+        for s in range(F.shape[0]):
+            for n in range(self.dataset.N):
+                unaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], 0:self.dataset.n_labels]
+                binaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], self.dataset.n_labels:].reshape((self.dataset.object_size[n], self.dataset.n_labels, self.dataset.n_labels))
+                ll[s, self.seq_poses[n]: self.seq_poses[n+1]] = log_likelihood_function_numba(unaries, binaries, self.dataset.Y[n], self.dataset.object_size[n], self.dataset.n_labels)
+
+        return ll, None
+
+
+    def set_params(self, p):
+        if p.shape[0] != 0:
+            raise Exception("struct ll function does not have free parameters")
+
+    def get_params(self):
+        return []
+
+    def get_num_params(self):
+        return 0
+
+    def predict(self, mu, sigma, Ys, model=None):
+        pass
+
+    def output_dim(self):
+        return self.dataset.n_labels

@@ -50,7 +50,6 @@ class SAVIGP(Model):
         self.num_inducing = num_inducing
         self.MoG = self._get_mog()
         self.input_dim = X.shape[1]
-        self.output_dim = Y.shape[1]
         self.kernels = kernels
         self.cond_likelihood = likelihood
         self.X = X
@@ -182,7 +181,6 @@ class SAVIGP(Model):
             else:
                 inducing_index = np.random.permutation(X.shape[0])[:self.num_inducing]
             Z[j, :, :] = X[inducing_index].copy()
-            init_m[:, j] = Y[inducing_index, j]
         for i in range(self.num_inducing):
             init_m[i] = self.cond_likelihood.map_Y_to_f(np.array([Y[inducing_index[i]]])).copy()
 
@@ -701,8 +699,8 @@ class SAVIGP(Model):
         # print 'ell started'
         A, Kzx, K = self._get_A_K(Xs)
 
-        predicted_mu = np.empty((Xs.shape[0], self.num_mog_comp, self.output_dim))
-        predicted_var = np.empty((Xs.shape[0], self.num_mog_comp, self.output_dim))
+        predicted_mu = np.empty((Xs.shape[0], self.num_mog_comp, self.cond_likelihood.output_dim()))
+        predicted_var = np.empty((Xs.shape[0], self.num_mog_comp, self.cond_likelihood.output_dim()))
         nlpd = None
         if not (Ys is None):
             nlpd = np.empty((Xs.shape[0], self.num_mog_comp))

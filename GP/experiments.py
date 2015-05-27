@@ -2,6 +2,7 @@ import logging
 import math
 import pickle
 from ExtRBF import ExtRBF
+from gpstruct_wrapper import gpstruct_wrapper
 from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
@@ -9,7 +10,7 @@ from savigp_single_comp import SAVIGP_SingleComponent
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL
+from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL, StructLL
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -438,12 +439,21 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'mnist'
-        kernel = [ExtRBF(Xtrain.shape[1], variance=11., lengthscale=np.array((9.,)), ARD=False) for j in range(10)]
+
+        features_rm = np.array([])
+        for n in range(Xtrain.shape[1]):
+            if Xtrain[:, n].sum() ==0:
+                features_rm = np.append(features_rm, n)
+        Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
+        Xtest = np.delete(Xtest, features_rm.astype(int), 1)
+
+        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=True) for j in range(10)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
+
 
         image = None
         if 'image' in config.keys():
@@ -455,6 +465,50 @@ class Experiments:
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10},
                                   max_iter=300, n_threads=21,
+                                   model_image_file=image))
+
+
+    @staticmethod
+    def struct_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+
+        (ll_train,
+        posterior_marginals_test,
+        compute_error_nlm,
+        ll_test,
+        average_marginals,
+        write_marginals,
+        read_marginals,
+        n_labels,
+        Xtrain,
+        Xtest,
+         train_dataset,
+         test_dataset)  = gpstruct_wrapper()
+        name = 'struct'
+        n_latent_processes = n_labels + n_labels ** 2
+
+        Xtrain = np.array(Xtrain.todense())
+        Xtest = Xtest.todense()
+        kernel = [ExtRBF(Xtrain.shape[1], variance=.1, lengthscale=np.array((.1,)), ARD=False)] * n_latent_processes
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = StructLL(ll_train, train_dataset)
+        names = []
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, [], [], cond_ll, kernel, method, name, 1, num_inducing,
+                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
+                                  config['log_level'], False,  latent_noise=0.001,
+                                  opt_per_iter={'mog': 30, 'hyp': 3},
+                                  max_iter=300, n_threads=20,
                                    model_image_file=image))
 
     @staticmethod
