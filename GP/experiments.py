@@ -449,7 +449,7 @@ class Experiments:
         # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
 
 
-        res = 12
+        res = 13
         current_res = int(np.sqrt(Xtrain.shape[1]))
         X_train_resized = np.empty((Xtrain.shape[0], res * res))
         X_test_resized = np.empty((Xtest.shape[0], res * res))
