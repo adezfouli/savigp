@@ -467,7 +467,7 @@ class Experiments:
         Xtrain = X_train_resized
         Xtest = X_test_resized
 
-        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=True) for j in range(10)]
+        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=False) for j in range(10)]
         print 'fisnished'
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
