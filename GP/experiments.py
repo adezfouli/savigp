@@ -439,12 +439,21 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'mnist'
-        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=False) for j in range(10)]
+
+        features_rm = np.array([])
+        for n in range(Xtrain.shape[1]):
+            if Xtrain[:, n].sum() ==0:
+                features_rm = np.append(features_rm, n)
+        Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
+        Xtest = np.delete(Xtest, features_rm.astype(int), 1)
+
+        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=True) for j in range(10)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
+
 
         image = None
         if 'image' in config.keys():
