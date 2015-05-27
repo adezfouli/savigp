@@ -438,7 +438,7 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'mnist'
-        kernel = [ExtRBF(Xtrain.shape[1], variance=11., lengthscale=np.array((9.,)), ARD=True) for j in range(10)]
+        kernel = [ExtRBF(Xtrain.shape[1], variance=11., lengthscale=np.array((9.,)), ARD=False) for j in range(10)]
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
@@ -453,7 +453,7 @@ class Experiments:
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 20, 'hyp': 10},
+                                  opt_per_iter={'mog': 50, 'hyp': 10},
                                   max_iter=300, n_threads=21,
                                    model_image_file=image))
 
