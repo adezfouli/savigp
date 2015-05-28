@@ -484,7 +484,7 @@ class Experiments:
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10},
-                                  max_iter=300, n_threads=10,
+                                  max_iter=300, n_threads=6,
                                    model_image_file=image))
 
 
