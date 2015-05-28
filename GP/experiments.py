@@ -507,7 +507,7 @@ class Experiments:
          train_dataset,
          test_dataset)  = gpstruct_wrapper()
         name = 'struct'
-        n_latent_processes = n_labels + n_labels ** 2
+        n_latent_processes = n_labels + 1
 
         Xtrain = np.array(Xtrain.todense())
         Xtest = Xtest.todense()

@@ -93,7 +93,7 @@ def prepare_from_data_chain(data_indices_train, data_indices_test, data_folder, 
                 prepare_from_data.average_marginals, 
                 write_marginals,
                 lambda marginals_file : read_marginals(marginals_file, data_test),
-                n_labels, data_train.X, data_test.X) 
+                n_labels, data_train.X, data_test.X, data_train, data_test)
         else:
             raise Exception("You have set native_implementation=True, but there has been an ImportError on import chain_forwards_backwards_native, and so I can't find the native implementation.")
     else:
@@ -109,7 +109,7 @@ def prepare_from_data_chain(data_indices_train, data_indices_test, data_folder, 
             prepare_from_data.average_marginals, 
             write_marginals,
             lambda marginals_file : read_marginals(marginals_file, data_test),
-            n_labels, data_train.X, data_test.X) 
+            n_labels, data_train.X, data_test.X, data_train, data_test)
 
 def loadData(dirName, n_labels, indexData, n_features_x):
     # .Y list of ndarrays
