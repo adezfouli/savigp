@@ -115,7 +115,7 @@ def forwards_algo_log_Z(log_edge_pot, #'(t-1,t)',
     log_kappa[0] = lse_numba(log_alpha[0,:])
     log_alpha[0,:] -= log_kappa[0] # normalize alpha
     for t in range(1,T):
-        log_alpha[t,:] = log_node_pot[t,:] + lse_numba_axis_1_tile(log_edge_pot[t].T, log_alpha[t-1,:], temp_array_1, temp_array_2)
+        log_alpha[t,:] = log_node_pot[t,:] + lse_numba_axis_1_tile(log_edge_pot.T, log_alpha[t-1,:], temp_array_1, temp_array_2)
         #print("pre_mult" + str(np.exp(lse_numba_axis_1_tile(log_edge_pot.T, log_alpha[t-1,:], temp_array_1, temp_array_2))))
         log_kappa[t] = lse_numba(log_alpha[t,:])
         log_alpha[t,:] -= log_kappa[t] # normalize alpha
