@@ -144,7 +144,8 @@ class Experiments:
     @staticmethod
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
-                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None):
+                  latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None,
+                  xtol=1e-3, ftol=1e-5, partition_size=3000):
 
         if opt_per_iter is None:
             opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
@@ -157,13 +158,11 @@ class Experiments:
         Xtest = transformer.transform_X(Xtest)
 
         opt_max_fun_evals = None
-        xtol = 1e-3
         total_time = None
         timer_per_iter = None
         tracker = None
         export_model = False
         git_hash, git_branch = get_git()
-        ftol = 1e-5
 
         properties = {'method': method,
                    'sparsify_factor': sparsify_factor,
@@ -196,17 +195,17 @@ class Experiments:
                         ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
+                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
         if method == 'gp':
@@ -440,7 +439,7 @@ class Experiments:
         Ytest = d['test_Y']
         name = 'mnist'
 
-        # un comment these lines to delete unused features
+        # uncomment these lines to delete unused features
         # features_rm = np.array([])
         # for n in range(Xtrain.shape[1]):
         #     if Xtrain[:, n].sum() ==0:
@@ -449,30 +448,40 @@ class Experiments:
         # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
 
 
-        res = 13
-        current_res = int(np.sqrt(Xtrain.shape[1]))
-        X_train_resized = np.empty((Xtrain.shape[0], res * res))
-        X_test_resized = np.empty((Xtest.shape[0], res * res))
-        for n in range(Xtrain.shape[0]):
-            im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
-            im = im.resize((res, res))
-            X_train_resized[n] = np.array(im).flatten()
-
-        for n in range(Xtest.shape[0]):
-            im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
-            im = im.resize((res, res))
-            X_test_resized[n] = np.array(im).flatten()
-
-
-        Xtrain = X_train_resized
-        Xtest = X_test_resized
+        # uncomment these lines to change the resolution
+        # res = 13
+        # current_res = int(np.sqrt(Xtrain.shape[1]))
+        # X_train_resized = np.empty((Xtrain.shape[0], res * res))
+        # X_test_resized = np.empty((Xtest.shape[0], res * res))
+        # for n in range(Xtrain.shape[0]):
+        #     im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_train_resized[n] = np.array(im).flatten()
+        #
+        # for n in range(Xtest.shape[0]):
+        #     im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_test_resized[n] = np.array(im).flatten()
+        #
+        #
+        # Xtrain = X_train_resized
+        # Xtest = X_test_resized
 
         kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=True) for j in range(10)]
-        print 'fisnished'
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
         cond_ll = SoftmaxLL(10)
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
 
 
         image = None
@@ -483,9 +492,9 @@ class Experiments:
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 10, 'hyp': 10},
-                                  max_iter=300, n_threads=20,
-                                   model_image_file=image))
+                                  opt_per_iter={'mog': 50, 'hyp': 10},
+                                  max_iter=300, n_threads=n_threads, ftol=1,
+                                  model_image_file=image, partition_size=partition_size))
 
 
     @staticmethod

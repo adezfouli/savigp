@@ -9,10 +9,10 @@ import numpy as np
 
 class SAVIGP_SingleComponent(SAVIGP):
     def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples,
-                 config_list, latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None):
+                 config_list, latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None, partition_size=3000):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
                                                      kernels, n_samples, config_list, latent_noise,
-                                                     is_exact_ell, inducing_on_Xs, n_threads, image)
+                                                     is_exact_ell, inducing_on_Xs, n_threads, image, partition_size)
 
     def _dell_ds(self, k, j, cond_ll, A, sigma_kj, norm_samples):
         return  mdot(A[j].T * self._average(cond_ll, (norm_samples**2 - 1)/sigma_kj[k,j], True), A[j]) \

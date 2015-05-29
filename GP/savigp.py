@@ -37,8 +37,17 @@ class SAVIGP(Model):
     :param n_samples: number of samples drawn for approximating ell and its gradient
     :rtype: model object
     """
-    def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples,
-                 config_list=None, latent_noise=0, exact_ell=False, inducing_on_Xs=False, n_threads=1, image=None):
+    def __init__(self, X, Y, num_inducing, num_mog_comp,
+                 likelihood,
+                 kernels,
+                 n_samples,
+                 config_list=None,
+                 latent_noise=0,
+                 exact_ell=False,
+                 inducing_on_Xs=False,
+                 n_threads=1,
+                 image=None,
+                 max_X_partizion_size=3000):
 
         super(SAVIGP, self).__init__("SAVIGP")
         if config_list is None:
@@ -65,7 +74,7 @@ class SAVIGP(Model):
         self.is_exact_ell = exact_ell
         self.num_data_points = X.shape[0]
         self.n_threads = n_threads
-
+        self.max_x_partition_size = max_X_partizion_size
         self.cached_ell = None
         self.cached_ent = None
         self.cached_cross = None
@@ -140,7 +149,7 @@ class SAVIGP(Model):
         self.n_partitions = 1
 
     def _max_parition_size(self):
-        return 3000
+        return self.max_x_partition_size
 
     def _clust_inducing_points(self, X, Y):
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)

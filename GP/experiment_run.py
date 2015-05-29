@@ -100,7 +100,14 @@ class ExperimentRunner:
 
     @staticmethod
     def mnist_experiment():
-        Experiments.MNIST_data({'method': 'full', 'sparse_factor': 0.004, 'run_id': 1, 'log_level': logging.DEBUG})
+        Experiments.MNIST_data({'method': 'full',
+                                'sparse_factor': 0.004,
+                                'run_id': 1,
+                                'log_level': logging.DEBUG,
+                                'n_thread': 20,
+                                'partition_size': 2000,
+                                # 'image': '../results/mnist_1/'
+                                })
 
     @staticmethod
     def struct_experiment():
@@ -142,7 +149,7 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_experiment()
-    ExperimentRunner.struct_experiment()
+    ExperimentRunner.mnist_experiment()
+    # ExperimentRunner.struct_experiment()
 
     # ExperimentRunner.plot()
