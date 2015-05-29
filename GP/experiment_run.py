@@ -110,7 +110,7 @@ class ExperimentRunner:
                                 'log_level': logging.DEBUG,
                                 'n_thread': 10,
                                 'partition_size': 4000,
-                                'image': '../results/mnist_2/'
+                                # 'image': '../results/mnist_2/'
                                 })
 
     @staticmethod
