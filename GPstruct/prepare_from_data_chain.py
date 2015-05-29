@@ -18,7 +18,7 @@ except ImportError as ie:
     native_implementation_found = False
 
 def learn_predict_gpstruct_wrapper(
-    data_indices_train=np.arange(0,2),
+    data_indices_train=np.arange(0,10), 
     data_indices_test=np.arange(10,20),
     task='basenp',
     data_folder=None,
@@ -93,7 +93,7 @@ def prepare_from_data_chain(data_indices_train, data_indices_test, data_folder, 
                 prepare_from_data.average_marginals, 
                 write_marginals,
                 lambda marginals_file : read_marginals(marginals_file, data_test),
-                n_labels, data_train.X, data_test.X) 
+                n_labels, data_train.X, data_test.X, data_train, data_test)
         else:
             raise Exception("You have set native_implementation=True, but there has been an ImportError on import chain_forwards_backwards_native, and so I can't find the native implementation.")
     else:
@@ -166,7 +166,7 @@ def loadData(dirName, n_labels, indexData, n_features_x):
 def log_likelihood_function_numba(log_node_pot, log_edge_pot, dataset_Y_n, object_size, n_labels):
         # log-likelihood for point n, for observed data dataset.Y[n], consists of 
         # "numerator": sum of potentials for  binaries (indexed (y_{t-1}, y_{t})) and unaries (indexed (t, y))
-        log_pot = log_edge_pot[:, dataset_Y_n[:-1], dataset_Y_n[1:]].sum() + log_node_pot[np.arange(object_size), dataset_Y_n].sum()
+        log_pot = log_edge_pot[dataset_Y_n[:-1], dataset_Y_n[1:]].sum() + log_node_pot[np.arange(object_size), dataset_Y_n].sum()
         # using array indexing in numpy 
         # nodes: for each position in the chain (np.arange(object_size)), select the correct unary factor corresponding to y (dataset_Y_n)
         # edges: select edge factors with tuples (y_{t-1}, y_{t}). Use as the first index, y_{t-1}, obtained by cutting off dataset_Y_n before the last position; and as the second index, y{t}, obtained by shifting dataset_Y_n to the left (ie [1:]).

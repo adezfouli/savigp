@@ -13,9 +13,10 @@ from savigp import SAVIGP
 class SAVIGP_Diag(SAVIGP):
 
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list,
-                 latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None):
+                 latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None, partition_size=3000):
         super(SAVIGP_Diag, self).__init__(X, Y, num_inducing, num_mog_comp, likelihood,
-                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell, inducing_on_Xs, n_threads, image)
+                                                     kernels, n_samples, config_list, latent_noise, is_exact_ell,
+                                                     inducing_on_Xs, n_threads, image, partition_size)
 
     def _dell_ds(self, k, j, cond_ll, A, sigma_kj, norm_samples):
         s = self._average(cond_ll, (np.square(norm_samples) - 1)/ sigma_kj[k, j], True)
