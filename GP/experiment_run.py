@@ -105,12 +105,12 @@ class ExperimentRunner:
     @staticmethod
     def mnist_experiment():
         Experiments.MNIST_data({'method': 'full',
-                                'sparse_factor': 0.02,
+                                'sparse_factor': 0.04,
                                 'run_id': 1,
                                 'log_level': logging.DEBUG,
                                 'n_thread': 10,
-                                'partition_size': 3000,
-                                # 'image': '../results/mnist_2/'
+                                'partition_size': 2000,
+                                'image': '../results/mnist_2/'
                                 })
 
     @staticmethod
