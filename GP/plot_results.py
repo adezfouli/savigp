@@ -65,7 +65,7 @@ class PlotOutput:
                     X0 = np.array([data_test['X0']])
 
                     PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
-                                           np.array([X0[0,:]/365+1851.2026, Ypred[0,:], Yvar[0,:]] ).T)
+                                           np.array([X0[0,:]/365+1851.2026, Ypred[0, :], Yvar[0, :], Ytrue[0, :]]).T)
 
         for n, g in graphs.iteritems():
             if g:
@@ -88,6 +88,8 @@ class PlotOutput:
                     ax.legend(patches, labels, loc='lower center')
                 if n in ['intensity']:
                     X = g.values()[0][:, 0]
+                    true_data = DataFrame({'x': X, 'y': g.values()[0][:, 3]})
+                    true_data.to_csv('../graph_data/' + name  + '_' + 'true_y' + '_data.csv')
                     plt.figure()
                     color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
                     c = 0
