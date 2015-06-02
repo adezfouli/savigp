@@ -10,7 +10,7 @@ from savigp_single_comp import SAVIGP_SingleComponent
 import csv
 import GPy
 from sklearn import preprocessing
-from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL, StructLL
+from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL, StructLL, CogLL
 from data_source import DataSource
 import numpy as np
 from optimizer import Optimizer
@@ -554,23 +554,32 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'sarcos'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, True)
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
 
-        cond_ll = WarpLL(np.array([3.8715, 3.8898, 2.8759]),
-                         np.array([1.5925, -1.3360, -2.0289]),
-                         np.array([0.7940, -4.1855, -3.0289]),
-                         np.log(0.01))
+        cond_ll =CogLL(0.1, 2, 1)
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                  num_samples, sparsify_factor, ['mog', 'll'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                  opt_per_iter={'mog': 1, 'hyp': 2, 'll': 5},
+                                  max_iter=200,
+                                  partition_size=partition_size,
+                                  n_threads=n_threads))
 
 
     @staticmethod

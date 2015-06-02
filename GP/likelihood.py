@@ -434,3 +434,44 @@ class StructLL(Likelihood):
 
     def output_dim(self):
         return self.dataset.n_labels
+
+
+class CogLL(Likelihood):
+    def __init__(self, sigma_y, P, Q):
+        Likelihood.__init__(self)
+        self.P = P
+        self.Q = Q
+        self.f_num = (P + 1) * Q
+        self.set_params(np.array([np.log(sigma_y)]))
+
+    def ll(self, f, y):
+        return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
+
+    def ll_F_Y(self, F, Y):
+        W = F[:, :, :self.P * self.Q].reshape(F.shape[0], F.shape[1], self.P, self.Q)
+        f = F[:, :, self.P * self.Q:]
+        Wf = np.einsum('ijlk,ijk->ijl', W, f)
+        c = 1.0 / 2 * (mdot((Y - Wf), self.sigma_inv) * (Y - Wf)).sum(axis=2)
+        return (self.const + -c), (self.const_grad * self.sigma_y + c)
+
+    def get_params(self):
+        return np.array([np.log(self.sigma_y)])
+
+    def get_num_params(self):
+        return 1
+
+    def ell(self, mu, sigma, Y):
+        return cross_ent_normal(mu, np.diag(sigma), Y, self.sigma)
+
+    def output_dim(self):
+        return self.P
+
+    def map_Y_to_f(self, Y):
+        return np.mean(Y) * np.ones(self.f_num)
+
+    def set_params(self, p):
+        self.sigma_y = math.exp(p[0])
+        self.sigma = self.sigma_y * np.eye(self.P)
+        self.sigma_inv = inv(self.sigma)
+        self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
+        self.const_grad = -float(self.P) / 2. / self.sigma_y
