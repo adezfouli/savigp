@@ -443,6 +443,9 @@ class CogLL(Likelihood):
         self.Q = Q
         self.f_num = (P + 1) * Q
         self.set_params(np.array([np.log(sigma_y)]))
+        self.n_samples = 20000
+        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.f_num) \
+            .reshape((self.f_num, self.n_samples))
 
     def ll(self, f, y):
         return self.const + -1.0 / 2 * inner1d(mdot((f - y), self.sigma_inv), (f-y))
@@ -475,3 +478,17 @@ class CogLL(Likelihood):
         self.sigma_inv = inv(self.sigma)
         self.const = -1.0 / 2 * np.log(det(self.sigma)) - float(len(self.sigma)) / 2 * np.log(2 * math.pi)
         self.const_grad = -float(self.P) / 2. / self.sigma_y
+
+    def predict(self, mu, sigma, Ys, model=None):
+        F = np.empty((self.n_samples, mu.shape[0], self.f_num))
+        for j in range(self.f_num):
+            F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma[:, j])) + mu[:, j]
+
+        W = F[:, :, :self.P * self.Q].reshape(F.shape[0], F.shape[1], self.P, self.Q)
+        f = F[:, :, self.P * self.Q:]
+        Wf = np.einsum('ijlk,ijk->ijl', W, f)
+        lpd = None
+        if Ys is not None:
+            c = 1.0 / 2 * (mdot((Ys - Wf), self.sigma_inv) * (Ys - Wf)).sum(axis=2)
+            lpd = np.log(np.exp(self.const + -c).mean(axis=0))
+        return Wf.mean(axis=0), None, lpd
