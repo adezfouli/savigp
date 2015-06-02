@@ -554,7 +554,7 @@ class Experiments:
         Xtest = d['test_X']
         Ytest = d['test_Y']
         name = 'sarcos'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, True)
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
 
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
