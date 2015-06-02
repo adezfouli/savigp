@@ -105,7 +105,7 @@ class ExperimentRunner:
     @staticmethod
     def sarcos_experiment():
         Experiments.sarcos_data({'method': 'full',
-                                 'sparse_factor': 0.1,
+                                 'sparse_factor': 0.04,
                                  'run_id': 0,
                                  'log_level': logging.DEBUG,
                                  'n_thread': 15,
