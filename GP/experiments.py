@@ -574,9 +574,9 @@ class Experiments:
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll'], MinTransformation, True,
+                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 1, 'hyp': 2, 'll': 5},
+                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
                                   max_iter=200,
                                   partition_size=partition_size,
                                   n_threads=n_threads))
