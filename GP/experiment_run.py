@@ -99,6 +99,10 @@ class ExperimentRunner:
         Experiments.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
+    def sarcos_experiment():
+        Experiments.sarcos_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 0, 'log_level': logging.DEBUG})
+
+    @staticmethod
     def mnist_experiment():
         Experiments.MNIST_data({'method': 'full',
                                 'sparse_factor': 0.004,
@@ -149,7 +153,8 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.mnist_experiment()
+    # ExperimentRunner.mnist_experiment()
     # ExperimentRunner.struct_experiment()
+    ExperimentRunner.sarcos_experiment()
 
     # ExperimentRunner.plot()

@@ -235,6 +235,22 @@ class DataSource:
         #target to the example with the same index in the input.
 
 
+    @staticmethod
+    def sarcos_data():
+        data = []
+        train = pandas.read_csv('data/sarcos/train_' +'.csv', header=None)
+        test = pandas.read_csv('data/sarcos/test_' + '.csv', header=None)
+        data.append({
+            'train_Y': train.ix[:, 0:1].values,
+            'train_X': train.ix[:, 2:].values,
+            'test_Y': test.ix[:, 0:1].values,
+            'test_X': test.ix[:, 2:].values,
+            'id': 0
+        })
+
+        return data
+
+
 if __name__ == '__main__':
     X, Y = DataSource.wisconsin_breast_cancer_data()
     pass

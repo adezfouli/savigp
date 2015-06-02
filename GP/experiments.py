@@ -541,6 +541,39 @@ class Experiments:
                                    model_image_file=image))
 
     @staticmethod
+    def sarcos_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.sarcos_data()
+
+        names = []
+        d = data[0]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'sarcos'
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+
+        cond_ll = WarpLL(np.array([3.8715, 3.8898, 2.8759]),
+                         np.array([1.5925, -1.3360, -2.0289]),
+                         np.array([0.7940, -4.1855, -3.0289]),
+                         np.log(0.01))
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
+
+
+    @staticmethod
     def get_kernels(input_dim, num_latent_proc, ARD):
         return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
 
