@@ -65,7 +65,7 @@ class PlotOutput:
                     X0 = np.array([data_test['X0']])
 
                     PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
-                                           np.array([X0[0,:]/365+1851.2026, Ypred[0,:], Yvar[0,:]] ).T)
+                                           np.array([X0[0,:]/365+1851.2026, Ypred[0, :], Yvar[0, :], Ytrue[0, :]]).T)
 
         for n, g in graphs.iteritems():
             if g:
@@ -74,12 +74,13 @@ class PlotOutput:
                     print k, 'n: ', graph_n[k]
                 if n in ['SSE', 'NLPD']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
-                    # p = g.quantile(0.975)
                     ax = g.plot(kind='box', title=n)
-                    # ax.set_ylim(ax.get_ylim()[0], p.max())
-                    # ax.axhline(y=0.1, linewidth=4, color='r')
+                    check_dir_exists('../graph_data/')
+                    g.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
                 if n in ['ER']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
+                    check_dir_exists('../graph_data/')
+                    g.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
                     m = g.mean()
                     errors = g.std()
                     ax =m.plot(kind='bar', yerr=errors, title=n)
@@ -87,15 +88,21 @@ class PlotOutput:
                     ax.legend(patches, labels, loc='lower center')
                 if n in ['intensity']:
                     X = g.values()[0][:, 0]
-                    # g= DataFrame(dict([(k,Series(v[:, 1])) for k,v in g.iteritems()]))
+                    true_data = DataFrame({'x': X, 'y': g.values()[0][:, 3]})
+                    true_data.to_csv('../graph_data/' + name  + '_' + 'true_y' + '_data.csv')
                     plt.figure()
-                    color = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                    color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
                     c = 0
+                    check_dir_exists('../graph_data/')
+                    graph_data = DataFrame()
                     for k,v in g.iteritems():
                         plt.plot(X, v[:, 1], hold=True, color=color[c], label=k)
                         plt.fill_between(X, v[:, 1] - 2 * np.sqrt(v[:, 2]), v[:, 1] + 2 * np.sqrt(v[:, 2]), alpha=0.2, facecolor=color[c])
+                        graph_data = graph_data.append(DataFrame({'x': X, 'm' : v[:, 1], 'v' :v[:, 2], 'model_sp' :[k] * X.shape[0]}
+                                                                 ))
                         c += 1
                     plt.legend(loc='upper center')
+                    graph_data.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
 
                 if export_pdf:
                     check_dir_exists(infile_path + name + '/graphs/')
