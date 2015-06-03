@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn import preprocessing
+
 
 class DataTransformation:
 
@@ -79,6 +81,35 @@ class MeanTransformation(object, DataTransformation):
     @staticmethod
     def get_transformation(Y, X):
         return MeanTransformation(Y.mean(axis=0))
+
+
+class MeanStdYTransformation(object, DataTransformation):
+
+    def __init__(self, scalar):
+        super(MeanStdYTransformation, self).__init__()
+        self.scalar = scalar
+
+    def transform_X(self, X):
+        return X
+
+    def transform_Y(self, Y):
+        return self.scalar.transform(Y)
+
+    def untransform_X(self, X):
+        return X
+
+    def untransform_Y(self, Y):
+        return self.scalar.inverse_transform(Y)
+
+    def untransform_Y_var(self, Yvar):
+        return Yvar
+
+    def untransform_NLPD(self, NLPD):
+        return NLPD + np.log(self.scalar.std_).sum()
+
+    @staticmethod
+    def get_transformation(Y, X):
+        return MeanStdYTransformation(preprocessing.StandardScaler().fit(Y))
 
 
 class MinTransformation(object, DataTransformation):

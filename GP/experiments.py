@@ -3,7 +3,7 @@ import math
 import pickle
 from ExtRBF import ExtRBF
 from gpstruct_wrapper import gpstruct_wrapper
-from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
+from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation, MeanStdYTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
@@ -576,7 +576,7 @@ class Experiments:
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MinTransformation, True,
+                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
                                   max_iter=200,
