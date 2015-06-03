@@ -53,7 +53,7 @@ class Experiments:
             data = np.hstack((Ytrain, Xtrain))
             header += ['X%d,' % (j) for j in range(Xtrain.shape[1])]
         else:
-            data = np.hstack((Ytrain))
+            data = Ytrain
         np.savetxt(path + file_name + '.csv', data , header=''.join(header), delimiter=',', comments='')
 
 
