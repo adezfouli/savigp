@@ -104,7 +104,12 @@ p1 = draw_bar_models(data, "error rate", "None")
 data = read.csv('../../graph_data/mnist_NLPD_data.csv')
 p2 = draw_boxplot_models(data, "NLP", "right")
 
-g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
+
+name = "sarcos"
+data = read.csv('../../graph_data/sarcos_MSSE_data.csv')
+p3 = draw_joints(data)
+
+g = arrangeGrob(p3, p1, p2, ncol=3,  widths=c(9/30, 9/30, 12/30))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
 
 
@@ -243,4 +248,39 @@ draw_mining_data <- function(data){
     guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))
   p
 }
+
+draw_joints <- function(data){
+  data$X = NULL
+  data = melt(data)
+  data$joint = paste("output", as.numeric(substr(data$variable,11, 14)) + 1)
+  data$name = paste("FG (", SP_name, "=", 0.04 , ")")
+  p =   ggplot(data, aes(x=joint, y = value)) + 
+    stat_summary(fun.y = "mean", geom = "bar", fill="gray", colour = "black",position = position_dodge() ) + 
+    theme_bw() + 
+    
+    xlab('') +
+    ylab("SSE") +
+    theme(legend.direction = "vertical", legend.position = "none", legend.box = "vertical", 
+          axis.line = element_line(colour = "black"),
+          panel.grid.major=element_blank(), 
+          panel.grid.minor=element_blank(),      
+          panel.border = element_blank(),
+          panel.margin = unit(.4, "lines"),
+          text=element_text(family="Arial", size=10),
+          legend.key = element_blank(),
+          strip.background = element_rect(colour = "white", fill = "white",
+                                          size = 0.5, linetype = "solid"),
+          axis.ticks.x = element_blank(),
+          axis.title.x=element_blank()
+          
+          
+    ) +
+    facet_grid(. ~ name)+ 
+    
+    
+    guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))
+  p
+}
+
+
 
