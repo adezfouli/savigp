@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 from matplotlib.pyplot import show, ion, savefig
 import pandas
 from pandas.util.testing import DataFrame, Series
-from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL
+from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL, CogLL
 from util import check_dir_exists
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,6 +17,7 @@ class PlotOutput:
     def plot_output(name, infile_path, model_names, filter, export_pdf):
         graphs = {}
         graphs['SSE'] = {}
+        graphs['MSSE'] = {}
         graphs['NLPD'] = {}
         graphs['ER'] = {}
         graphs['intensity'] = {}
@@ -41,6 +42,14 @@ class PlotOutput:
                 if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
                     graph_n[PlotOutput.config_to_str(data_config)] = 0
                 graph_n[PlotOutput.config_to_str(data_config)] += 1
+
+                if data_config['ll'] in [CogLL.__name__]:
+                    NLPD = np.array(data_test['nlpd'])
+                    for i in range(Ytrue.shape[0]):
+                        Y_mean = data_train['Y' + str(i)].mean()
+                        PlotOutput.add_to_list(graphs['MSSE'], PlotOutput.config_to_str(data_config) + str(i),
+                                               ((Ypred[i] - Ytrue[i])**2).mean() / ((Y_mean - Ytrue[i]) **2).mean())
+                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config) + str(i), NLPD)
 
                 if data_config['ll'] in [UnivariateGaussian.__name__, WarpLL.__name__]:
                     NLPD = np.array(data_test['nlpd'])
@@ -71,13 +80,14 @@ class PlotOutput:
             if g:
                 ion()
                 for k in g.keys():
-                    print k, 'n: ', graph_n[k]
+                    if k in graph_n.keys():
+                        print k, 'n: ', graph_n[k]
                 if n in ['SSE', 'NLPD']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
                     ax = g.plot(kind='box', title=n)
                     check_dir_exists('../graph_data/')
                     g.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
-                if n in ['ER']:
+                if n in ['ER', 'MSSE']:
                     g= DataFrame(dict([(k,Series(v)) for k,v in g.iteritems()]))
                     check_dir_exists('../graph_data/')
                     g.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
