@@ -3,7 +3,7 @@ import math
 import pickle
 from ExtRBF import ExtRBF
 from gpstruct_wrapper import gpstruct_wrapper
-from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation
+from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation, MeanStdYTransformation
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
@@ -53,7 +53,7 @@ class Experiments:
             data = np.hstack((Ytrain, Xtrain))
             header += ['X%d,' % (j) for j in range(Xtrain.shape[1])]
         else:
-            data = np.hstack((Ytrain))
+            data = Ytrain
         np.savetxt(path + file_name + '.csv', data , header=''.join(header), delimiter=',', comments='')
 
 
@@ -519,25 +519,27 @@ class Experiments:
         n_latent_processes = n_labels + 1
 
         Xtrain = np.array(Xtrain.todense())
-        Xtest = Xtest.todense()
+        Xtest = np.array(Xtest.todense())
         kernel = [ExtRBF(Xtrain.shape[1], variance=.1, lengthscale=np.array((.1,)), ARD=False)] * n_latent_processes
-
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
-        cond_ll = StructLL(ll_train, train_dataset)
+        cond_ll = StructLL(ll_train, train_dataset, test_dataset)
         names = []
         image = None
         if 'image' in config.keys():
             image = config['image']
 
 
+        Ytest_labels = np.hstack(np.array(test_dataset.Y))
+        Ytest = np.zeros((Xtest.shape[0], test_dataset.n_labels))
+        Ytest[np.arange(Xtest.shape[0]), Ytest_labels] = 1
         names.append(
-            Experiments.run_model(Xtest, Xtrain, [], [], cond_ll, kernel, method, name, 1, num_inducing,
+            Experiments.run_model(Xtest, Xtrain, Ytest, np.empty((Xtrain.shape[0], 1)), cond_ll, kernel, method, name, 1, num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
                                   config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 30, 'hyp': 3},
-                                  max_iter=300, n_threads=20,
+                                  opt_per_iter={'mog': 1, 'hyp': 3},
+                                  max_iter=1, n_threads=20,
                                    model_image_file=image))
 
     @staticmethod
@@ -574,7 +576,7 @@ class Experiments:
 
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MinTransformation, True,
+                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
                                   max_iter=200,
