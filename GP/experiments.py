@@ -94,7 +94,7 @@ class Experiments:
         header =  ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
             ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
             ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] + \
-            ['nlpd,']
+            ['nlpd,'] + ['NLPD_%d,' % (j) for j in range(nlpd.shape[1]-1)]
 
 
         if export_X:
@@ -574,6 +574,11 @@ class Experiments:
         else:
             partition_size = 3000
 
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
@@ -581,7 +586,8 @@ class Experiments:
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
                                   max_iter=200,
                                   partition_size=partition_size,
-                                  n_threads=n_threads))
+                                  n_threads=n_threads,
+                                  model_image_file=image))
 
 
     @staticmethod

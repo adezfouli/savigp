@@ -44,11 +44,11 @@ class PlotOutput:
                 graph_n[PlotOutput.config_to_str(data_config)] += 1
 
                 if data_config['ll'] in [CogLL.__name__]:
-                    NLPD = np.array(data_test['nlpd'])
                     for i in range(Ytrue.shape[0]):
                         Y_mean = data_train['Y' + str(i)].mean()
                         PlotOutput.add_to_list(graphs['MSSE'], PlotOutput.config_to_str(data_config) + '_' + str(i),
                                                ((Ypred[i] - Ytrue[i])**2).mean() / ((Y_mean - Ytrue[i]) ** 2).mean())
+                        NLPD = np.array(data_test['NLPD_' + str(i)])
                         PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config) + '_' + str(i), NLPD)
 
                 if data_config['ll'] in [UnivariateGaussian.__name__, WarpLL.__name__]:

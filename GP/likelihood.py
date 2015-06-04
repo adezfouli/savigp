@@ -141,7 +141,7 @@ class UnivariateGaussian(Likelihood):
         lpd = None
         if not (Ys is None):
             lpd = -(np.square(0.5 * (Ys - mu)) / var + np.log(2. * math.pi * var))[:, 0]
-        return mu, var, lpd
+        return mu, var, lpd[:, np.newaxis]
 
     def ell(self, mu, sigma, Y):
         return cross_ent_normal(mu, np.diag(sigma), Y, np.array([[self.sigma]]))
@@ -230,7 +230,7 @@ class LogisticLL(object, Likelihood):
         if not (Ys is None):
             lpd = np.log((-Ys + 1) / 2 + Ys * mean)
 
-        return mean, mean * (1 - mean), lpd[:, 0]
+        return mean, mean * (1 - mean), lpd[:, 0][:, np.newaxis]
 
     def _get_y_range(self):
         return np.array([[1, -1]]).T
@@ -279,7 +279,7 @@ class SoftmaxLL(Likelihood):
         lpd = None
         if not (Ys is None):
             lpd = np.log((Ys * mean).sum(axis=1))
-        return mean, None, lpd
+        return mean, None, lpd[:, np.newaxis]
 
 
     def ll_grad(self, f, y):
@@ -358,7 +358,7 @@ class WarpLL(object, Likelihood):
         if not (Ys is None):
             ts, w = self.warp(Ys)
             lpd = -0.5*np.log(2*math.pi*s) - 0.5 * np.square(ts-mu)/s + np.log(w)
-        return mean, var[:, np.newaxis], lpd[:, 0]
+        return mean, var[:, np.newaxis], lpd[:, 0][:, np.newaxis]
 
     def output_dim(self):
         return 1
@@ -511,6 +511,20 @@ class CogLL(Likelihood):
         Wf = np.einsum('ijlk,ijk->ijl', W, f)
         lpd = None
         if Ys is not None:
-            c = 1.0 / 2 * (mdot((Ys - Wf), self.sigma_inv) * (Ys - Wf)).sum(axis=2)
-            lpd = np.log(np.exp(self.const + -c).mean(axis=0))
+            lpd = self._calc_nlpd(Ys, Wf)
         return Wf.mean(axis=0), None, lpd
+
+
+    def _calc_nlpd(self, Ys, Wf):
+        lpd = np.empty((Ys.shape[0], Ys.shape[1] + 1))
+        c = 1.0 / 2 * (mdot((Ys - Wf), self.sigma_inv) * (Ys - Wf)).sum(axis=2)
+        lpd[:, 0] = np.log(np.exp(self.const + -c).mean(axis=0))
+        for i in range(Ys.shape[1]):
+            c = 1.0 / 2 * (np.square((Ys[:, i] - Wf[:, :, i])) * self.sigma_inv[i,i])
+            const = -1.0 / 2 * np.log((self.sigma[i,i])) - 1. / 2 * np.log(2 * math.pi)
+            lpd[:, i+1] = np.log(np.exp(const + -c).mean(axis=0))
+
+        return lpd
+
+    def nlpd_dim(self):
+        return 3
