@@ -108,7 +108,7 @@ p2 = draw_boxplot_models_with_X(data, "NLP", "None")
 data = read.csv('../../graph_data/sarcos_MSSE_data.csv')
 p3 = draw_joints(data)
 
-g = arrangeGrob(p1, p2, p3, ncol=3,  widths=c(11.5/30, 11.5/30, 9/30))
+g = arrangeGrob(p1, p2, p3, ncol=3,  widths=c(11/30, 11/30, 8/30))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
 
 
@@ -283,14 +283,14 @@ draw_mining_data <- function(data){
 draw_joints <- function(data){
   data$X = NULL
   data = melt(data)
-  data$joint = paste(as.numeric(substr(data$variable,11, 14)) + 1)
-  data$name = paste("FG (", SP_name, "=", 0.04 , ")")
+  data$joint = factor(as.numeric(substr(data$variable,11, 14)) + 1)
+  data$name = paste(SP_name, "=", "0.04")
   p =   ggplot(data, aes(x=joint, y = value)) + 
     stat_summary(fun.y = "mean", geom = "bar", fill="gray", colour = "black",position = position_dodge() ) + 
     theme_bw() + 
     
     xlab("output") +
-    ylab("SSE") +
+    ylab("SMSE") +
     theme(legend.direction = "vertical", legend.position = "none", legend.box = "vertical", 
           axis.line = element_line(colour = "black"),
           panel.grid.major=element_blank(), 
@@ -300,9 +300,7 @@ draw_joints <- function(data){
           text=element_text(family="Arial", size=10),
           legend.key = element_blank(),
           strip.background = element_rect(colour = "white", fill = "white",
-                                          size = 0.5, linetype = "solid"),
-          axis.ticks.x = element_blank(),
-          axis.title.x=element_blank()
+                                          size = 0.5, linetype = "solid")
           
           
     ) +
