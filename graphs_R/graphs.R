@@ -97,19 +97,18 @@ ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, unit
 
 
 #mnist data
-name = "mnist"
+name = "mnist_sarcos"
 data = read.csv('../../graph_data/mnist_ER_data.csv')
-p1 = draw_bar_models(data, "error rate", "None")
+p1 = draw_bar_models_with_X(data, "error rate", "None")
 
 data = read.csv('../../graph_data/mnist_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLP", "right")
+p2 = draw_boxplot_models_with_X(data, "NLP", "None")
 
 
-name = "sarcos"
 data = read.csv('../../graph_data/sarcos_MSSE_data.csv')
 p3 = draw_joints(data)
 
-g = arrangeGrob(p3, p1, p2, ncol=3,  widths=c(9/30, 9/30, 12/30))
+g = arrangeGrob(p1, p2, p3, ncol=3,  widths=c(11.5/30, 11.5/30, 9/30))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
 
 
@@ -156,8 +155,42 @@ draw_bar_models <- function(data, y_lab, leg_pos){
     guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))
 }  
   
+draw_bar_models_with_X <- function(data, y_lab, leg_pos){
+  data$X = NULL
+  data = melt(data)
+  data$model = toupper(substr(data$variable,0, 4))
+  data = rename_model(data)
+  data$sp = substr(data$variable,6, 15)
+  
+  ggplot(data, aes(x=sp, y = value, fill = sp)) + 
+    stat_summary(fun.y = "mean", geom = "bar", position = position_dodge() ) + 
+    stat_summary(fun.data = mean_cl_normal, geom="linerange", colour="black", position=position_dodge(.9)) +
+    theme_bw() + 
+    scale_fill_brewer(name=SP_name, palette="Set1") + 
+    xlab(SP_name) +
+    ylab(y_lab) +
+    theme(legend.direction = "vertical", legend.position = leg_pos, legend.box = "vertical", 
+          axis.line = element_line(colour = "black"),
+          panel.grid.major=element_blank(), 
+          panel.grid.minor=element_blank(),      
+          panel.border = element_blank(),
+          panel.margin = unit(.4, "lines"),
+          text=element_text(family="Arial", size=10),
+          legend.key = element_blank(),
+          strip.background = element_rect(colour = "white", fill = "white",
+                                          size = 0.5, linetype = "solid")
+          
+          
+          
+    ) +
+    facet_wrap(~model)+ 
+    
+    guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))
+}  
 
-draw_boxplot_models <- function(data, y_lab, leg_pos){
+
+
+draw_boxplot_models_with_X <- function(data, y_lab, leg_pos){
   data$X = NULL
   data = melt(data)
   data$model = toupper(substr(data$variable,0, 4))
@@ -169,14 +202,14 @@ draw_boxplot_models <- function(data, y_lab, leg_pos){
   y_min = min(by(data, data[, c('model', 'sp')], function(x){boxplot.stats(x$value)$stats[c(1)]}))
   
   
-  p = ggplot(data, aes(x='', y = value, colour = sp)) + 
+  p = ggplot(data, aes(x=sp, y = value, colour = sp)) + 
   geom_boxplot(width=1, 
                position=position_dodge(1),
                outlier.shape = NA) + 
   coord_cartesian(ylim = c(y_min - abs(y_min) * 0.1 , y_max + abs(y_max) * 0.1)) +
   theme_bw() + 
   scale_colour_brewer(name=SP_name, palette="Set1") +
-  xlab('') +
+  xlab(SP_name) +
   ylab(y_lab) +
   theme(legend.direction = "vertical", legend.position = leg_pos, legend.box = "vertical", 
         axis.line = element_line(colour = "black"),
@@ -187,9 +220,7 @@ draw_boxplot_models <- function(data, y_lab, leg_pos){
         text=element_text(family="Arial", size=10),
         legend.key = element_blank(),
         strip.background = element_rect(colour = "white", fill = "white",
-                                        size = 0.5, linetype = "solid"),
-        axis.ticks.x = element_blank(),
-        axis.title.x=element_blank()
+                                        size = 0.5, linetype = "solid")
   ) +
   facet_wrap(~model)+ 
   
@@ -252,13 +283,13 @@ draw_mining_data <- function(data){
 draw_joints <- function(data){
   data$X = NULL
   data = melt(data)
-  data$joint = paste("output", as.numeric(substr(data$variable,11, 14)) + 1)
+  data$joint = paste(as.numeric(substr(data$variable,11, 14)) + 1)
   data$name = paste("FG (", SP_name, "=", 0.04 , ")")
   p =   ggplot(data, aes(x=joint, y = value)) + 
     stat_summary(fun.y = "mean", geom = "bar", fill="gray", colour = "black",position = position_dodge() ) + 
     theme_bw() + 
     
-    xlab('') +
+    xlab("output") +
     ylab("SSE") +
     theme(legend.direction = "vertical", legend.position = "none", legend.box = "vertical", 
           axis.line = element_line(colour = "black"),
