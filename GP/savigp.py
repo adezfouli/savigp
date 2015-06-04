@@ -712,7 +712,7 @@ class SAVIGP(Model):
         predicted_var = np.empty((Xs.shape[0], self.num_mog_comp, self.cond_likelihood.output_dim()))
         nlpd = None
         if not (Ys is None):
-            nlpd = np.empty((Xs.shape[0], self.num_mog_comp))
+            nlpd = np.empty((self.cond_likelihood.nlpd_dim(), Xs.shape[0], self.num_mog_comp))
 
         mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, Xs.shape[0]))
         sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, Xs.shape[0]))
@@ -722,13 +722,13 @@ class SAVIGP(Model):
                 sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
 
             if not (Ys is None):
-                predicted_mu[:, k, :], predicted_var[:, k, :], nlpd[:, k] = \
+                predicted_mu[:, k, :], predicted_var[:, k, :], nlpd[:, :, k] = \
                     self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys, self)
             else:
                 predicted_mu[:, k, :], predicted_var[:, k, :], _ = \
                     self.cond_likelihood.predict(mean_kj[k, :].T, sigma_kj[k, :].T, Ys, self)
 
-        return predicted_mu, predicted_var, -logsumexp(nlpd, 1, self.MoG.pi)
+        return predicted_mu, predicted_var, -logsumexp(nlpd, 2, self.MoG.pi)
 
     def predict(self, Xs, Ys=None):
 
@@ -745,4 +745,4 @@ class SAVIGP(Model):
         predicted_var = np.average(mu ** 2, axis=1, weights=self.MoG.pi) \
                         + np.average(var, axis=1, weights=self.MoG.pi) - predicted_mu ** 2
 
-        return predicted_mu, predicted_var, nlpd[:, np.newaxis]
+        return predicted_mu, predicted_var, nlpd.T

@@ -51,6 +51,8 @@ class Likelihood:
     def output_dim(self):
         raise Exception("not implemented yet")
 
+    def nlpd_dim(self):
+        return 1
 
     # def predict(self, mu, sigma):
     #     self.dim = mu.shape[0]
