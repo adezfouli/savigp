@@ -94,7 +94,7 @@ class Experiments:
         header =  ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
             ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
             ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] + \
-            ['nlpd,']
+            ['nlpd,'] + ['NLPD_%d,' % (j) for j in range(nlpd.shape[1]-1)]
 
 
         if export_X:
@@ -574,6 +574,11 @@ class Experiments:
         else:
             partition_size = 3000
 
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+
         names.append(
             Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
@@ -581,7 +586,63 @@ class Experiments:
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
                                   max_iter=200,
                                   partition_size=partition_size,
-                                  n_threads=n_threads))
+                                  n_threads=n_threads,
+                                  model_image_file=image))
+
+
+
+    @staticmethod
+    def sarcos_all_joints_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.sarcos_all_joints_data()
+
+        names = []
+        d = data[0]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'sarcos_all_joints'
+
+        scaler = preprocessing.StandardScaler().fit(Xtrain)
+        Xtrain = scaler.transform(Xtrain)
+        Xtest = scaler.transform(Xtest)
+
+        kernel = Experiments.get_kernels(Xtrain.shape[1], 8, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+
+        cond_ll =CogLL(0.1, 7, 1)
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
+
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+
+        names.append(
+            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
+                                  config['log_level'], False, latent_noise=0.001,
+                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
+                                  max_iter=200,
+                                  partition_size=partition_size,
+                                  ftol=10,
+                                  n_threads=n_threads,
+                                  model_image_file=image))
 
 
     @staticmethod

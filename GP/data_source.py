@@ -251,6 +251,21 @@ class DataSource:
         return data
 
 
+    @staticmethod
+    def sarcos_all_joints_data():
+        data = []
+        train = pandas.read_csv('data/sarcos/train_all' +'.csv', header=None)
+        test = pandas.read_csv('data/sarcos/test_all' + '.csv', header=None)
+        data.append({
+            'train_Y': train.ix[:, 0:6].values,
+            'train_X': train.ix[:, 7:].values,
+            'test_Y': test.ix[:, 0:6].values,
+            'test_X': test.ix[:, 7:].values,
+            'id': 0
+        })
+
+        return data
+
 if __name__ == '__main__':
     X, Y = DataSource.wisconsin_breast_cancer_data()
     pass
