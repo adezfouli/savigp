@@ -100,11 +100,25 @@ class ExperimentRunner:
 
     @staticmethod
     def sarcos_experiment():
-        Experiments.sarcos_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 0, 'log_level': logging.DEBUG})
+        Experiments.sarcos_data({'method': 'full',
+                                 'sparse_factor': 0.04,
+                                 'run_id': 0,
+                                 'log_level': logging.DEBUG,
+                                 'n_thread': 15,
+                                 'partition_size': 2000,
+                                 # 'image': '../results/all/'
+    })
 
     @staticmethod
     def sarcos_all_joins_experiment():
-        Experiments.sarcos_all_joints_data({'method': 'full', 'sparse_factor': 0.001, 'run_id': 0, 'log_level': logging.DEBUG})
+        Experiments.sarcos_all_joints_data({'method': 'full',
+                                 'sparse_factor': 0.04,
+                                 'run_id': 0,
+                                 'log_level': logging.DEBUG,
+                                 'n_thread': 15,
+                                 'partition_size': 3000,
+                                 #'image': '../results/sarcos_1/'
+    })
 
     @staticmethod
     def mnist_experiment():
@@ -159,6 +173,8 @@ if __name__ == '__main__':
     # ExperimentRunner.abalone_experiment()
     # ExperimentRunner.mnist_experiment()
     # ExperimentRunner.struct_experiment()
-    ExperimentRunner.sarcos_all_joins_experiment()
+    # ExperimentRunner.sarcos_all_joins_experiment()
+    ExperimentRunner.sarcos_experiment()
+
 
     # ExperimentRunner.plot()
