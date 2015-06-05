@@ -5,6 +5,11 @@ y = sarcos_inv(:,22:end);
 
 xtest = sarcos_inv_test(:,1:21);
 ytest = sarcos_inv_test(:,22:end);
+
+csvwrite(['../sarcos/train_all', '.csv'], [y,x])
+csvwrite(['../sarcos/test_all', '.csv'], [ytest,xtest])
+
+
 outputs = [4,7];
 y = y(:,outputs);
 ytest = ytest(:,outputs);

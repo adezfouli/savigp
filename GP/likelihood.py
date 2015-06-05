@@ -527,4 +527,5 @@ class CogLL(Likelihood):
         return lpd
 
     def nlpd_dim(self):
-        return 3
+        return self.P + 1
+
