@@ -2,7 +2,7 @@ __author__ = 'AT'
 
 import numpy as np
 from data_source import DataSource
-from experiments import Experiments
+from model_learn import ModelLearn
 from likelihood import *
 from data_transformation import *
 from ExtRBF import ExtRBF
@@ -35,7 +35,7 @@ class ExperimentSetup:
         num_samples = 2000
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
@@ -70,7 +70,7 @@ class ExperimentSetup:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
@@ -101,7 +101,7 @@ class ExperimentSetup:
         kernel[0].lengthscale= 13516.
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
                                   config['log_level'], True, latent_noise=0.001,
                                   opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
@@ -129,7 +129,7 @@ class ExperimentSetup:
         cond_ll = SoftmaxLL(3)
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
@@ -161,7 +161,7 @@ class ExperimentSetup:
                          np.log(0.1))
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
@@ -197,7 +197,7 @@ class ExperimentSetup:
                          np.log(0.01))
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
@@ -268,7 +268,7 @@ class ExperimentSetup:
             image = config['image']
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10},
@@ -314,7 +314,7 @@ class ExperimentSetup:
         Ytest = np.zeros((Xtest.shape[0], test_dataset.n_labels))
         Ytest[np.arange(Xtest.shape[0]), Ytest_labels] = 1
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, np.empty((Xtrain.shape[0], 1)), cond_ll, kernel, method, name, 1, num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, np.empty((Xtrain.shape[0], 1)), cond_ll, kernel, method, name, 1, num_inducing,
                                   num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
                                   config['log_level'], False,  latent_noise=0.001,
                                   opt_per_iter={'mog': 1, 'hyp': 3},
@@ -359,7 +359,7 @@ class ExperimentSetup:
 
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
@@ -413,7 +413,7 @@ class ExperimentSetup:
 
 
         names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
                                   opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},

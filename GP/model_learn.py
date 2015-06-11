@@ -12,7 +12,7 @@ from optimizer import Optimizer
 from util import id_generator, check_dir_exists, get_git
 
 
-class Experiments:
+class ModelLearn:
     @staticmethod
     def get_output_path():
         """
@@ -37,8 +37,8 @@ class Experiments:
         """
         logger = logging.getLogger(name)
         logger.setLevel(level)
-        check_dir_exists(Experiments.get_logger_path())
-        fh = logging.FileHandler(Experiments.get_logger_path() + name + '.log')
+        check_dir_exists(ModelLearn.get_logger_path())
+        fh = logging.FileHandler(ModelLearn.get_logger_path() + name + '.log')
         fh.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
@@ -59,7 +59,7 @@ class Experiments:
         :param export_X: whether to export 'X'. If False, only Ytrain will be exported
         :return:
         """
-        path = Experiments.get_output_path() + name + '/'
+        path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'train_'
         header =['Y%d,' % (j) for j in range(Ytrain.shape[1])]
@@ -80,7 +80,7 @@ class Experiments:
         :param track: trajectory of the objective function
         :return: None
         """
-        path = Experiments.get_output_path() + name + '/'
+        path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'obj_track_'
         np.savetxt(path + file_name + '.csv', np.array([track]).T,
@@ -95,7 +95,7 @@ class Experiments:
         :param name: name of the csv file
         :return: None
         """
-        path = Experiments.get_output_path() + name + '/'
+        path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'model_'
         if model is not None:
@@ -122,7 +122,7 @@ class Experiments:
         :param export_X: Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file.
         :return: None
         """
-        path = Experiments.get_output_path() + name + '/'
+        path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'test_'
         out = []
@@ -155,7 +155,7 @@ class Experiments:
         :param config: Configuration to be exported
         :return: None
         """
-        path = Experiments.get_output_path() + name + '/'
+        path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = path + 'config_' + '.csv'
         with open(file_name, 'wb') as csvfile:
@@ -174,7 +174,7 @@ class Experiments:
     @staticmethod
     def opt_callback(name):
         def callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
-            path = Experiments.get_output_path() + name + '/'
+            path = ModelLearn.get_output_path() + name + '/'
             check_dir_exists(path)
             pickle.dump(model.image(), open(path + 'model.dump', 'w'))
             pickle.dump({
@@ -236,8 +236,8 @@ class Experiments:
 
         if opt_per_iter is None:
             opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
-        folder_name = name + '_' + Experiments.get_ID()
-        logger = Experiments.get_logger(folder_name, logging_level)
+        folder_name = name + '_' + ModelLearn.get_ID()
+        logger = ModelLearn.get_logger(folder_name, logging_level)
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
         Ytrain = transformer.transform_Y(Ytrain)
         Ytest = transformer.transform_Y(Ytest)
@@ -284,17 +284,17 @@ class Experiments:
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, Experiments.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
@@ -302,9 +302,9 @@ class Experiments:
 
         y_pred, var_pred, nlpd = m.predict(Xtest, Ytest)
         if not (tracker is None):
-            Experiments.export_track(folder_name, tracker)
-        Experiments.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain), export_X)
-        Experiments.export_test(folder_name,
+            ModelLearn.export_track(folder_name, tracker)
+        ModelLearn.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain), export_X)
+        ModelLearn.export_test(folder_name,
                                 transformer.untransform_X(Xtest),
                                 transformer.untransform_Y(Ytest),
                                 [transformer.untransform_Y(y_pred)],
@@ -313,11 +313,11 @@ class Experiments:
                                 [''], export_X)
 
         if export_model and isinstance(m, SAVIGP):
-            Experiments.export_model(m, folder_name)
+            ModelLearn.export_model(m, folder_name)
 
         properties['total_time'] = total_time
         properties['time_per_iter'] = timer_per_iter
         properties['total_evals'] = total_evals
-        Experiments.export_configuration(folder_name, properties)
+        ModelLearn.export_configuration(folder_name, properties)
         return folder_name, m
 

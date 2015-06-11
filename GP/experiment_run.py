@@ -1,6 +1,6 @@
 import logging
 from experiment_setup import ExperimentSetup
-from experiments import Experiments
+from model_learn import ModelLearn
 from plot_results import PlotOutput
 from multiprocessing.pool import Pool
 
@@ -137,7 +137,7 @@ class ExperimentRunner:
 
     @staticmethod
     def plot():
-        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+        PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
                                    lambda x: x['method'] == 'full', False)
 
         # plots all the files
@@ -151,14 +151,14 @@ class ExperimentRunner:
 def run_config(config):
     try:
         logger.info('started config: ' + str(config))
-        getattr(Experiments, config['method_to_run'])(config)
+        getattr(ModelLearn, config['method_to_run'])(config)
         logger.info('finished config: ' + str(config))
     except Exception as e:
         logger.exception(config)
 
 
 if __name__ == '__main__':
-    logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
+    logger = ModelLearn.get_logger('general_' + ModelLearn.get_ID(), logging.DEBUG)
 
     # uncomment to run experiments in parallel
     # ExperimentRunner.run_parallel(3)

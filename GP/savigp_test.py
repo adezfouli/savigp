@@ -1,30 +1,25 @@
+__author__ = 'AT'
+
 import logging
-from numpy.random import random
-from scipy.stats import uniform
+
 from data_source import DataSource
-from data_transformation import MeanTransformation, IdentityTransformation
-from experiments import Experiments
+from data_transformation import IdentityTransformation
+from model_learn import ModelLearn
 from plot_results import PlotOutput
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
 
-__author__ = 'AT'
 
-from copy import deepcopy, copy
-import warnings
-from numpy.ma import trace
-from scipy.linalg import inv, det
-from sklearn import preprocessing
+
+from copy import deepcopy
 import GPy
 from matplotlib.pyplot import show
-from GPy.util.linalg import mdot
-import numpy as np
 from optimizer import *
 from savigp import Configuration
 from likelihood import UnivariateGaussian, MultivariateGaussian
 from grad_checker import GradChecker
 from plot import plot_fit
-from util import chol_grad, jitchol, bcolors
+from util import bcolors
 
 
 class SAVIGP_Test:
@@ -227,8 +222,8 @@ class SAVIGP_Test:
         Ytrain = Y[:train_n, :]
         Xtest = X[train_n:, :]
         Ytest = Y[train_n:, :]
-        kernel1 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-        kernel2 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+        kernel1 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
+        kernel2 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
         gaussian_sigma = 1.0
 
         #number of inducing points
@@ -236,16 +231,16 @@ class SAVIGP_Test:
         num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        n1, _ = Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
-                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+        n1, _ = ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
+                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation, True,
                                            logging.DEBUG, True)
 
-        n2, _ =Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
-                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+        n2, _ =ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
+                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
 
-        PlotOutput.plot_output('test', Experiments.get_output_path(), [n1, n2], None, False)
+        PlotOutput.plot_output('test', ModelLearn.get_output_path(), [n1, n2], None, False)
 
 
     @staticmethod
@@ -273,8 +268,8 @@ class SAVIGP_Test:
         # m.MoG.update_covariance(0, gp_var - gaussian_sigma * np.eye(10))
 
         try:
-            folder_name = 'test' + '_' + Experiments.get_ID()
-            logger = Experiments.get_logger(folder_name, logging.DEBUG)
+            folder_name = 'test' + '_' + ModelLearn.get_ID()
+            logger = ModelLearn.get_logger(folder_name, logging.DEBUG)
 
             Optimizer.optimize_model(m, 10000, logger, ['mog'])
         except KeyboardInterrupt:
