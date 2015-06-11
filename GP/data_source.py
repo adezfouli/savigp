@@ -1,18 +1,19 @@
-import gzip
-import os
-from GPy.util import datasets
-import cPickle
-import pandas
-from pandas.util.testing import DataFrame
-from ExtRBF import ExtRBF
-
 __author__ = 'AT'
 
+import gzip
+import os
+import cPickle
+import pandas
+from ExtRBF import ExtRBF
 import GPy
 import numpy as np
 
 
 class DataSource:
+    """
+    Loading and preparing data. Some of the datasets are generated using the Matlab code, in order to ensure they are
+    same training and test points are the previous papers. The Matlab code to generate data is 'load_data.m'
+    """
 
     def __init__(self):
         pass
@@ -37,21 +38,18 @@ class DataSource:
 
 
     @staticmethod
-    def normal_1D_data(n_samples, var):
-        num_samples = n_samples
-        noise = var
-        num_in = 1
-        X = np.random.uniform(low=-1.0, high=1.0, size=(num_samples, num_in))
-        X.sort(axis=0)
-        rbf = GPy.kern.RBF(num_in, variance=0.5, lengthscale=np.array((0.2,)))
-        white = GPy.kern.White(num_in, variance=noise)
-        kernel = rbf + white
-        K = kernel.K(X)
-        y = np.reshape(np.random.multivariate_normal(np.zeros(num_samples), K), (num_samples, 1))
-        return X, y
-
-    @staticmethod
     def wisconsin_breast_cancer_data():
+        """
+        Loads and returns data of wisconsin breast cancer dataset. Note that 'X' is standardized.
+
+        :return: a list of length = 5, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Mangasarian OL, Street WN, Wolberg WH. Breast cancer diagnosis and prognosis via linear programming. Oper Res. 1995;43(4);570-7 \n
+        Data is directly imported from the Matlab code.
+
+        """
         # uncomment these lines to read directly from original file
         # data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
         # # replacing Y values with -1 and 1
@@ -78,9 +76,15 @@ class DataSource:
 
     @staticmethod
     def USPS_data():
-        def label_to_num(x):
-            return  (x[:, 1] + x[:, 2] * 2)[:, np.newaxis]
+        """
+        Loads and returns data of USPS dataset. Note that 'X' is standardized. Only digits 4,7, and 9 are included.
+        :return: a list of length = 5, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
+        See \n
+        Rasmussen CE, Williams CKI. {G}aussian processes for machine learning. The MIT Press; 2006. \n
+        Data is imported from the Matlab code.
+        """
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/USPS/train_' + str(i) + '.csv', header=None)
@@ -105,6 +109,14 @@ class DataSource:
 
     @staticmethod
     def mining_data():
+        """
+        Loads and returns data of Coal-mining disasters dataset. See 'get_mine_data.m' to see how data is transformed.
+        :return: a list of length = 1, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'. Training and test points are the same.
+
+        Reference: \n
+        Jarrett RG. A note on the intervals between coal-mining disasters. Biometrika. 1979;66(1):191-3.
+        """
         data = []
         train = pandas.read_csv('data/mining/data.csv', header=None)
         data.append({
@@ -120,6 +132,14 @@ class DataSource:
 
     @staticmethod
     def boston_data():
+        """
+        Loads and returns data of Boston housing dataset. Note data 'X' is standardized.
+        :return: a list of length = 5, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Harrison Jr D, Rubinfeld DL. Hedonic housing prices and the demand for clean air. J Environ Econ Manage. 1978;5(1):81-102.
+        """
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/boston_housing/train_' + str(i) + '.csv', header=None)
@@ -137,6 +157,14 @@ class DataSource:
 
     @staticmethod
     def abalone_data():
+        """
+        Loads and returns data of Abalone dataset.
+        :return: a list of length = 5, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Bache K, Lichman M. {UCI} Machine Learning Repository [Internet]. 2013. Available from: http://archive.ics.uci.edu/ml
+        """
         data = []
         for i in range(5, 11):
             train = pandas.read_csv('data/abalone/train_' + str(i) + '.csv', header=None)
@@ -154,6 +182,15 @@ class DataSource:
 
     @staticmethod
     def creep_data():
+        """
+        Loads and returns data of Creep dataset.
+        :return: a list of length = 5, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Cole D, Martin-Moran C, Sheard AG, Bhadeshia HKDH, MacKay DJC.
+        Modelling creep rupture strength of ferritic steel welds. Sci Technol Weld Join. 2000;5(2):81-9.
+        """
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/creep/train_' + str(i) + '.csv', header=None)
@@ -170,11 +207,14 @@ class DataSource:
 
     @staticmethod
     def mnist_data():
-        ''' Loads the dataset
+        """
+        Loads and returns data of MNIST dataset for all digits.
+        :return: a list of length = 1, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        :type dataset: string
-        :param dataset: the path to the dataset (here MNIST)
-        '''
+        Reference: \n
+        Data is imported from this project: http://deeplearning.net/tutorial/gettingstarted.html
+        """
 
         #############
         # LOAD DATA #
@@ -227,16 +267,19 @@ class DataSource:
             })
 
         return data
-        #train_set, valid_set, test_set format: tuple(input, target)
-        #input is an numpy.ndarray of 2 dimensions (a matrix)
-        #witch row's correspond to an example. target is a
-        #numpy.ndarray of 1 dimensions (vector)) that have the same length as
-        #the number of rows in the input. It should give the target
-        #target to the example with the same index in the input.
-
 
     @staticmethod
     def sarcos_data():
+        """
+        Loads and returns data of SARCOS dataset for joints 4 and 7. Note that 'X' is standardized.
+        :return: a list of length = 1, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
+        The data here is directly imported from the Matlab code on Gaussian process networks. The Matlab code to generate
+        data is 'sarcos.m'
+        """
         data = []
         train = pandas.read_csv('data/sarcos/train_' +'.csv', header=None)
         test = pandas.read_csv('data/sarcos/test_' + '.csv', header=None)
@@ -253,6 +296,15 @@ class DataSource:
 
     @staticmethod
     def sarcos_all_joints_data():
+        """
+        Loads and returns data of SARCOS dataset for all joints.
+        :return: a list of length = 1, where each element is a dictionary which contains
+            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+
+        Reference: \n
+        Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
+        The data here is directly imported from the Matlab code on Gaussian process networks.
+        """
         data = []
         train = pandas.read_csv('data/sarcos/train_all' +'.csv', header=None)
         test = pandas.read_csv('data/sarcos/test_all' + '.csv', header=None)
@@ -265,7 +317,3 @@ class DataSource:
         })
 
         return data
-
-if __name__ == '__main__':
-    X, Y = DataSource.wisconsin_breast_cancer_data()
-    pass
