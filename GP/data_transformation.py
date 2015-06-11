@@ -3,29 +3,60 @@ from sklearn import preprocessing
 
 
 class DataTransformation:
+    """
+    A generic class for the transformation of data
+    """
 
     def __init__(self):
         pass
 
     def transform_X(self, X):
+        """
+        transforms X
+        :param X: Input X
+        :return: transformed X
+        """
         raise NotImplementedError()
 
     def transform_Y(self, Y):
+        """
+        transforms Y
+        :param Y: Input Y
+        :return: transforms Y
+        """
         raise NotImplementedError()
 
     def untransform_X(self, X):
+        """
+        Untransforms X to its original values
+        :param X: transformed X
+        :return: untransformed X
+        """
         raise NotImplementedError()
 
     def untransform_Y(self, Y):
+        """
+        Untransforms Y
+        :param Y: transformed Y
+        :return: untransfomred Y
+        """
         raise NotImplementedError()
 
     def untransform_Y_var(self, Yvar):
         raise NotImplementedError()
 
     def untransform_NLPD(self, NLPD):
+        """
+        untransfomrs NLPD to the original Y space
+        :param NLPD: transfomred NLPD
+        :return: untransformed NLPD
+        """
         raise NotImplementedError()
 
 class IdentityTransformation:
+    """
+    Identity transformation. No transformation will be applied to data.
+    """
 
     def __init__(self):
         pass
@@ -53,8 +84,11 @@ class IdentityTransformation:
         return NLPD
 
 
-
 class MeanTransformation(object, DataTransformation):
+    """
+    Only transforms Y as follows:
+    transformed Y = untransformed Y - mean(Y)
+    """
 
     def __init__(self, mean):
         super(MeanTransformation, self).__init__()
@@ -84,6 +118,9 @@ class MeanTransformation(object, DataTransformation):
 
 
 class MeanStdYTransformation(object, DataTransformation):
+    """
+    Transforms only Y in a way that the transfomred Y has mean = 0 and std =1
+    """
 
     def __init__(self, scalar):
         super(MeanStdYTransformation, self).__init__()
@@ -113,6 +150,10 @@ class MeanStdYTransformation(object, DataTransformation):
 
 
 class MinTransformation(object, DataTransformation):
+    """
+    Transforms only Y.
+    transformed Y = (Y - min(Y)) / (max(Y) - min(Y)) - 0.5
+    """
 
     def __init__(self, min, max, offset):
         super(MinTransformation, self).__init__()
