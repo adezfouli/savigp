@@ -1,7 +1,9 @@
 import logging
+from experiment_setup import ExperimentSetup
 from experiments import Experiments
 from plot_results import PlotOutput
 from multiprocessing.pool import Pool
+
 
 class ExperimentRunner:
 
@@ -32,7 +34,7 @@ class ExperimentRunner:
     @staticmethod
     def get_experiments():
         """
-        Builds an array of experiments to run
+        Builds an array of experiments to run in parallel
         """
 
         # uncomment to run desired experiment
@@ -41,7 +43,7 @@ class ExperimentRunner:
         # return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
-        return [Experiments.mining_data.__name__]
+        return [ExperimentSetup.mining_data.__name__]
     #
 
     @staticmethod
@@ -65,42 +67,39 @@ class ExperimentRunner:
 
     @staticmethod
     def get_log_level():
+        """ debug level """
         # return logging.DEBUG
         return logging.INFO
 
 
     @staticmethod
-    def get_expr_names():
-        return str(ExperimentRunner.get_experiments())[2:6]
-
-    @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
+        ExperimentSetup.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data(
+        ExperimentSetup.wisconsin_breast_cancer_data(
             {'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def abalone_experiment():
-        Experiments.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def creep_experiment():
-        Experiments.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def USPS_experiment():
-        Experiments.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def mining_experiment():
-        Experiments.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def sarcos_experiment():
-        Experiments.sarcos_data({'method': 'full',
+        ExperimentSetup.sarcos_data({'method': 'full',
                                  'sparse_factor': 0.04,
                                  'run_id': 0,
                                  'log_level': logging.DEBUG,
@@ -111,7 +110,7 @@ class ExperimentRunner:
 
     @staticmethod
     def sarcos_all_joins_experiment():
-        Experiments.sarcos_all_joints_data({'method': 'full',
+        ExperimentSetup.sarcos_all_joints_data({'method': 'full',
                                  'sparse_factor': 0.04,
                                  'run_id': 0,
                                  'log_level': logging.DEBUG,
@@ -122,7 +121,7 @@ class ExperimentRunner:
 
     @staticmethod
     def mnist_experiment():
-        Experiments.MNIST_data({'method': 'full',
+        ExperimentSetup.MNIST_data({'method': 'full',
                                 'sparse_factor': 0.004,
                                 'run_id': 1,
                                 'log_level': logging.DEBUG,
@@ -133,7 +132,7 @@ class ExperimentRunner:
 
     @staticmethod
     def struct_experiment():
-        Experiments.struct_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.struct_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
 
     @staticmethod
@@ -161,11 +160,12 @@ def run_config(config):
 if __name__ == '__main__':
     logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
 
+    # uncomment to run experiments in parallel
     # ExperimentRunner.run_parallel(3)
+
     # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
-
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()

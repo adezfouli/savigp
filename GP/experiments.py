@@ -1,33 +1,40 @@
 import logging
-import math
 import pickle
-from ExtRBF import ExtRBF
-from gpstruct_wrapper import gpstruct_wrapper
-from data_transformation import MeanTransformation, IdentityTransformation, MinTransformation, MeanStdYTransformation
+import csv
+
+import GPy
+import numpy as np
+
 from savigp import SAVIGP
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
-import csv
-import GPy
-from sklearn import preprocessing
-from likelihood import UnivariateGaussian, LogisticLL, SoftmaxLL, LogGaussianCox, WarpLL, StructLL, CogLL
-from data_source import DataSource
-import numpy as np
 from optimizer import Optimizer
 from util import id_generator, check_dir_exists, get_git
-import Image
+
 
 class Experiments:
     @staticmethod
     def get_output_path():
+        """
+        :return: the path in which results of the experiment will be saved
+        """
         return '../results/'
 
     @staticmethod
     def get_logger_path():
+        """
+        :return: the path in which log files will be created
+        """
         return '../logs/'
 
     @staticmethod
     def get_logger(name, level):
+        """
+        Creates loggers
+        :param name: name of the log file
+        :param level: level of debugging
+        :return: created loggers
+        """
         logger = logging.getLogger(name)
         logger.setLevel(level)
         check_dir_exists(Experiments.get_logger_path())
@@ -44,6 +51,14 @@ class Experiments:
 
     @staticmethod
     def export_train(name, Xtrain, Ytrain, export_X=False):
+        """
+        Exports training data into a csv file
+        :param name: name of file
+        :param Xtrain: 'X' of training data
+        :param Ytrain: 'Y' of training data
+        :param export_X: whether to export 'X'. If False, only Ytrain will be exported
+        :return:
+        """
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'train_'
@@ -59,6 +74,12 @@ class Experiments:
 
     @staticmethod
     def export_track(name, track):
+        """
+        exports trajectory of the objective function
+        :param name: name of the file
+        :param track: trajectory of the objective function
+        :return: None
+        """
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'obj_track_'
@@ -68,6 +89,12 @@ class Experiments:
 
     @staticmethod
     def export_model(model, name):
+        """
+        exports Modle into a csv file
+        :param model: the model to be exported
+        :param name: name of the csv file
+        :return: None
+        """
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'model_'
@@ -83,6 +110,18 @@ class Experiments:
 
     @staticmethod
     def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names, export_X=False):
+        """
+        Exports test data and the predictions into a csv file
+        :param name: name of the file
+        :param X: 'X' for which prediction have been made
+        :param Ytrue: The true values of 'Y'
+        :param Ypred: Predictions
+        :param Yvar_pred: Variance of the prediction
+        :param nlpd: NLPD of the predictions
+        :param pred_names:
+        :param export_X: Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file.
+        :return: None
+        """
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'test_'
@@ -110,6 +149,12 @@ class Experiments:
 
     @staticmethod
     def export_configuration(name, config):
+        """
+        Exports configuration of the model as well as optimize to a csv file
+        :param name: Name of the file
+        :param config: Configuration to be exported
+        :return: None
+        """
         path = Experiments.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = path + 'config_' + '.csv'
@@ -120,6 +165,9 @@ class Experiments:
 
     @staticmethod
     def get_ID():
+        """
+        :return: A random ID
+        """
         return id_generator(size=6)
 
 
@@ -146,6 +194,45 @@ class Experiments:
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
                   latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None,
                   xtol=1e-3, ftol=1e-5, partition_size=3000):
+        """
+        Fits a model to the data (Xtrin, Ytraing) using the method provided by 'method', and makes predictions on
+         'Xtrest' and 'Ytest', and exports the result to several csv files.
+        :param Xtest: X of test points
+        :param Xtrain: X of training points
+        :param Ytest: Y of test points
+        :param Ytrain: Y of traiing points
+        :param cond_ll: Conditional log likelihood function used to build the model. It should be subclass of
+        likelihood/Likelihood
+        :param kernel: The kernel that the model uses. It should be an array, and size of the array should be same as the
+         number of latent processes
+        :param method: The method to use to learns the model. It can be 'full', 'mix1', and 'mix2'
+        :param name: The name that will be used for logger file names, and results files names
+        :param run_id: ID of the experiment, which can be anything, and it will be included in the configuation file
+        :param num_inducing: Number of inducing points
+        :param num_samples: Number of samples for estimating objective function and gradients
+        :param sparsify_factor: Can be any number and will be included in the configuration file. It will not determine
+        the number of inducing points
+        :param to_optimize: The subject of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
+        it can be ['ll', 'mog']
+        :param trans_class: The class which will be used to transform data.
+        :param random_Z: Whether to initialise inducing points randomly on the training data. If False, inducing points
+        will be placed using k-means clustering. If True, inducing points will be placed randomly on the training data.
+        :param logging_level: The logging level to use.
+        :param export_X: Whether to export X to csv files.
+        :param latent_noise: The amount of latent noise to add to the kernel. A white noise of amount latent_noise will be
+        added to the kernel.
+        :param opt_per_iter: Number of update of each subset of parameters in each iteration, e.g., {'mog': 15000, 'hyp': 25, 'll': 25}
+        :param max_iter: Maximum of global iterations used on optimization.
+        :param n_threads: Maximum number of threads used.
+        :param model_image_file: The image file from the which the model will be initialized.
+        :param xtol: Tolerance of 'X' below which the optimization is determined as converged.
+        :param ftol: Tolerance of 'f' below which the optimization is determined as converged.
+        :param partition_size: The size which is used to partition training data. This is not the partition used for SGD.
+        Training data will be split to the partitions of size 'partition_size' and calculations will be done on each paritions
+        separately.
+        :return: a tuple, where the first element is the name of the folder in which results are stored, and the
+        second element is the model itself.
+        """
 
         if opt_per_iter is None:
             opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
@@ -233,427 +320,4 @@ class Experiments:
         properties['total_evals'] = total_evals
         Experiments.export_configuration(folder_name, properties)
         return folder_name, m
-
-    @staticmethod
-    def boston_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.boston_data()
-        d = data[config['run_id'] - 1]
-        names = []
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'boston'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-        # gaussian_sigma = np.var(Ytrain)/4 + 1e-4
-        gaussian_sigma = 1.0
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
-        num_samples = 2000
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
-        return names
-
-    @staticmethod
-    def wisconsin_breast_cancer_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.wisconsin_breast_cancer_data()
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'breast_cancer'
-
-        # uncomment these lines to use softmax
-        # kernel = Experiments.get_kernels(Xtrain.shape[1], 2, False)
-        # Ytrain = np.array([(Ytrain[:,0] + 1) / 2, (-Ytrain[:,0] + 1) / 2]).T
-        # Ytest = np.array([(Ytest[:,0] + 1) / 2, (-Ytest[:,0] + 1) / 2]).T
-        # cond_ll = SoftmaxLL(2)
-
-        # uncomment these lines to use logistic
-        cond_ll = LogisticLL()
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
-        return names
-
-
-    @staticmethod
-    def mining_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.mining_data()
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'mining'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        cond_ll = LogGaussianCox(math.log(191./811))
-        kernel[0].variance= 1.0
-        kernel[0].lengthscale= 13516.
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True, latent_noise=0.001,
-                                  opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
-                                  max_iter=1))
-        return names
-
-
-    @staticmethod
-    def USPS_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.USPS_data()
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'USPS'
-        kernel = [ExtRBF(Xtrain.shape[1], variance=2, lengthscale=np.array((4.,)), ARD=False) for j in range(3)]
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        cond_ll = SoftmaxLL(3)
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=300))
-
-
-    @staticmethod
-    def abalone_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.abalone_data()
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'abalone'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, False)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-
-        cond_ll = WarpLL(np.array([-2.0485, 1.7991, 1.5814]),
-                         np.array([2.7421, 0.9426, 1.7804]),
-                         np.array([0.1856, 0.7024, -0.7421]),
-                         np.log(0.1))
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
-
-
-    @staticmethod
-    def creep_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.creep_data()
-
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'creep'
-        scaler = preprocessing.StandardScaler().fit(Xtrain)
-        Xtrain = scaler.transform(Xtrain)
-        Xtest = scaler.transform(Xtest)
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-
-        cond_ll = WarpLL(np.array([3.8715, 3.8898, 2.8759]),
-                         np.array([1.5925, -1.3360, -2.0289]),
-                         np.array([0.7940, -4.1855, -3.0289]),
-                         np.log(0.01))
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
-
-
-    @staticmethod
-    def MNIST_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.mnist_data()
-        names = []
-        d = data[config['run_id'] - 1]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'mnist'
-
-        # uncomment these lines to delete unused features
-        # features_rm = np.array([])
-        # for n in range(Xtrain.shape[1]):
-        #     if Xtrain[:, n].sum() ==0:
-        #         features_rm = np.append(features_rm, n)
-        # Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
-        # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
-
-
-        # uncomment these lines to change the resolution
-        # res = 13
-        # current_res = int(np.sqrt(Xtrain.shape[1]))
-        # X_train_resized = np.empty((Xtrain.shape[0], res * res))
-        # X_test_resized = np.empty((Xtest.shape[0], res * res))
-        # for n in range(Xtrain.shape[0]):
-        #     im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
-        #     im = im.resize((res, res))
-        #     X_train_resized[n] = np.array(im).flatten()
-        #
-        # for n in range(Xtest.shape[0]):
-        #     im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
-        #     im = im.resize((res, res))
-        #     X_test_resized[n] = np.array(im).flatten()
-        #
-        #
-        # Xtrain = X_train_resized
-        # Xtest = X_test_resized
-
-        kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(10)]
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        cond_ll = SoftmaxLL(10)
-
-        if 'n_thread' in config.keys():
-            n_threads = config['n_thread']
-        else:
-            n_threads = 1
-
-        if 'partition_size' in config.keys():
-            partition_size = config['partition_size']
-        else:
-            partition_size = 3000
-
-
-        image = None
-        if 'image' in config.keys():
-            image = config['image']
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10},
-                                  max_iter=300, n_threads=n_threads, ftol=10,
-                                  model_image_file=image, partition_size=partition_size))
-
-
-    @staticmethod
-    def struct_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-
-        (ll_train,
-        posterior_marginals_test,
-        compute_error_nlm,
-        ll_test,
-        average_marginals,
-        write_marginals,
-        read_marginals,
-        n_labels,
-        Xtrain,
-        Xtest,
-         train_dataset,
-         test_dataset)  = gpstruct_wrapper()
-        name = 'struct'
-        n_latent_processes = n_labels + 1
-
-        Xtrain = np.array(Xtrain.todense())
-        Xtest = np.array(Xtest.todense())
-        kernel = [ExtRBF(Xtrain.shape[1], variance=.1, lengthscale=np.array((.1,)), ARD=False)] * n_latent_processes
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        cond_ll = StructLL(ll_train, train_dataset, test_dataset)
-        names = []
-        image = None
-        if 'image' in config.keys():
-            image = config['image']
-
-
-        Ytest_labels = np.hstack(np.array(test_dataset.Y))
-        Ytest = np.zeros((Xtest.shape[0], test_dataset.n_labels))
-        Ytest[np.arange(Xtest.shape[0]), Ytest_labels] = 1
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, np.empty((Xtrain.shape[0], 1)), cond_ll, kernel, method, name, 1, num_inducing,
-                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 1, 'hyp': 3},
-                                  max_iter=1, n_threads=20,
-                                   model_image_file=image))
-
-    @staticmethod
-    def sarcos_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.sarcos_data()
-
-        names = []
-        d = data[0]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'sarcos'
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 3, False)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-
-        cond_ll =CogLL(0.1, 2, 1)
-
-        if 'n_thread' in config.keys():
-            n_threads = config['n_thread']
-        else:
-            n_threads = 1
-
-        if 'partition_size' in config.keys():
-            partition_size = config['partition_size']
-        else:
-            partition_size = 3000
-
-        image = None
-        if 'image' in config.keys():
-            image = config['image']
-
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
-                                  max_iter=200,
-                                  partition_size=partition_size,
-                                  n_threads=n_threads,
-                                  model_image_file=image))
-
-
-
-    @staticmethod
-    def sarcos_all_joints_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-        data = DataSource.sarcos_all_joints_data()
-
-        names = []
-        d = data[0]
-        Xtrain = d['train_X']
-        Ytrain = d['train_Y']
-        Xtest = d['test_X']
-        Ytest = d['test_Y']
-        name = 'sarcos_all_joints'
-
-        scaler = preprocessing.StandardScaler().fit(Xtrain)
-        Xtrain = scaler.transform(Xtrain)
-        Xtest = scaler.transform(Xtest)
-
-        kernel = Experiments.get_kernels(Xtrain.shape[1], 8, False)
-
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-
-        cond_ll =CogLL(0.1, 7, 1)
-
-        if 'n_thread' in config.keys():
-            n_threads = config['n_thread']
-        else:
-            n_threads = 1
-
-        if 'partition_size' in config.keys():
-            partition_size = config['partition_size']
-        else:
-            partition_size = 3000
-
-        image = None
-        if 'image' in config.keys():
-            image = config['image']
-
-
-        names.append(
-            Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
-                                  max_iter=200,
-                                  partition_size=partition_size,
-                                  ftol=10,
-                                  n_threads=n_threads,
-                                  model_image_file=image))
-
-
-    @staticmethod
-    def get_kernels(input_dim, num_latent_proc, ARD):
-        return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD) for j in range(num_latent_proc)]
-
-    @staticmethod
-    def get_train_test(X, Y, n_train):
-        data = np.hstack((X, Y))
-        np.random.shuffle(data)
-        Xn = data[:, :X.shape[1]]
-        Yn = data[:, X.shape[1]:]
-        return Xn[:n_train], Yn[:n_train], Xn[n_train:], Yn[n_train:]
 
