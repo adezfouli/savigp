@@ -13,32 +13,43 @@ class DataTransformation:
     def transform_X(self, X):
         """
         transforms X
-        :param X: Input X
-        :return: transformed X
+
+        :param
+         X: Input X
+        :return
+         transformed X
         """
         raise NotImplementedError()
 
     def transform_Y(self, Y):
         """
         transforms Y
-        :param Y: Input Y
-        :return: transforms Y
+
+        :param
+         Y: Input Y
+        :return
+         transformed Y
         """
         raise NotImplementedError()
 
     def untransform_X(self, X):
         """
         Untransforms X to its original values
-        :param X: transformed X
-        :return: untransformed X
+
+        :param
+         X: transformed X
+        :return
+         untransformed X
         """
         raise NotImplementedError()
 
     def untransform_Y(self, Y):
         """
         Untransforms Y
-        :param Y: transformed Y
-        :return: untransfomred Y
+        :param
+         Y: transformed Y
+        :return
+         untransfomred Y
         """
         raise NotImplementedError()
 
@@ -48,8 +59,11 @@ class DataTransformation:
     def untransform_NLPD(self, NLPD):
         """
         untransfomrs NLPD to the original Y space
-        :param NLPD: transfomred NLPD
-        :return: untransformed NLPD
+
+        :param
+         NLPD: transfomred NLPD
+        :return
+         untransformed NLPD
         """
         raise NotImplementedError()
 

@@ -12,20 +12,28 @@ class ExtRBF(RBF):
     """
 
     def get_gradients_Kn(self, dL_dK, X, X2=None):
-        """
-        Dimensions: \n
-        dim(dL_DK) = N * M \n
-        dim(X) = N * D \n
-        dim(X2) = M * D \n
-        where D is the dimensionality of input.
-
+        r"""
         Assume we have a function Ln of the kernel, which its gradient wrt to the hyper-parameters is as follows:
 
-        dLn\dH = (dLn\dK) * dK(X2, Xn)\dH
+        dLn\\dH = (dLn\\dK) * dK(X2, Xn)\\dH
 
         where dLn_dK = dLn_dK[n, :], Xn = X[n, :]. The function then returns a matrix containing dLn_dH for all 'n's.
 
-        :returns dL\dH, which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
+        Parameters
+        ----------
+        dL_dK : ndarray
+         dim(dL_dK) = N * M
+        X : ndarray
+         dim(X) = N * D
+        X2: ndarray
+         dim(X2) = M * D
+
+        where D is the dimensionality of input.
+
+        Returns
+        -------
+        :return dL\\dH, which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
+
         """
         variance_gradient = inner1d(self.K(X, X2), dL_dK) *  1./ self.variance
 
@@ -43,31 +51,45 @@ class ExtRBF(RBF):
 
 
     def get_gradients_Kdiagn(self, X):
-        """
-        Dimensions: \n
-        dim(X) = N * D, where D is the dimension of input. \n
-        Assume we have a function Ln of the kernel we follows: \n
-        dL_n\dH = dK(Xn, Xn)\dH \n
-        where Xn=X[n, :]. Then the function returns a matrix which contains dL_n\dH for all 'n's
+        r"""
+        Assume we have a function Ln of the kernel we follows:
 
-        :return: dL\dH which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
+        dL_n\\dH = dK(Xn, Xn)\\dH
+
+        Parameters
+        ----------
+        X : ndarray
+         dim(X) = N * D, where D is the dimension of input. \n
+         where Xn=X[n, :]. Then the function returns a matrix which contains dL_n\dH for all 'n's
+
+        Returns
+        -------
+        :return dL\\dH which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
         """
 
         variance_gradient = self.Kdiag(X) * 1./self.variance
         return np.hstack((variance_gradient[:, np.newaxis], np.zeros((X.shape[0], self.lengthscale.shape[0]))))
 
     def get_gradients_Kzz(self, S, D, X, X2=None):
-        """
-        Dimensions:\n
-        dim(S) = N * M \n
-        dim(D) = M * N \n
-        dim(X) = M * d, where d is the input dimensionality \n
-        dim(X2) = M * d \n
+        r"""
         Assume we have a function Ln, which its gradient wrt to the hyper-parameters (H), is as follows: \n
-        dLn\dH = S[:, n] *  dK(X,X2)\dH * D[n, :] \n
+        dLn\\dH = S[:, n] *  dK(X,X2)\\dH * D[n, :]
         then this function calculates dLn\dH for all 'n's.
 
-        :returns dL\dH which is a matrix by dimensions N * dim(H), where dim(H) is the number of hyper-parameters.
+        Parameters
+        ----------
+        S : ndarray
+            dim(S) = N * M
+        D : ndarray
+            dim(D) = M * N
+        X : ndarray
+            dim(X) = M * d, where d is the input dimensionality \n
+        X2 : nadrray
+            dim(X2) = M * d
+
+        Returns
+        -------
+        :returns dL\\dH which is a matrix by dimensions N * dim(H), where dim(H) is the number of hyper-parameters.
         """
         variance_gradient = mdot(S, self.K(X, X2), D) * 1./self.variance
 

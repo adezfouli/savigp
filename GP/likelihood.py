@@ -118,8 +118,44 @@ class Likelihood:
 
         raise Exception("not implemented yet")
 
+    def predict(self, mu, sigma, Ys, model=None):
+        """
+        Makes predictions about mean, and variance and calculates NLPD baes on Ys.
+
+        Parameters
+        ----------
+        mu : ndarray
+         dim(mu) = N * Q, where Q is the number of latent processes
+
+        sigma : ndarray
+         dim(sigma) = N * Q
+
+        Ys : ndarray
+         dim(Ys) = N * output dimension
+
+
+        Returns
+        -------
+        mean : array_like
+         mean = \integral y * P(y|f)N(f|mu, sigma) df dy
+        var :
+         variance of the prediction
+        NLPD:
+         NLPD = log \integral p(Ys|f)N(f|mu, sigma) df
+
+        """
+
+        raise Exception("not implemented yet")
+
+
+
 
 class MultivariateGaussian(Likelihood):
+    """
+    Implementation of a multi-variate Gaussian likelihood
+
+    log P(y|f) = -0.5 * log det (sigma) - size(sigma)/2 * log (2 * pi) - 0.5 * (f-y)T sigma^-1 (f-y)
+    """
     def __init__(self, sigma):
         Likelihood.__init__(self)
         self.sigma = sigma
@@ -147,6 +183,11 @@ class MultivariateGaussian(Likelihood):
 
 
 class UnivariateGaussian(Likelihood):
+    """
+    Implementation of the a univariate likelihood
+
+    log p(y|f) = -0.5 * log(sigma) - 0.5 log (2pi) - 0.5 * (f-y)^2 / sigma
+    """
     def __init__(self, sigma):
         Likelihood.__init__(self)
         self.set_params(np.log([sigma]))
@@ -186,7 +227,7 @@ class UnivariateGaussian(Likelihood):
 
 class LogGaussianCox(Likelihood):
     """
-    Log Gaussian Cox process
+    Implementation of a Log Gaussian Cox process
 
     p(y|f) = (lambda)^y exp(-lambda) / y!
 
@@ -225,7 +266,6 @@ class LogisticLL(object, Likelihood):
 
     p(y|f) = 1 / (1 + exp(-f))
 
-    lambda = f + offset
     """
 
     def __init__(self):
@@ -266,7 +306,7 @@ class SoftmaxLL(Likelihood):
     """
     Softmax likelihood:
 
-    p(y=c|f) = exp(f_c) / (f_1 + ... + f_N)
+    p(y=c|f) = exp(f_c) / (exp(f_1) + ... + exp(f_N))
     """
 
     def __init__(self, dim):
@@ -305,8 +345,19 @@ class SoftmaxLL(Likelihood):
         return self.dim
 
 
-
 class WarpLL(object, Likelihood):
+    """
+    Implementation of a Warp likelihood.
+
+    The log likelihood for warped Gaussian processes and its derivatives.
+       p(y|f) = dt(y)/dy p(t(y)|f)
+    where t(y) = nnwarp(y)
+
+    The likelihood parameters are
+    hyp.lik = [a, b ,c log(sqrt(sn2))]
+    where a,b,c are parameter vectors of the warping t(y).
+
+    """
     def __init__(self, ea, eb, c, log_s):
         Likelihood.__init__(self)
         self.set_params(np.hstack((ea, eb, c, [log_s])))
@@ -465,7 +516,22 @@ class StructLL(Likelihood):
 
 
 class CogLL(Likelihood):
+    """
+    Implementation of a Gaussian process network likelihood.
+
+    y ~ N (W  * F, sigma)
+
+    where dim(W) = P * Q, and dim(F) = Q * 1.
+
+    W and F are made of latent processes
+    """
     def __init__(self, sigma_y, P, Q):
+        """
+        :param sigma_y: input noise
+        :param P: output dimensionality
+        :param Q: number of latent functions in the network
+        :return: None
+        """
         Likelihood.__init__(self)
         self.P = P
         self.Q = Q

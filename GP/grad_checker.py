@@ -16,12 +16,22 @@ class GradChecker:
         Checks whether gradient of function 'f' at point x0 is same as the gradients provided by 'f_grad'. 'error'
         is the difference between numerical and provided gradients. '%error' = abs(error) / numerical gradient.
 
-        :param f: input function to check gradients against \n
-        :param f_grad: input function which provides gradients \n
-        :param x0: the point at which gradients should be calculated \n
-        :param name: a vector with the size of the number of parameters, which provides name for each parameter. This
-        name will be used when generating output table\n
-        :param verbose: whether to print output for each parameter separately\n
+        Parameters
+        ----------
+        f: callable
+         input function to check gradients against
+        f_grad: callable
+         input function which provides gradients \n
+        x0: ndarray
+         the point at which gradients should be calculated \n
+        name: list
+         a vector with the size of the number of parameters, which provides name for each parameter. This
+         name will be used when generating output table\n
+        verbose: boolean
+         whether to print output for each parameter separately\n
+
+        Returns
+        -------
         :return: average of the percentage error over all the parameters, i.e., mean(%error)
         """
 

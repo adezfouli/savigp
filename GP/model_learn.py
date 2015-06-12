@@ -31,9 +31,13 @@ class ModelLearn:
     def get_logger(name, level):
         """
         Creates loggers
-        :param name: name of the log file
-        :param level: level of debugging
-        :return: created loggers
+
+        :param
+         name: name of the log file
+        :param
+         level: level of debugging
+        :return
+         created loggers
         """
         logger = logging.getLogger(name)
         logger.setLevel(level)
@@ -53,11 +57,17 @@ class ModelLearn:
     def export_train(name, Xtrain, Ytrain, export_X=False):
         """
         Exports training data into a csv file
-        :param name: name of file
-        :param Xtrain: 'X' of training data
-        :param Ytrain: 'Y' of training data
-        :param export_X: whether to export 'X'. If False, only Ytrain will be exported
+
+        :param
+         name: name of file
+        :param
+         Xtrain: 'X' of training data
+        :param
+         Ytrain: 'Y' of training data
+        :param
+         export_X: whether to export 'X'. If False, only Ytrain will be exported
         :return:
+         None
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -76,9 +86,13 @@ class ModelLearn:
     def export_track(name, track):
         """
         exports trajectory of the objective function
-        :param name: name of the file
-        :param track: trajectory of the objective function
-        :return: None
+
+        :param
+         name: name of the file
+        :param
+         track: trajectory of the objective function
+        :return:
+         None
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -90,10 +104,14 @@ class ModelLearn:
     @staticmethod
     def export_model(model, name):
         """
-        exports Modle into a csv file
-        :param model: the model to be exported
-        :param name: name of the csv file
-        :return: None
+        exports Model into a csv file
+
+        :param
+         model: the model to be exported
+        :param
+         name: name of the csv file
+        :return:
+         None
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -112,15 +130,25 @@ class ModelLearn:
     def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names, export_X=False):
         """
         Exports test data and the predictions into a csv file
-        :param name: name of the file
-        :param X: 'X' for which prediction have been made
-        :param Ytrue: The true values of 'Y'
-        :param Ypred: Predictions
-        :param Yvar_pred: Variance of the prediction
-        :param nlpd: NLPD of the predictions
-        :param pred_names:
-        :param export_X: Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file.
-        :return: None
+
+        :param
+         name: name of the file
+        :param
+         X: 'X' for which prediction have been made
+        :param
+         Ytrue: The true values of 'Y'
+        :param
+         Ypred: Predictions
+        :param
+         Yvar_pred: Variance of the prediction
+        :param
+         nlpd: NLPD of the predictions
+        :param
+         pred_names:
+        :param
+         export_X: Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file.
+        :return:
+         None
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -151,9 +179,13 @@ class ModelLearn:
     def export_configuration(name, config):
         """
         Exports configuration of the model as well as optimize to a csv file
-        :param name: Name of the file
-        :param config: Configuration to be exported
-        :return: None
+
+        :param
+         name: Name of the file
+        :param
+         config: Configuration to be exported
+        :return:
+         None
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -197,41 +229,72 @@ class ModelLearn:
         """
         Fits a model to the data (Xtrin, Ytraing) using the method provided by 'method', and makes predictions on
          'Xtrest' and 'Ytest', and exports the result to several csv files.
-        :param Xtest: X of test points
-        :param Xtrain: X of training points
-        :param Ytest: Y of test points
-        :param Ytrain: Y of traiing points
-        :param cond_ll: Conditional log likelihood function used to build the model. It should be subclass of
-        likelihood/Likelihood
-        :param kernel: The kernel that the model uses. It should be an array, and size of the array should be same as the
-         number of latent processes
-        :param method: The method to use to learns the model. It can be 'full', 'mix1', and 'mix2'
-        :param name: The name that will be used for logger file names, and results files names
-        :param run_id: ID of the experiment, which can be anything, and it will be included in the configuation file
-        :param num_inducing: Number of inducing points
-        :param num_samples: Number of samples for estimating objective function and gradients
-        :param sparsify_factor: Can be any number and will be included in the configuration file. It will not determine
-        the number of inducing points
-        :param to_optimize: The subject of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
-        it can be ['ll', 'mog']
-        :param trans_class: The class which will be used to transform data.
-        :param random_Z: Whether to initialise inducing points randomly on the training data. If False, inducing points
-        will be placed using k-means clustering. If True, inducing points will be placed randomly on the training data.
-        :param logging_level: The logging level to use.
-        :param export_X: Whether to export X to csv files.
-        :param latent_noise: The amount of latent noise to add to the kernel. A white noise of amount latent_noise will be
-        added to the kernel.
-        :param opt_per_iter: Number of update of each subset of parameters in each iteration, e.g., {'mog': 15000, 'hyp': 25, 'll': 25}
-        :param max_iter: Maximum of global iterations used on optimization.
-        :param n_threads: Maximum number of threads used.
-        :param model_image_file: The image file from the which the model will be initialized.
-        :param xtol: Tolerance of 'X' below which the optimization is determined as converged.
-        :param ftol: Tolerance of 'f' below which the optimization is determined as converged.
-        :param partition_size: The size which is used to partition training data. This is not the partition used for SGD.
-        Training data will be split to the partitions of size 'partition_size' and calculations will be done on each paritions
-        separately.
+
+        Parameters
+        ----------
+        Xtest: ndarray
+         X of test points
+        Xtrain: ndarray
+         X of training points
+        Ytest: ndarray
+         Y of test points
+        Ytrain: ndarray
+         Y of traiing points
+        cond_ll: subclass of likelihood/Likelihood
+         Conditional log likelihood function used to build the model.
+        kernel:
+         The kernel that the model uses. It should be an array, and size of the array should be same as the
+         number of latent processes. Each element should provide interfact similar to ``ExtRBF`` class
+        method: string
+         The method to use to learns the model. It can be 'full', 'mix1', and 'mix2'
+        name: string
+         The name that will be used for logger file names, and results files names
+        run_id: object
+         ID of the experiment, which can be anything, and it will be included in the configuation file
+        num_inducing: integer
+         Number of inducing points
+        num_samples: integer
+         Number of samples for estimating objective function and gradients
+        sparsify_factor: float
+         Can be any number and will be included in the configuration file. It will not determine
+         the number of inducing points
+        to_optimize: list
+         The subject of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
+         it can be ['ll', 'mog']
+        trans_class: subclass of DataTransformation
+         The class which will be used to transform data.
+        random_Z: boolean
+         Whether to initialise inducing points randomly on the training data. If False, inducing points
+         will be placed using k-means clustering. If True, inducing points will be placed randomly on the training data.
+        logging_level: string
+         The logging level to use.
+        export_X: boolean
+         Whether to export X to csv files.
+        latent_noise: integer
+         The amount of latent noise to add to the kernel. A white noise of amount latent_noise will be
+         added to the kernel.
+        opt_per_iter: integer
+         Number of update of each subset of parameters in each iteration, e.g., {'mog': 15000, 'hyp': 25, 'll': 25}
+        max_iter: integer
+         Maximum of global iterations used on optimization.
+        n_threads: integer
+         Maximum number of threads used.
+        model_image_file: string
+         The image file from the which the model will be initialized.
+        xtol: float
+         Tolerance of 'X' below which the optimization is determined as converged.
+        ftol: float
+         Tolerance of 'f' below which the optimization is determined as converged.
+        partition_size: integer
+         The size which is used to partition training data. This is not the partition used for SGD.
+         Training data will be split to the partitions of size 'partition_size' and calculations will be done on each paritions
+         separately.
+
+        Returns
+        -------
         :return: a tuple, where the first element is the name of the folder in which results are stored, and the
-        second element is the model itself.
+         second element is the model itself.
+
         """
 
         if opt_per_iter is None:
