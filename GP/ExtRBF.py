@@ -6,7 +6,7 @@ from numpy.core.umath_tests import inner1d
 
 class ExtRBF(RBF):
     """
-    This class extends RBF class in order to provide fast methods for calculating gradients wrt to the
+    Extended-RBF class, which extends RBF class in order to provide fast methods for calculating gradients wrt to the
     hyper-parameters of the kernel. The base class provides a similar functionality, but that implementation can be
     slow.
     """
