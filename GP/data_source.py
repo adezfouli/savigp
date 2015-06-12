@@ -40,14 +40,21 @@ class DataSource:
     @staticmethod
     def wisconsin_breast_cancer_data():
         """
-        Loads and returns data of wisconsin breast cancer dataset. Note that 'X' is standardized.
+        Loads and returns data of wisconsin breast cancer dataset. Note that `X` is standardized.
 
-        :return: a list of length = 5, where each element is a dictionary which contains
+        Returns
+        -------
+        data : a list of length = 5, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Mangasarian OL, Street WN, Wolberg WH. Breast cancer diagnosis and prognosis via linear programming. Oper Res. 1995;43(4);570-7 \n
-        Data is directly imported from the Matlab code.
+        Notes
+        -----
+        Data is directly imported from the Matlab code for AVIGP paper.
+
+        References
+        ----------
+        * Mangasarian OL, Street WN, Wolberg WH. Breast cancer diagnosis and prognosis via linear programming.
+          Oper Res. 1995;43(4);570-7
 
         """
         # uncomment these lines to read directly from original file
@@ -78,12 +85,17 @@ class DataSource:
     def USPS_data():
         """
         Loads and returns data of USPS dataset. Note that 'X' is standardized. Only digits 4,7, and 9 are included.
-        :return: a list of length = 5, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 5, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        See \n
-        Rasmussen CE, Williams CKI. {G}aussian processes for machine learning. The MIT Press; 2006. \n
-        Data is imported from the Matlab code.
+        References
+        ----------
+        * Rasmussen CE, Williams CKI. {G}aussian processes for machine learning. The MIT Press; 2006.
+          Data is imported from the Matlab code.
+
         """
         data = []
         for i in range(1, 6):
@@ -111,11 +123,15 @@ class DataSource:
     def mining_data():
         """
         Loads and returns data of Coal-mining disasters dataset. See 'get_mine_data.m' to see how data is transformed.
-        :return: a list of length = 1, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 1, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'. Training and test points are the same.
 
-        Reference: \n
-        Jarrett RG. A note on the intervals between coal-mining disasters. Biometrika. 1979;66(1):191-3.
+        References
+        ----------
+        * Jarrett RG. A note on the intervals between coal-mining disasters. Biometrika. 1979;66(1):191-3.
         """
         data = []
         train = pandas.read_csv('data/mining/data.csv', header=None)
@@ -134,11 +150,16 @@ class DataSource:
     def boston_data():
         """
         Loads and returns data of Boston housing dataset. Note data 'X' is standardized.
-        :return: a list of length = 5, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 5, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Harrison Jr D, Rubinfeld DL. Hedonic housing prices and the demand for clean air. J Environ Econ Manage. 1978;5(1):81-102.
+        References
+        ----------
+        * Harrison Jr D, Rubinfeld DL. Hedonic housing prices and the demand for clean air. J Environ Econ Manage. 1978;5(1):81-102.
+
         """
         data = []
         for i in range(1, 6):
@@ -159,11 +180,17 @@ class DataSource:
     def abalone_data():
         """
         Loads and returns data of Abalone dataset.
-        :return: a list of length = 5, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data: a list of length = 5, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Bache K, Lichman M. {UCI} Machine Learning Repository [Internet]. 2013. Available from: http://archive.ics.uci.edu/ml
+
+        References
+        ----------
+        * Bache K, Lichman M. {UCI} Machine Learning Repository [Internet]. 2013. Available from: http://archive.ics.uci.edu/ml
+
         """
         data = []
         for i in range(5, 11):
@@ -184,12 +211,17 @@ class DataSource:
     def creep_data():
         """
         Loads and returns data of Creep dataset.
-        :return: a list of length = 5, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 5, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Cole D, Martin-Moran C, Sheard AG, Bhadeshia HKDH, MacKay DJC.
+        References
+        ----------
+        * Cole D, Martin-Moran C, Sheard AG, Bhadeshia HKDH, MacKay DJC.
         Modelling creep rupture strength of ferritic steel welds. Sci Technol Weld Join. 2000;5(2):81-9.
+
         """
         data = []
         for i in range(1, 6):
@@ -209,11 +241,15 @@ class DataSource:
     def mnist_data():
         """
         Loads and returns data of MNIST dataset for all digits.
-        :return: a list of length = 1, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 1, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Data is imported from this project: http://deeplearning.net/tutorial/gettingstarted.html
+        References
+        ----------
+        * Data is imported from this project: http://deeplearning.net/tutorial/gettingstarted.html
         """
 
         #############
@@ -272,14 +308,20 @@ class DataSource:
     def sarcos_data():
         """
         Loads and returns data of SARCOS dataset for joints 4 and 7. Note that 'X' is standardized.
-        :return: a list of length = 1, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 1, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
+        References
+        ----------
+        * Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
         The data here is directly imported from the Matlab code on Gaussian process networks. The Matlab code to generate
         data is 'sarcos.m'
+
         """
+
         data = []
         train = pandas.read_csv('data/sarcos/train_' +'.csv', header=None)
         test = pandas.read_csv('data/sarcos/test_' + '.csv', header=None)
@@ -298,13 +340,19 @@ class DataSource:
     def sarcos_all_joints_data():
         """
         Loads and returns data of SARCOS dataset for all joints.
-        :return: a list of length = 1, where each element is a dictionary which contains
+
+        Returns
+        -------
+        data : a list of length = 1, where each element is a dictionary which contains
             'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
 
-        Reference: \n
-        Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
+        References
+        ----------
+        * Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
         The data here is directly imported from the Matlab code on Gaussian process networks.
+
         """
+
         data = []
         train = pandas.read_csv('data/sarcos/train_all' +'.csv', header=None)
         test = pandas.read_csv('data/sarcos/test_all' + '.csv', header=None)
