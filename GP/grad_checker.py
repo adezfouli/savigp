@@ -1,13 +1,30 @@
+__author__ = 'AT'
+
 from DerApproximator import get_d1
-from numpy import hstack, concatenate
+from numpy import concatenate
 from texttable import Texttable
 
 
-__author__ = 'AT'
-
 class GradChecker:
+    """ A class for checking gradients. """
+    def __init__(self):
+        pass
+
     @staticmethod
-    def check(f, f_grad, x0, name, verbose= False):
+    def check(f, f_grad, x0, name, verbose=False):
+        """
+        Checks whether gradient of function 'f' at point x0 is same as the gradients provided by 'f_grad'. 'error'
+        is the difference between numerical and provided gradients. '%error' = abs(error) / numerical gradient.
+
+        :param f: input function to check gradients against \n
+        :param f_grad: input function which provides gradients \n
+        :param x0: the point at which gradients should be calculated \n
+        :param name: a vector with the size of the number of parameters, which provides name for each parameter. This
+        name will be used when generating output table\n
+        :param verbose: whether to print output for each parameter separately\n
+        :return: average of the percentage error over all the parameters, i.e., mean(%error)
+        """
+
         g = f_grad(x0)
         if len(g) != len(x0):
             raise Exception('dimensions mismatch')
