@@ -428,7 +428,7 @@ class SAVIGP(Model):
         """
         calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
         """
-        return Kj + self.MoG.aSkja(Aj, k, j)
+        return Kj + self.MoG.aSa(Aj, k, j)
 
     # @profile
     def _get_A_K(self, p_X):
@@ -663,7 +663,7 @@ class SAVIGP(Model):
                     N * math.log(2 * math.pi) + \
                     self.log_detZ[j] + \
                      + np.dot(a, a.T) + \
-                    self.MoG.tr_Ainv_mult_S(self.chol[j, :, :], k, j)
+                    self.MoG.tr_AinvS(self.chol[j, :, :], k, j)
         for k in range(self.num_mog_comp):
             cross += self.MoG.pi[k] * d_pi[k]
 

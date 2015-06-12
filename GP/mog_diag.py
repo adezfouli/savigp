@@ -48,14 +48,11 @@ class MoG_Diag(MoG):
     def get_s_size(self):
         return self.num_comp * self.num_process * self.num_dim
 
-    def full_s_dim(self):
-        return (self.num_comp, self.num_process, self.num_dim,)
-
     def get_sjk_size(self):
         return self.num_dim
 
     def S_dim(self):
-        return (self.num_dim,)
+        return self.num_dim,
 
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
@@ -64,24 +61,20 @@ class MoG_Diag(MoG):
         self.s = np.exp(sa).reshape((self.num_comp, self.num_process, self.num_dim))
         self.log_s = sa.reshape((self.num_comp, self.num_process, self.num_dim))
 
-    def tr_Ainv_mult_S(self, L, k, j):
+    def tr_AinvS(self, L, k, j):
         return np.dot(np.diagonal(inv_chol(L)), self.s[k,j,:])
 
-    def tr_A_mult_S(self, A, k, j):
+    def tr_AS(self, A, k, j):
         return np.dot(np.diagonal(A), self.s[k,j,:])
 
     def C_m(self, j, k, l):
         return (self.m[k, j, :] - self.m[l, j, :]) / (self.s[l, j, :] + self.s[k, j, :])
 
-
     def C_m_C(self, j, k, l):
         return (self.invC_klj_Sk[k, l, j] -
                 np.square(self.invC_klj_Sk[k, l, j] * (self.m[k, j, :] - self.m[l, j, :])) / self.s[k,j])
 
-    def aSa(self, a, j):
-        return mdot(self.s[:,j,:], (a ** 2))
-
-    def aSkja(self, a, k, j):
+    def aSa(self, a, k, j):
         # return mdot(self.s[k, j, :], (a ** 2))
         return np.diagonal(mdot(a, np.diag(self.s[k,j,:]), a.T))
 

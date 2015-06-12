@@ -32,10 +32,7 @@ class MoG_SingleComponent(MoG):
         return -((self.s[0, j, :, :].shape[0])/2) * (math.log(2 * math.pi) + math.log(2.0)) - \
                0.5 * pddet(self.L[0,j,:])
 
-    def aSa(self, a, j):
-        return mdot(a.T, self.s[:,j,:,:], a)
-
-    def aSkja(self, a, k, j):
+    def aSa(self, a, k, j):
         return np.diagonal(mdot(a, self.s[k,j,:,:], a.T))
 
     def mmTS(self, k, j):
@@ -94,9 +91,6 @@ class MoG_SingleComponent(MoG):
     def S_dim(self):
         return self.num_dim, self.num_dim
 
-    def full_s_dim(self):
-        return (self.num_comp, self.num_process, self.num_dim, self.num_dim)
-
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
 
@@ -108,11 +102,11 @@ class MoG_SingleComponent(MoG):
     def get_m_S_params(self):
         return self.m, self.L_flatten
 
-    def tr_Ainv_mult_S(self, L, k, j):
+    def tr_AinvS(self, L, k, j):
         a = solve_triangular(L, self.L[k, j, :], lower=True)
         return tr_AB(a.T, a)
 
-    def tr_A_mult_S(self, A, k, j):
+    def tr_AS(self, A, k, j):
         return tr_AB(A, self.s[k, j, :])
 
     def C_m(self, j, k, l):
