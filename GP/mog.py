@@ -68,8 +68,16 @@ class MoG:
         self.pi_from_array(np.random.uniform(low=1.0, high=5.0, size=self.num_comp))
 
     def transform_S_grad(self, g):
-        """ transforms gradients of of `s` to be in the original space, i.e., space of the values the was used
-         in `updata_parameters` """
+        r"""
+        transforms gradients of of `s` to be in the original space, i.e., space of the values the was used
+        in `updata_parameters`. Assume:
+
+        g = df \\ dS, where S is the posterior covariance,
+
+        then this function returns:
+
+        :returns: df \\ dL, where L the representation of the parameter in the raw space.
+        """
         raise NotImplementedError
 
     def _random_init(self):
@@ -175,20 +183,12 @@ class MoG:
         """
         raise NotImplementedError
 
-    def C_m(self, j, k, l):
-        """ :return  C_kl^-1 (m[k,j] - m[l,j]) """
-        raise NotImplementedError
-
-    def C_m_C(self, j, k, l):
-        """ :return  C_kl^-1 (m[k,j] - m[l,j])(m[k,j] - m[l,j])T C_kl^-1"""
-        raise NotImplementedError
-
     def aSa(self, a, k, j):
         """ :return  a s[k,j] a"""
         raise NotImplementedError
 
     def mmTS(self, k, j):
-        """ :return  m_kj m_kj^T s_kj  """
+        """ :return  m_kj m_kj^T  + s_kj  """
         raise NotImplementedError
 
     def dAinvS_dS(self, L, k, j):
@@ -211,4 +211,8 @@ class MoG:
         pass
 
     def get_m_S_params(self):
+        """
+        Returns a tuple (m, s), which contains mean and covariance matrix of the posterior, which can be used for
+        example by the optimize to evaluate the amount of change in posterior parameters.
+        """
         raise NotImplementedError

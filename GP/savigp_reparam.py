@@ -109,7 +109,6 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
                - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
                2 * self.dKzxn_dhyper_mult_x(j, xn, self.MoG.Sa(Kxnz, k, j))
 
-
     def _db_n_dhyp(self, j, k, A, n, xn):
         return self.dKzxn_dhyper_mult_x(j, xn, self.MoG.m[k, j])
 

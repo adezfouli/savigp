@@ -1,13 +1,26 @@
-from util import inv_chol
-
 __author__ = 'AT'
 
-import math
+from util import inv_chol
 from GPy.util.linalg import mdot
 from mog import MoG
 import numpy as np
 
+
 class MoG_Diag(MoG):
+    """
+    Implementation of a posterior distribution where the covariance matrix is a mixture of diagonal Gaussians.
+    The class has to important
+    internal field as follows: \n
+
+     Attributes
+     ----------
+     log_s: ndarray
+      Logarithm of the diagonal of covariance matrix
+
+     invC_klj_Sk: ndarray
+      (s[k,j] + s[l,j])^-1 * s[k,j]
+
+    """
 
     def __init__(self, num_comp, num_process, num_dim):
         MoG.__init__(self, num_comp, num_process, num_dim)
@@ -43,6 +56,13 @@ class MoG_Diag(MoG):
         self._update()
 
     def transform_S_grad(self, g):
+        r"""
+        Assume:
+        g = df \\ dS
+
+        then this function returns:
+        :returns df \\ d log(s)
+        """
         return g.flatten() * self.s.flatten()
 
     def get_s_size(self):
@@ -68,9 +88,19 @@ class MoG_Diag(MoG):
         return np.dot(np.diagonal(A), self.s[k,j,:])
 
     def C_m(self, j, k, l):
+        """
+        Returns (m[k,j] - m[l,j]) / (s[l,j] + s[k,j])
+        """
         return (self.m[k, j, :] - self.m[l, j, :]) / (self.s[l, j, :] + self.s[k, j, :])
 
     def C_m_C(self, j, k, l):
+        """
+        Returns (1 / (s[k,j] + s[l,j]) - (m[k,j] - m[l,j]) ** 2 / (s[k,j] + s[l,j])) * s[k,j]
+
+        None that the last multiplication by s[k,j] is because this function is used to calculate
+        gradients, and this multiplication brings the gradients to the raw space
+        """
+
         return (self.invC_klj_Sk[k, l, j] -
                 np.square(self.invC_klj_Sk[k, l, j] * (self.m[k, j, :] - self.m[l, j, :])) / self.s[k,j])
 
@@ -97,11 +127,11 @@ class MoG_Diag(MoG):
                 for j in range(self.num_process):
                     self.invC_klj_Sk[k,l,j] = self._s_k_skl(k,l,j)
 
-    def log_sk_sl(self, k, l, j):
-        a = np.maximum(self.log_s[k, j, :], self.log_s[l, j, :])
-        return a + np.log(np.exp(self.log_s[k, j, :] - a) + np.exp(self.log_s[l, j, :] - a))
-
     def _s_k_skl(self, k, l, j):
+        """
+        calculates s[k,j] / (s[k,j] + s[k,l]) in a hopefully numerical stable manner.
+        """
+
         a = np.maximum(self.log_s[k, j, :], self.log_s[l, j, :])
         return np.exp((-a + self.log_s[k, j, :])) / (np.exp((-a + self.log_s[l, j, :]))  + np.exp((-a + self.log_s[k, j, :])))
 

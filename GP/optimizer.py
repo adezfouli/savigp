@@ -1,16 +1,11 @@
 __author__ = 'AT'
 
 import math
-from GPy.util.linalg import mdot
-# import nlopt
-from numpy.ma import concatenate
-from scipy.linalg import inv
 from scipy.optimize import fmin_l_bfgs_b, minimize, fmin_cg
 import numpy as np
 import time
 from util import JitChol
 from savigp import Configuration
-
 
 
 class Optimizer:
@@ -52,6 +47,44 @@ class Optimizer:
 
     @staticmethod
     def get_f_f_grad_from_model(model, x0, opt_indices, tracker, logger):
+        """
+        Receives a model and extracts needed functions and attributes to use the model with an optimiser.
+
+        Parameters
+        ----------
+        model : object
+         any object which exposes `objective_function` and `objective_function_gradients`
+
+        x0 : ndarray
+         starting point of optimisation
+
+        opt_indices:
+         indices of the elements to optimise
+
+        tracker : list
+         keeps track of objective function values
+
+        logger : logger
+         use for logging objective function and gradients
+
+        Returns
+        -------
+        f : callable
+         a function which returns objective function for the input parameter
+
+        f_grad : callable
+         a function which returns gradient of the objective function for the input parameter
+
+        update : callable
+         updates the model to reflect new parameters
+
+        min_x : callable
+         the parameter with lowest objective function
+
+        total_evals : int
+         total evaluation of the objective function
+
+        """
         last_x = np.empty((1, x0.shape[0]))
         last_x[0] = x0
         best_f = {'f': None}
@@ -107,6 +140,27 @@ class Optimizer:
 
     @staticmethod
     def BFGS(model, logger, opt_indices=None, max_fun=None, apply_bound=False):
+        """
+        Optimise the `model` using l_bfgs_b algorithm.
+
+        Parameters
+        ----------
+        model : model
+         the model to optimise
+
+        logger : logger
+         logger used for logging
+
+        opt_indices : ndarray
+         indices of the parameters that will be optimised. If None, all the parameters will be optimised.
+
+        max_fun : int
+         maximum number of function evaluations
+
+        apply_bound : boolean
+         whether to apply bounds. If True, parameters will be limited to be less than log (1e10)
+
+        """
         start = model.get_params()
         if opt_indices is None:
             opt_indices = range(0, len(start))
@@ -143,48 +197,7 @@ class Optimizer:
         d['funcalls'] = total_evals()
         return d, tracker
 
-    @staticmethod
-    def CG(model, opt_indices=None, verbose=False):
-        start = model.get_params()
-        if opt_indices is None:
-            opt_indices = range(0, len(start))
 
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
-        fmin_cg(f, start, f_grad, epsilon=1e-6,
-                callback=lambda x: update(x))
-
-    # @staticmethod
-    # def NLOPT(model, algorithm, opt_indices=None, verbose=False):
-    #     start = model.get_params()
-    #     if opt_indices is None:
-    #         opt_indices = range(0, len(start))
-    #
-    #     f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
-    #
-    #     def myfunc(x, grad):
-    #         update(x)
-    #         if grad.size > 0:
-    #             grad[:] = f_grad()
-    #         return f()
-    #
-    #     opt = nlopt.opt(algorithm, len(model.get_params()))
-    #     opt.set_min_objective(myfunc)
-    #     opt.set_ftol_rel(1e-3)
-    #     opt_x = opt.optimize(model.get_params())
-    #     d = {'opt_params': opt_x, 'funcalls': 1}
-    #     return d
-
-    @staticmethod
-    def general(model, opt_indices=None, verbose=False):
-        start = model.get_params()
-        if opt_indices is None:
-            opt_indices = range(0, len(start))
-
-        f, f_grad, update = Optimizer.get_f_f_grad_from_model(model, model.get_params(), opt_indices, verbose=verbose)
-        minimize(f, start, jac=f_grad, method='Newton-CG',
-                 callback=lambda x: update(x))
-
-        return {'funcalls': 1}
 
     @staticmethod
     def print_short(a):
@@ -192,8 +205,52 @@ class Optimizer:
 
     @staticmethod
     def optimize_model(model, max_fun_evals, logger,
-                       method=None, xtol=1e-4, iters_per_opt=15000, max_iters=200,
+                       method=None, xtol=1e-4, iters_per_opt=[25, 25, 25], max_iters=200,
                        ftol =1e-5, callback=None, current_iter=None):
+        """
+        Optimised model in an EM manner, i.e., each set of parameters are optimised independently, e.g.,
+
+                 |---> MoG ---> hyp ---> ll ----|
+                 |---<-------- <--------<-------|
+
+        Parameters
+        ----------
+        model : model
+         the model to optimise
+
+        max_fun_evals : int
+         maximum number of function evaluatioins
+
+        logger : logger
+         logger
+
+        method : list
+         the set of parameters to optimise. For example method = ['mog', 'hyp'] will optimise posterior distribution
+         and hyper-parameters.
+
+        iters_per_opt : dictionary
+         a dictionary containing maximum number of function evaluations for each subset of parameters in each local
+         optimisation. For example, iters_per_opt = {'mog' : 25, 'hyp' : 30} will update posterior parameters (mog)
+         for a maximum of 25 function evaluations and hyper-parameter for a maximum of 30 function evaluation.
+
+        max_iters : int
+         maximum number of global optimisations.
+
+        xtol : float
+         tolerance in the parameters which determines convergence. Tolerance is calculated as the average of posterior
+         mean and covariance, i.e., tol = (delta m + delta s) / 2
+
+        ftol : float
+         tolerance in the objective function which determines convergence.
+
+        callback : callable
+         a function which will be called after optimisation of the posterior parameters.
+
+        current_iter : int
+         current iteration of the optimisation. It is useful for example in the case that the optimisation is continued
+         from a previous optimisation.
+        """
+
         if not method:
             method=['hyp', 'mog']
         if not (max_fun_evals is None):
@@ -221,9 +278,6 @@ class Optimizer:
                         Configuration.ELL,
                     ])
                     d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt['mog'])
-                    # d = Optimizer.NLOPT(model, algorithm=nlopt.LD_LBFGS, verbose=verbose)
-                    # d = Optimizer.SGD(model, alpha=1e-6, start=model.get_params(), max_iter=10, adaptive_alpha=False)
-                    # d = Optimizer.general(model, verbose=verbose)
                     obj_track += tracker
                     total_evals += d['funcalls']
 
@@ -275,7 +329,6 @@ class Optimizer:
 
                 current_iter += 1
 
-
         except KeyboardInterrupt:
             logger.info('interrupted by the user')
             logger.info('last obj: ' + str(model.objective_function()))
@@ -288,5 +341,9 @@ class Optimizer:
             avg_time = (end - start) / total_evals
         return model, avg_time, (end - start), obj_track, total_evals
 
+
 class OptTermination(Exception):
+    """
+    a specific class when to indicate problems during optimisation, e.g., problems in function evaluation.
+    """
     pass

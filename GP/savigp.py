@@ -1,18 +1,17 @@
 import threading
+import math
+
 import GPy
 from atom.enum import Enum
 from scipy.misc import logsumexp
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from mog_diag import MoG_Diag
-from util import mdiag_dot, jitchol, pddet, inv_chol, nearPD, cross_ent_normal, log_diag_gaussian
-import math
 from GPy.util.linalg import mdot
 import numpy as np
-from numpy.ma import trace, vstack
-from scipy.linalg import logm, det, cho_solve, solve_triangular
-import scipy.stats
-from GPy import likelihoods
+from scipy.linalg import cho_solve, solve_triangular
 from GPy.core import Model
+
+from mog_diag import MoG_Diag
+from util import mdiag_dot, jitchol, pddet, inv_chol
 
 
 class Configuration(Enum):
@@ -26,18 +25,68 @@ class Configuration(Enum):
 
 class SAVIGP(Model):
     """
-    Scalable Variational Inference Gaussian Process
+    Provides a general class for Scalable Variational Inference Gaussian Process models.
 
-    :param X: input observations
-    :param Y: outputs
-    :param num_inducing: number of inducing variables
-    :param num_MoG_comp: number of components of the MoG
-    :param likelihood: conditional likelihood function
-    :param kernels: list of kernels of the HP
-    :param n_samples: number of samples drawn for approximating ell and its gradient
-    :rtype: model object
+    Parameters
+    ----------
+    X : ndarray
+     a N * D matrix containing N observation each in a D dimensional space
+
+    Y : ndarray
+    a N * O matrix, containing N outputs, where each output is in a O dimensional space
+
+    num_inducing : int
+     number of inducing points
+
+    num_mog_comp : int
+     number of mixture of Gaussians components used for representing posterior
+
+    likelihood : subclass of likelihood/Likelihood
+     likelihood object
+
+    kernels : list
+     a list containin kernels
+
+    n_samples : int
+     number of samples used to approximate gradients and objective function
+
+    config_list : list
+     configuration of the model. For example:
+
+     config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ENTROPY]
+
+     means that cross entropy, expected log likelihood, and entropy term all contribute to the calculation of gradients.
+     The config list also can contain for example:
+
+     config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ENTROPY, Configuration.MOG], which means that
+     posterior parameters will be in the objective function gradient. Similarly, Configuration.HYP, and
+     Configuration.LL mean that hyper-parameters, and likelihood parameters will be in the objective function gradient.
+
+    latent_noise : float
+     the amount of latent noise that will be added to the kernel.
+
+    exact_ell : boolean
+     whether to use exact log likelihood provided by the `likelihood` method. If `exact_ell` is False, log likelihood
+     will be calculated using sampling. The exact likelihood if useful for checking gradients.
+
+    inducing_on_Xs: boolean
+     whether to put inducing points randomly on training data. If False, inducing points will be determined using
+     clustering.
+
+    n_threads : int
+     number of threads used for calculating expected likelihood andi its gradients.
+
+    image : dictionary
+     a dictionary containing 'params' and 'Z', using which posterior parameters and inducing points will be
+     initialized.
+
+    max_X_partition_size : int
+     for memory efficiency, the algorithm partitions training data (X), to partitions of size `max_X_partition_size`,
+     and calculated the quantities for each using a separate thread.
     """
-    def __init__(self, X, Y, num_inducing, num_mog_comp,
+    def __init__(self, X, Y,
+                 num_inducing,
+                 num_mog_comp,
                  likelihood,
                  kernels,
                  n_samples,
@@ -55,29 +104,78 @@ class SAVIGP(Model):
         else:
             self.config_list = config_list
         self.num_latent_proc = len(kernels)
+        """ number of latent processes """
+
         self.num_mog_comp = num_mog_comp
+        """ number of mixture components """
+
         self.num_inducing = num_inducing
+        """ number of inducing points """
+
         self.MoG = self._get_mog()
+        """ posterior distribution """
+
         self.input_dim = X.shape[1]
+        """ dimensionality of input """
+
         self.kernels = kernels
+        """ list containing all the kernels """
+
         self.cond_likelihood = likelihood
+        """ the conditional likelihood function """
+
         self.X = X
+        """ input data. Dimensions: N * D """
         self.Y = Y
+        """ output data """
+
         self.n_samples = n_samples
+        """ number of samples used for approximations """
+
         self.param_names = []
+        """ name of the parameters """
+
         self.latent_noise = latent_noise
+        """ amount of latent process """
+
         self.last_param = None
+        """ last parameter that was used in `set_params` """
+
         self.hyper_params = None
+        """ hyper-parameters """
+
         self.sparse = X.shape[0] != self.num_inducing
+        """ bool : whether the model is sparse """
+
         self.num_hyper_params = self.kernels[0].gradient.shape[0]
+        """ number of hyper-parameters in each kernel """
+
         self.num_like_params = self.cond_likelihood.get_num_params()
+        """ number of likelihood parameters """
+
         self.is_exact_ell = exact_ell
+        """ whether to use exact likelihood """
+
         self.num_data_points = X.shape[0]
+        """ number of data points (N) """
+
         self.n_threads = n_threads
+        """ number of threads """
+
         self.max_x_partition_size = max_X_partizion_size
+        """ maximum number of data points to consider for calculations """
+
         self.cached_ell = None
+        """ current expected log likelihood """
+
         self.cached_ent = None
+        """ current entropy """
+
         self.cached_cross = None
+        """ current cross entropy term """
+
+        self.Z = None
+        """ position of inducing points. Dimensions: Q * M * D """
 
         if not image:
             if inducing_on_Xs:
@@ -89,17 +187,24 @@ class SAVIGP(Model):
 
         # Z is Q * M * D
         self.Kzz = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+        """ kernel values for each latent process. Dimension: Q * M * M """
+
         self.invZ = np.array([np.empty((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+        """ inverse of the kernels. Dimension: Q * M * M """
+
         self.chol = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
-        self.invZ = np.array([np.zeros((self.num_inducing, self.num_inducing))] * self.num_latent_proc)
+        """ Cholesky decomposition of the kernels .Dimension: Q * M * M """
+
         self.log_detZ = np.zeros(self.num_latent_proc)
+        """ logarithm of determinant of each kernel : log det K(Z[j], Z[j]) """
 
         # self._sub_parition()
-        self.X_paritions, self.Y_paritions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
+        self.X_partitions, self.Y_partitions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
 
         np.random.seed(12000)
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
             .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
+        """ samples from a normal distribution with mean 0 and variance 1. Dimensions: Q * S * partition_size """
 
         # uncomment to use sample samples for all data points
         # self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc) \
@@ -119,39 +224,81 @@ class SAVIGP(Model):
         self.set_configuration(self.config_list)
 
     def _partition_data(self, X, Y):
-        X_paritions = []
-        Y_paritions = []
-        if 0 == (X.shape[0] % self._max_parition_size()):
-            n_partitions = X.shape[0] / self._max_parition_size()
+        """
+        Partitions `X` and `Y` into batches of size `self._max_partition_size()`
+
+        Returns
+        -------
+        X_partition : list
+         a list containing partitions of X. Each partition has dimensions: P * D, where P < `self._max_partition_size()`
+
+        Y_partition : list
+         a list containing partitions of Y.
+
+        n_partitions : int
+         number of partitions
+
+        partition_size : int
+         size of each partition
+
+        """
+        X_partitions = []
+        Y_partitions = []
+        if 0 == (X.shape[0] % self._max_partition_size()):
+            n_partitions = X.shape[0] / self._max_partition_size()
         else:
-            n_partitions = X.shape[0] / self._max_parition_size() + 1
-        if X.shape[0] > self._max_parition_size():
+            n_partitions = X.shape[0] / self._max_partition_size() + 1
+        if X.shape[0] > self._max_partition_size():
             paritions = np.array_split(np.hstack((X, Y)), n_partitions)
-            partition_size = self._max_parition_size()
+            partition_size = self._max_partition_size()
 
             for p in paritions:
-                X_paritions.append(p[:, :X.shape[1]])
-                Y_paritions.append(p[:, X.shape[1]:X.shape[1] + Y.shape[1]])
+                X_partitions.append(p[:, :X.shape[1]])
+                Y_partitions.append(p[:, X.shape[1]:X.shape[1] + Y.shape[1]])
         else:
-            X_paritions = ([X])
-            Y_paritions = ([Y])
+            X_partitions = ([X])
+            Y_partitions = ([Y])
             partition_size = X.shape[0]
-        return X_paritions, Y_paritions, n_partitions, partition_size
+        return X_partitions, Y_partitions, n_partitions, partition_size
 
     def _sub_parition(self):
         self.partition_size = 50
         inducing_index = np.random.permutation(self.X.shape[0])[:self.partition_size]
-        self.X_paritions = []
-        self.Y_paritions = []
-        self.X_paritions.append(self.X[inducing_index])
-        self.Y_paritions.append(self.Y[inducing_index])
+        self.X_partitions = []
+        self.Y_partitions = []
+        self.X_partitions.append(self.X[inducing_index])
+        self.Y_partitions.append(self.Y[inducing_index])
         self.cached_ell = None
         self.n_partitions = 1
 
-    def _max_parition_size(self):
+    def _max_partition_size(self):
+        """
+        :return: maximum number of elements in each partition
+        """
         return self.max_x_partition_size
 
     def _clust_inducing_points(self, X, Y):
+        """
+        Determines the position of inducing points using k-means or mini-batch k-means clustering.
+
+        Parameters
+        ----------
+        X : ndarray
+         inputs
+
+        Y : ndarray
+         outputs
+
+        Returns
+        -------
+        Z : ndarray
+         position of inducting points. Dimensions: Q * M * M
+
+        init_m : ndarray
+          initial value for the mean of posterior distribution which is the mean of Y of data points in
+          the corresponding cluster. Dimensions: M * Q
+        """
+
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
         init_m = np.empty((self.num_inducing, self.num_latent_proc))
         np.random.seed(12000)
@@ -480,7 +627,7 @@ class SAVIGP(Model):
         total_out = []
         threads = []
         for p in range(0, self.n_partitions):
-            t = MyThread(self, self.X_paritions[p], self.Y_paritions[p], total_out)
+            t = MyThread(self, self.X_partitions[p], self.Y_partitions[p], total_out)
             threads.append(t)
             t.start()
 
