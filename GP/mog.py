@@ -20,6 +20,7 @@ class MoG:
         :param num_dim: dimensionality of each Gaussian.
         :return: None
         """
+
         self.num_comp = num_comp
         self.num_process = num_process
         self.num_dim = num_dim
@@ -36,11 +37,11 @@ class MoG:
 
         Parameters
         ----------
-        params: ndarray
+        params : ndarray
          an array of size  = self.get_m_size() + self.get_s_size() + self.num_ comp, which will be used to update
          parameters
-        :return: None
         """
+
         self.parameters = params
         self.m_from_array(params[:self.get_m_size()])
         self.s_from_array(params[self.get_m_size():(self.get_m_size() + self.get_s_size())])
@@ -49,7 +50,7 @@ class MoG:
 
     def pi_dim(self):
         """
-        :return: number of components (dimensionality of the `pi` array)
+        :return: number of components (dimensionality of the ``pi`` array)
         """
         return self.num_comp
 
@@ -69,10 +70,10 @@ class MoG:
 
     def transform_S_grad(self, g):
         r"""
-        transforms gradients of of `s` to be in the original space, i.e., space of the values the was used
-        in `updata_parameters`. Assume:
+        transforms gradients of of ``s`` to be in the original space, i.e., space of the values the was used
+        in ``updata_parameters``. Assume:
 
-        g = df \\ dS, where S is the posterior covariance,
+         g = df \\ dS, where S is the posterior covariance,
 
         then this function returns:
 
@@ -94,12 +95,15 @@ class MoG:
 
     def pi_from_array(self, p):
         """
-        Builds p (weight of each component) from an unconstrained array.
-        :param p:
-         a ndarray of size num_comp
-        :return:
-         None
+        Builds ``p`` (weight of each component) from an unconstrained array.
+
+        Parameters
+        ----------
+        p : ndarray
+         an array of size num_comp
+
         """
+
         pis = np.exp(p)
         self.pi = pis / sum(pis)
         self.pi_untrans = p.copy()
@@ -110,29 +114,33 @@ class MoG:
 
     def transform_pi_grad(self, p):
         """
-        Returns gradient of the `p` array wrt to the untransformed parameters, i.e., the parameters that will be exposed
+        Returns gradient of the ``p`` array wrt to the untransformed parameters, i.e., the parameters that will be exposed
         to the optimiser.
-        :param p: input array to calculate its gradient
-        :return:
+
+        Parameters
+        ----------
+        p : ndarray
+         input array to calculate its gradient
         """
         return mdot(p, self.dpi_dx())
 
     def get_m_size(self):
         """
-        :return: total size of the array containing `m` of all components and processes
+        :return: total size of the array containing mean of the posterior for all components and processes
         """
         return self.num_comp * self.num_process * self.num_dim
 
     def updata_mean(self, j, mj):
 
         """
-        Update mean of the latenet process `j` using `mj` for all components.
+        Update mean of the latent process ``j`` using ``mj`` for all components.
         :param j:
          the latent process to update
         :param mj:
          the mean used to update
         :return: None
         """
+
         for k in range(self.num_comp):
             self.m[k, j, :] = mj.copy()
         self._update()
@@ -142,17 +150,19 @@ class MoG:
         raise NotImplementedError
 
     def num_parameters(self):
-        """ return number of free parameters of a model """
+        """ returns number of free parameters of a model """
         raise NotImplementedError
 
     def get_s_size(self):
-        """ returns the size of the representation of covariance when flattened. For example, in the case of diagonal
-        covariance the size will be K * Q * M (K : number of components; Q : number of latent processes;
+        """ returns the size of an array needed to represent the posterior covariance when flattened. For example,
+        in the case of diagonal covariance the size will be K * Q * M (K : number of components; Q : number of latent processes;
         M : number of inducing points)"""
+
         raise NotImplementedError
 
     def S_dim(self):
-        """ dimensionality of nonzero elements in the covariance matrix """
+        """ dimensionality of nonzero elements in the covariance matrix (e.g., M in the case of diagonal posterior
+        and M^2 in the case of full posterior covariance) """
         raise NotImplementedError
 
     def m_from_array(self, ma):
@@ -164,7 +174,7 @@ class MoG:
         raise NotImplementedError
 
     def s_from_array(self, sa):
-        """ initializes the covariance matrix from `sa`. Note that `sa` is in the raw space, ie., it is coming directly
+        """ initializes the covariance matrix from ``sa``. Note that ``sa`` is in the raw space, ie., it is coming directly
         form the optimiser"""
         raise NotImplementedError
 
@@ -174,7 +184,7 @@ class MoG:
 
     def tr_AinvS(self, L, k, j):
         """
-        Assuming that `L` is the cholesky decomposition of A
+        Assuming that ``L`` is the Cholesky decomposition of A
 
         :return  trace(A^-1 s[k,j]) """
         raise NotImplementedError
@@ -195,14 +205,13 @@ class MoG:
 
     def dAinvS_dS(self, L, k, j):
         r"""
-        Assuming L = chol (A), then this function calculates dA^{-1}s[k,j] \\ ds[k,j] and transforms the results to the
+        Assuming ``L`` = chol (A), then this function calculates dA^{-1}s[k,j] \\ ds[k,j] and transforms the results to the
         raw space i.e., ready for exposing to the optimiser"""
         raise NotImplementedError
 
     def dAS_dS(self, L, k, j):
         """ :return  dA^{-1}S dS  """
         raise NotImplementedError
-
 
     def Sa(self, a, k, j):
         """ :return  S_kj a  """

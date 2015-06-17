@@ -1,6 +1,5 @@
 __author__ = 'AT'
 
-import numpy as np
 from data_source import DataSource
 from model_learn import ModelLearn
 from likelihood import *
@@ -9,6 +8,10 @@ from ExtRBF import ExtRBF
 
 
 class ExperimentSetup:
+    """
+    Sets up settings for running each experiment.
+    """
+
     def __init__(self):
         pass
 
@@ -37,8 +40,8 @@ class ExperimentSetup:
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 1, 'hyp': 1, 'll': 1},
-                                  max_iter=1))
+                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                  max_iter=200))
         return names
 
     @staticmethod
@@ -383,6 +386,24 @@ class ExperimentSetup:
 
     @staticmethod
     def get_train_test(X, Y, n_train):
+        """
+        Divides inputs ``X`` and ``Y`` into a training set of size ``n_train``, and a test set which contains rest of
+        data points.
+
+        Returns
+        -------
+        Xn : ndarray
+         training X
+
+        Yn : ndarray
+         training Y
+
+        Xs : ndarray
+         test X
+
+        Ys : ndarray
+         test Y
+        """
         data = np.hstack((X, Y))
         np.random.shuffle(data)
         Xn = data[:, :X.shape[1]]

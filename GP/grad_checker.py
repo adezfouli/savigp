@@ -13,26 +13,32 @@ class GradChecker:
     @staticmethod
     def check(f, f_grad, x0, name, verbose=False):
         """
-        Checks whether gradient of function 'f' at point x0 is same as the gradients provided by 'f_grad'. 'error'
-        is the difference between numerical and provided gradients. '%error' = abs(error) / numerical gradient.
+        Checks whether gradients of function ``f`` at point x0 is same as the gradients provided by ``f_grad``.
+        ``error`` is the difference between numerical and provided gradients.
+         '%error' = abs(error) / numerical gradient.
 
         Parameters
         ----------
-        f: callable
+        f : callable
          input function to check gradients against
-        f_grad: callable
-         input function which provides gradients \n
-        x0: ndarray
-         the point at which gradients should be calculated \n
-        name: list
+
+        f_grad : callable
+         input function which provides gradients
+
+        x0 : ndarray
+         the point at which gradients should be calculated
+
+        name : list
          a vector with the size of the number of parameters, which provides name for each parameter. This
-         name will be used when generating output table\n
-        verbose: boolean
-         whether to print output for each parameter separately\n
+         name will be used when generating output table
+
+        verbose : boolean
+         whether to print output for each parameter separately
 
         Returns
         -------
-        :return: average of the percentage error over all the parameters, i.e., mean(%error)
+        avg : float
+         average of the percentage error over all the parameters, i.e., mean(%error)
         """
 
         g = f_grad(x0)

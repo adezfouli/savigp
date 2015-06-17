@@ -22,10 +22,10 @@ class PlotOutput:
     @staticmethod
     def plot_output(name, infile_path, model_names, filter, export_pdf):
         """
-        Reads predictions from csv files and generates plots and output csv. csv files should be in the infile_path
-        with following structure:
+        Reads predictions from csv files and generates plots and output csv. Input csv files should be in the
+        infile_path with following structure:
 
-        `infile_path` /
+        ``infile_path`` /
                     ../any_name/
                                 ../config.csv, test_.csv,train_.csv
                     ../any_name2
@@ -38,16 +38,21 @@ class PlotOutput:
         Parameters
         ----------
         name : string
-         name for export csv files
+         name of the csv files to which data will be exported
+
         infile_path : string
          the folder which contains csv for configs and test and train
+
         model_names : list
-         name of the sub-directories in `infile_path` to consider
+         name of the sub-directories in ``infile_path`` to consider
+
         filter : callable
          a filter which will be applied in config files to filter which configs should be considered. For example,
          lambda x: x['method'] == 'full' will only consider outputs which used 'full' method
+
         export_pdf : boolean
          whether to export the final plot as the pdf.
+
         :return: None
         """
         graphs = {}
@@ -168,7 +173,7 @@ class PlotOutput:
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
         """
-        A helper function which will extract plot data for all the folders in `path` which satisfy the filter.
+        A helper function which will extract plot data for all the folders in ``path`` which satisfy the filter.
 
         Parameters
         ----------
@@ -184,6 +189,7 @@ class PlotOutput:
 
         export_pdf: boolean
          whether to export output graphs as pdf
+
         :return: None
         """
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
@@ -193,7 +199,7 @@ class PlotOutput:
     @staticmethod
     def find_all(path, filter):
         """
-        Prints the name of all folders inside `path` which their config files satisfies `filter`
+        Prints the name of all folders inside ``path`` which their config files satisfies ``filter``
         """
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         for m in dir:

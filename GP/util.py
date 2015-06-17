@@ -9,9 +9,10 @@ from scipy.linalg import det, inv, lapack
 from GPy.util.linalg import mdot, dpotri
 import numpy as np
 
+
 def mdiag_dot(A, B):
     """
-    Given input matrices `A` and `B`, this function returns the diagonal terms of the matrix product of A and B
+    Given input matrices ``A`` and ``B``, this function returns the diagonal terms of the matrix product of A and B
 
     Returns
     -------
@@ -24,8 +25,9 @@ def mdiag_dot(A, B):
 def KL_normal(m1, sigma1, m2, sigma2):
     """
     Calculates the KL divergence between two normal distributions specified by
-    N(mu1, sigma1), N(mu2, sigma2)
+    N(``mu1``, ``sigma1``), N(``mu2``, ``sigma2``)
     """
+
     return 1. / 2. * (math.log(det(sigma2) / det(sigma1)) - len(m1) + trace(mdot(inv(sigma2), sigma1)) + \
     mdot((m2 - m1).T, inv(sigma2) , m2- m1))
 
@@ -33,7 +35,7 @@ def KL_normal(m1, sigma1, m2, sigma2):
 def cross_ent_normal(m1, sigma1, m2, sigma2):
     """
     Calculates the cross entropy between two normal distributions specified by
-    N(mu1, sigma1), N(mu2, sigma2)
+    N(``mu1``, ``sigma1``), N(``mu2``, ``sigma2``)
     """
 
     return -KL_normal(m1, sigma1, m2, sigma2) - 1. / 2 * math.log(det(2.0 * math.pi * math.e * sigma1))
@@ -41,8 +43,8 @@ def cross_ent_normal(m1, sigma1, m2, sigma2):
 
 def jitchol(A, maxtries=5):
     """
-    Calculates the Cholesky decomposition of A. In the case that it is not possible to calculate the Cholesky,
-    it will add jitter to A.
+    Calculates the Cholesky decomposition of ``A``. In the case that it is not possible to calculate the Cholesky,
+    a jitter will be added to ``A``.
 
     Note
     ----
@@ -84,7 +86,7 @@ def pddet(L):
 
 def inv_chol(L):
     """
-    Given that L is the Cholesky decomposition of A, this method returns A^-1
+    Given that ``L`` is the Cholesky decomposition of A, this method returns A^-1
 
     Note
     ----
@@ -97,14 +99,15 @@ def inv_chol(L):
 
 def chol_grad(L, dM_dx):
     """
-    Given that L is the Cholesky decomposition of x, and `dM_dx` is the gradient of M wrt to x,
+    Given that ``L`` is the Cholesky decomposition of x, and ``dM_dx`` is the gradient of M wrt to x,
     then this function calculates dM \\ dL
 
     L = cholesky (x)
 
     Returns
     -------
-    dM \\ dL
+    dM_dL : ndarray
+     dM \\ dL
 
     """
 
@@ -134,20 +137,20 @@ class bcolors:
 
 def check_dir_exists(dir_name):
     """
-    Checks if folder `dir_name` exists, and if it does not exist, it will be created.
+    Checks if folder ``dir_name`` exists, and if it does not exist, it will be created.
     """
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
 
 def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
-    """generates a random sequence of character of length `size`"""
+    """generates a random sequence of character of length ``size``"""
 
     return ''.join(random.choice(chars) for _ in range(size))
 
 
 def tr_AB(A, B):
-    """ Given two matrices `A` and `B`, this function return trace (AB) """
+    """ Given two matrices ``A`` and ``B``, this function return trace (AB) """
     return np.sum(inner1d(A, B.T))
 
 

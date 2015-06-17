@@ -12,7 +12,7 @@ from savigp import SAVIGP
 
 class SAVIGP_Diag(SAVIGP):
     """
-    Implementation of the SAVIGP model in the case the posterior is the mixture of diagonal Gaussians.
+    Implementation of the SAVIGP model in the case that posterior is the mixture of diagonal Gaussians.
     """
 
     def __init__(self, X, Y, num_inducing, num_mog_comp, likelihood, kernels, n_samples, config_list,
@@ -62,8 +62,8 @@ class SAVIGP_Diag(SAVIGP):
 
     def _d_ent_d_S_kj(self, k, j):
         """
-        Calculates gradient of the entropy term of ELBO wrt to the posterior covariance for component `k` and latent
-        `j`. The returned gradient will be in the raw space.
+        Calculates gradient of the entropy term of ELBO wrt to the posterior covariance for component ``k`` and latent
+        process ``j``. The returned gradient will be in the raw space.
         """
         s_k = np.zeros(self.MoG.S_dim())
         for l in range(self.num_mog_comp):
@@ -79,7 +79,7 @@ class SAVIGP_Diag(SAVIGP):
         Returns
         -------
         ds : ndarray
-         dent \\ ds. Gradients will be in the raw space. Dimensions : K * Q * `self.MoG.S_dim()`
+         dent \\ ds. Gradients will be in the raw space. Dimensions : K * Q * ``self.MoG.S_dim()``
 
         """
         dent_ds = np.empty((self.num_mog_comp, self.num_latent_proc) + self.MoG.S_dim())

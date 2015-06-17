@@ -9,8 +9,7 @@ import numpy as np
 class MoG_Diag(MoG):
     """
     Implementation of a posterior distribution where the covariance matrix is a mixture of diagonal Gaussians.
-    The class has to important
-    internal field as follows: \n
+    The class has to important internal field as follows:
 
      Attributes
      ----------
@@ -62,6 +61,8 @@ class MoG_Diag(MoG):
 
         then this function returns:
         :returns df \\ d log(s)
+
+        therefore transforming the gradient to the raw space (log(s) space).
         """
         return g.flatten() * self.s.flatten()
 
@@ -98,7 +99,7 @@ class MoG_Diag(MoG):
         Returns (1 / (s[k,j] + s[l,j]) - (m[k,j] - m[l,j]) ** 2 / (s[k,j] + s[l,j])) * s[k,j]
 
         None that the last multiplication by s[k,j] is because this function is used to calculate
-        gradients, and this multiplication brings the gradients to the raw space
+        gradients, and this multiplication brings the gradients to the raw space (log(s) space)
         """
 
         return (self.invC_klj_Sk[k, l, j] -

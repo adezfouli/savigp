@@ -8,7 +8,7 @@ import numpy as np
 
 class SAVIGP_SingleComponent(SAVIGP):
     """
-    Implementation of SAVIGP in the case the posterior covariance is full, and the mixture has only one component.
+    Implementation of SAVIGP in the case that the posterior covariance is full, and the mixture has only one component.
     """
 
     def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples,

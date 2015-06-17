@@ -21,26 +21,31 @@ class Likelihood:
         pass
 
     def ll_F_Y(self, F, Y):
-        """
-        Method which calculates p(Y|F), and dp(Y|F)\dlambda, for multiple latent function values, and multiple
-        output points.
+        r"""
+        Method which calculates p(Y|F), and dp(Y|F)\\dlambda, for multiple latent function values (``F``), and multiple
+        output points (``Y``).
 
-        Dimensions
+        Parameters
         ----------
-        dim(F) = S * N * Q,
-            where S is the number of samples, N number of datapoints, and Q number of latent processes
+        F : ndarray
+         dim(F) = S * N * Q,
+         where S is the number of samples, N number of datapoints, and Q number of latent processes
 
-        dim(Y) = N * dim(O),
-            where dim(O) is the output dimensionality. \n
+        Y : ndarray
+         dim(Y) = N * dim(O),
+         where dim(O) is the output dimensionality.
 
 
         Returns
         -------
-        The method is supposed to return matrix P and dP, where: \n
-            P[n,s] = p(Y[n,:]| F[s,n,:])\n
-        and
-            dP[n,s] = p(Y[n,:]| F[s,n,:])\\ dlambda,
-            where lambda is the likelihood parameters
+        P : ndarray
+         dim(P) = N * S
+         P[n,s] = p(Y[n,:]| F[s,n,:])
+
+        dP : ndarray
+         dim(dP) = N * S
+         dP[n,s] = p(Y[n,:]| F[s,n,:])\\dlambda,
+         where lambda is the likelihood parameters
         """
         raise Exception("not implemented yet")
 
@@ -57,7 +62,7 @@ class Likelihood:
         Parameters
         ----------
         p : ndarray
-            array containing values.
+         array containing values.
 
         """
         raise Exception("not implemented yet")
@@ -69,7 +74,7 @@ class Likelihood:
         Returns
         -------
         p : ndarray
-            parameters of the likelihood.
+         parameters of the likelihood.
 
         """
 
@@ -82,12 +87,12 @@ class Likelihood:
         Parameters
         ----------
         Y : ndarray
-            input matrix. dim(Y) = N * dim(out).
+         input matrix. dim(Y) = N * dim(out).
 
         Returns
         -------
         f : array_like
-            initial value of `f` given `Y`. dim(f) = Q, where Q is the number of latent processes
+         initial value of ``f`` given ``Y``. dim(f) = Q, where Q is the number of latent processes.
         """
         return np.mean(Y, axis=0)
 
@@ -99,7 +104,8 @@ class Likelihood:
 
     def nlpd_dim(self):
         """
-        This function returns number of NLPD.
+        This function returns number of NLPD. This can be useful in the case that for example the likelihood
+        returns NLPD for each output separately.
         """
         return 1
 
@@ -111,7 +117,7 @@ class Likelihood:
         Returns
         -------
         ell : float
-            ell = log \integral p(Y|f)N(f|mu, sigma)
+         ell = log \integral p(Y|f)N(f|mu, sigma)
 
         """
 
@@ -119,12 +125,12 @@ class Likelihood:
 
     def predict(self, mu, sigma, Ys, model=None):
         """
-        Makes predictions about mean, and variance and calculates NLPD baes on Ys.
+        Makes predictions about mean, and variance for the output and calculates NLPD based on Ys.
 
         Parameters
         ----------
         mu : ndarray
-         dim(mu) = N * Q, where Q is the number of latent processes
+         dim(mu) = N * Q, where Q is the number of latent processes.
 
         sigma : ndarray
          dim(sigma) = N * Q
@@ -137,23 +143,23 @@ class Likelihood:
         -------
         mean : array_like
          mean = \integral y * P(y|f)N(f|mu, sigma) df dy
+
         var :
          variance of the prediction
+
         NLPD:
-         NLPD = log \integral p(Ys|f)N(f|mu, sigma) df
+         NLPD = -log \integral p(Ys|f)N(f|mu, sigma) df
 
         """
 
         raise Exception("not implemented yet")
 
 
-
-
 class MultivariateGaussian(Likelihood):
     """
     Implementation of a multi-variate Gaussian likelihood
 
-    log P(y|f) = -0.5 * log det (sigma) - size(sigma)/2 * log (2 * pi) - 0.5 * (f-y)T sigma^-1 (f-y)
+     log P(y|f) = -0.5 * log det (sigma) - size(sigma)/2 * log (2 * pi) - 0.5 * (f-y)T sigma^-1 (f-y)
     """
     def __init__(self, sigma):
         Likelihood.__init__(self)
@@ -185,7 +191,7 @@ class UnivariateGaussian(Likelihood):
     """
     Implementation of the a univariate likelihood
 
-    log p(y|f) = -0.5 * log(sigma) - 0.5 log (2pi) - 0.5 * (f-y)^2 / sigma
+     log p(y|f) = -0.5 * log(sigma) - 0.5 log (2pi) - 0.5 * (f-y)^2 / sigma
     """
     def __init__(self, sigma):
         Likelihood.__init__(self)
@@ -223,14 +229,13 @@ class UnivariateGaussian(Likelihood):
         return 1
 
 
-
 class LogGaussianCox(Likelihood):
     """
     Implementation of a Log Gaussian Cox process
 
-    p(y|f) = (lambda)^y exp(-lambda) / y!
+     p(y|f) = (lambda)^y exp(-lambda) / y!
 
-    lambda = f + offset
+     lambda = f + offset
     """
 
     def __init__(self, offset):
@@ -263,7 +268,10 @@ class LogisticLL(object, Likelihood):
     """
     Logistic likelihood
 
-    p(y|f) = 1 / (1 + exp(-f))
+     p(y|f) = 1 / (1 + exp(-f))
+
+
+    The output is assumed to be either 1 or -1
 
     """
 
@@ -288,9 +296,6 @@ class LogisticLL(object, Likelihood):
 
         return mean, mean * (1 - mean), lpd[:, 0][:, np.newaxis]
 
-    def _get_y_range(self):
-        return np.array([[1, -1]]).T
-
     def get_params(self):
         return np.array([])
 
@@ -306,6 +311,8 @@ class SoftmaxLL(Likelihood):
     Softmax likelihood:
 
     p(y=c|f) = exp(f_c) / (exp(f_1) + ... + exp(f_N))
+
+    output is supposed to be in the form of for example [1 0 0] for class1, and [0 1 0] for class2 etc.
     """
 
     def __init__(self, dim):
@@ -349,12 +356,12 @@ class WarpLL(object, Likelihood):
     Implementation of a Warp likelihood.
 
     The log likelihood for warped Gaussian processes and its derivatives.
-       p(y|f) = dt(y)/dy p(t(y)|f)
-    where t(y) = nnwarp(y)
+     p(y|f) = dt(y)/dy p(t(y)|f)
+     where t(y) = nnwarp(y)
 
     The likelihood parameters are
-    hyp.lik = [a, b ,c log(sqrt(sn2))]
-    where a,b,c are parameter vectors of the warping t(y).
+     hyp.lik = [a, b ,c log(sqrt(sn2))]
+     where a,b,c are parameter vectors of the warping t(y).
 
     """
     def __init__(self, ea, eb, c, log_s):
@@ -420,9 +427,6 @@ class WarpLL(object, Likelihood):
         return 1
 
 
-    def _get_y_range(self):
-        return np.array([xrange(-1000, 2000, 1)]).T / 1000
-
     def _get_initial_points(self, q, sortz, sortt):
         t0 = np.empty(q.shape)
         for j in range(q.shape[0]):
@@ -437,8 +441,11 @@ class WarpLL(object, Likelihood):
                     t0[j,k] = sortt[I].mean()
         return t0
 
-
     def test(self):
+        """
+        It's a function for testing this class against the Matlob code from which this class is adapted
+        """
+
         mu = np.array([[1.13395340993645e-06, 5.65190424705805e-06, 5.78826209038103e-06, 2.83243484612040e-06, -7.38434570563690e-07]]).T
         sigma = np.array([[ 0.299216202282485, 0.243742513817980, 0.295996476326654, 0.230752860541760, 0.281672812756221
         ]]).T
@@ -452,13 +459,14 @@ class WarpLL(object, Likelihood):
     def get_num_params(self):
         return 1
 
+
 class CogLL(Likelihood):
     """
     Implementation of a Gaussian process network likelihood.
 
-    y ~ N (W  * F, sigma)
+     y ~ N (W  * F, sigma)
 
-    where dim(W) = P * Q, and dim(F) = Q * 1.
+     where dim(W) = P * Q, and dim(F) = Q * 1.
 
     W and F are made of latent processes
     """
@@ -520,7 +528,6 @@ class CogLL(Likelihood):
         if Ys is not None:
             lpd = self._calc_nlpd(Ys, Wf)
         return Wf.mean(axis=0), None, lpd
-
 
     def _calc_nlpd(self, Ys, Wf):
         lpd = np.empty((Ys.shape[0], Ys.shape[1] + 1))

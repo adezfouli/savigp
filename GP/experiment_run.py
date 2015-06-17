@@ -10,7 +10,7 @@ class ExperimentRunner:
     @staticmethod
     def get_configs():
         """
-        Builds an array of configuration for running
+        Builds an array of configuration for running (in parallel)
         """
 
         configs = []
@@ -34,7 +34,7 @@ class ExperimentRunner:
     @staticmethod
     def get_experiments():
         """
-        Builds an array of experiments to run in parallel
+        Builds an array of experiments to run in parallel (the array can contain more than one experiment)
         """
 
         # uncomment to run desired experiment
@@ -49,20 +49,12 @@ class ExperimentRunner:
     @staticmethod
     def run_parallel(n_process):
         """
-        :param n_process number of processes to run in parallel
-        Runs experiments in parallel.
+        Creates a process for each element in the array returned by ``get_configs()`` and the experiment corresponding
+        the each element. The maximum number of processes to run in parallel is determined by ``n_process``
         """
 
         p = Pool(n_process)
         p.map(run_config, ExperimentRunner.get_configs())
-
-    @staticmethod
-    def run_serial():
-        """
-        Runs experiments in serial.
-        """
-        for c in ExperimentRunner.get_configs():
-            run_config(c)
 
 
     @staticmethod
@@ -144,6 +136,7 @@ class ExperimentRunner:
         # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
         #                            lambda x: x['experiment'] == 'abalone', False)
 
+
 def run_config(config):
     try:
         logger.info('started config: ' + str(config))
@@ -158,8 +151,6 @@ if __name__ == '__main__':
 
     # uncomment to run experiments in parallel
     # ExperimentRunner.run_parallel(3)
-
-    # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
     ExperimentRunner.boston_experiment()

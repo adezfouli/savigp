@@ -58,7 +58,7 @@ class DataTransformation:
 
     def untransform_NLPD(self, NLPD):
         """
-        untransfomrs NLPD to the original Y space
+        Untransfomrs NLPD to the original Y space
 
         :param
          NLPD: transfomred NLPD
@@ -66,6 +66,7 @@ class DataTransformation:
          untransformed NLPD
         """
         raise NotImplementedError()
+
 
 class IdentityTransformation:
     """
@@ -133,7 +134,7 @@ class MeanTransformation(object, DataTransformation):
 
 class MeanStdYTransformation(object, DataTransformation):
     """
-    Transforms only Y in a way that the transfomred Y has mean = 0 and std =1
+    Transforms only Y in a way that the transformed Y has mean = 0 and std =1
     """
 
     def __init__(self, scalar):

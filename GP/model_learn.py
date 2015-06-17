@@ -13,17 +13,30 @@ from util import id_generator, check_dir_exists, get_git
 
 
 class ModelLearn:
+    """
+    Provides facility for fitting models to data, making predictions and exporting results to csv files.
+    """
+
+    def __init__(self):
+        pass
+
     @staticmethod
     def get_output_path():
         """
-        :return: the path in which results of the experiment will be saved
+        Returns
+        -------
+        path : string
+         the path in which results of the experiment will be saved
         """
         return '../results/'
 
     @staticmethod
     def get_logger_path():
         """
-        :return: the path in which log files will be created
+        Returns
+        -------
+        path : string
+         the path in which log files will be created
         """
         return '../logs/'
 
@@ -32,13 +45,20 @@ class ModelLearn:
         """
         Creates loggers
 
-        :param
-         name: name of the log file
-        :param
-         level: level of debugging
-        :return
+        Parameters
+        ----------
+        name : string
+         name of the log file
+
+        level : string
+         level of debugging
+
+        Returns
+        -------
+        logger : logger
          created loggers
         """
+
         logger = logging.getLogger(name)
         logger.setLevel(level)
         check_dir_exists(ModelLearn.get_logger_path())
@@ -58,14 +78,20 @@ class ModelLearn:
         """
         Exports training data into a csv file
 
-        :param
-         name: name of file
-        :param
-         Xtrain: 'X' of training data
-        :param
-         Ytrain: 'Y' of training data
-        :param
-         export_X: whether to export 'X'. If False, only Ytrain will be exported
+        Parameters
+        ----------
+        name : string
+         name of file
+
+        Xtrain : ndarray
+         X of training data
+
+        Ytrain : ndarray
+         Y of training data
+
+        export_X : boolean
+         whether to export 'X'. If False, only ``Ytrain`` will be exported
+
         :return:
          None
         """
@@ -87,12 +113,14 @@ class ModelLearn:
         """
         exports trajectory of the objective function
 
-        :param
-         name: name of the file
-        :param
-         track: trajectory of the objective function
-        :return:
-         None
+        Parameters
+        ----------
+        name : string
+         name of the file to which track will be exported
+
+        track : list
+         trajectory of the objective function
+
         """
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
@@ -106,13 +134,15 @@ class ModelLearn:
         """
         exports Model into a csv file
 
-        :param
-         model: the model to be exported
-        :param
-         name: name of the csv file
-        :return:
-         None
+        Parameters
+        ----------
+        model : model
+         the model to be exported
+
+        name : string
+         name of the csv file
         """
+
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'model_'
@@ -127,29 +157,38 @@ class ModelLearn:
 
 
     @staticmethod
-    def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names, export_X=False):
+    def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names=[''], export_X=False):
         """
         Exports test data and the predictions into a csv file
 
-        :param
-         name: name of the file
-        :param
-         X: 'X' for which prediction have been made
-        :param
-         Ytrue: The true values of 'Y'
-        :param
-         Ypred: Predictions
-        :param
-         Yvar_pred: Variance of the prediction
-        :param
-         nlpd: NLPD of the predictions
-        :param
-         pred_names:
-        :param
-         export_X: Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file.
-        :return:
-         None
+        Parameters
+        ----------
+        name : string
+         name of the file
+
+        X : ndarray
+         X test for which prediction have been made
+
+        Ytrue : ndarray
+         The true values of 'Y'
+
+        Ypred : ndarray
+         Predictions at the test points
+
+        Yvar_pred : ndarray
+         Variance of the prediction
+
+        nlpd : ndarray
+         NLPD of the predictions
+
+        pred_names : list
+         not necessary. It should be ['']
+
+        export_X : boolean
+         Whether to export 'X' to the csv file. If False, 'X' will not be exported into the csv file
+         (useful in large datasets).
         """
+
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'test_'
@@ -178,15 +217,17 @@ class ModelLearn:
     @staticmethod
     def export_configuration(name, config):
         """
-        Exports configuration of the model as well as optimize to a csv file
+        Exports configuration of the model as well as optimisation parameters to a csv file
 
-        :param
-         name: Name of the file
-        :param
-         config: Configuration to be exported
-        :return:
-         None
+        Parameters
+        ----------
+        name : string
+         Name of the file
+
+        config : dictionary
+         Configuration to be exported
         """
+
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = path + 'config_' + '.csv'
@@ -205,6 +246,15 @@ class ModelLearn:
 
     @staticmethod
     def opt_callback(name):
+        """
+        A callback function which will be called by the optimiser to save the model
+
+        Parameters
+        ----------
+        name : string
+         name of the folder to save the model in.
+        """
+
         def callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
             path = ModelLearn.get_output_path() + name + '/'
             check_dir_exists(path)
@@ -227,74 +277,102 @@ class ModelLearn:
                   latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None,
                   xtol=1e-3, ftol=1e-5, partition_size=3000):
         """
-        Fits a model to the data (Xtrin, Ytraing) using the method provided by 'method', and makes predictions on
-         'Xtrest' and 'Ytest', and exports the result to several csv files.
+        Fits a model to the data (Xtrain, Ytrain) using the method provided by 'method', and makes predictions on
+         'Xtest' and 'Ytest', and exports the result to csv files.
 
         Parameters
         ----------
-        Xtest: ndarray
+        Xtest : ndarray
          X of test points
-        Xtrain: ndarray
+
+        Xtrain : ndarray
          X of training points
-        Ytest: ndarray
+
+        Ytest : ndarray
          Y of test points
-        Ytrain: ndarray
+
+        Ytrain : ndarray
          Y of traiing points
-        cond_ll: subclass of likelihood/Likelihood
+
+        cond_ll : subclass of likelihood/Likelihood
          Conditional log likelihood function used to build the model.
-        kernel:
+
+        kernel : list
          The kernel that the model uses. It should be an array, and size of the array should be same as the
-         number of latent processes. Each element should provide interfact similar to ``ExtRBF`` class
-        method: string
+         number of latent processes. Each element should provide interface similar to ``ExtRBF`` class
+
+        method : string
          The method to use to learns the model. It can be 'full', 'mix1', and 'mix2'
-        name: string
+
+        name : string
          The name that will be used for logger file names, and results files names
-        run_id: object
-         ID of the experiment, which can be anything, and it will be included in the configuation file
-        num_inducing: integer
+
+        run_id : object
+         ID of the experiment, which can be anything, and it will be included in the configuration file. It can provdie
+         for example a number referring to a particular test and train partition.
+
+        num_inducing : integer
          Number of inducing points
-        num_samples: integer
+
+        num_samples : integer
          Number of samples for estimating objective function and gradients
-        sparsify_factor: float
+
+        sparsify_factor : float
          Can be any number and will be included in the configuration file. It will not determine
          the number of inducing points
-        to_optimize: list
-         The subject of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
-         it can be ['ll', 'mog']
-        trans_class: subclass of DataTransformation
+
+        to_optimize : list
+         The set of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
+         it can be ['ll', 'mog'] in which case posterior and ll will be optimised.
+
+        trans_class : subclass of DataTransformation
          The class which will be used to transform data.
-        random_Z: boolean
+
+        random_Z : boolean
          Whether to initialise inducing points randomly on the training data. If False, inducing points
-         will be placed using k-means clustering. If True, inducing points will be placed randomly on the training data.
-        logging_level: string
+         will be placed using k-means (or mini-batch k-mean) clustering. If True, inducing points will be placed randomly
+         on the training data.
+
+        logging_level : string
          The logging level to use.
-        export_X: boolean
+
+        export_X : boolean
          Whether to export X to csv files.
-        latent_noise: integer
+
+        latent_noise : integer
          The amount of latent noise to add to the kernel. A white noise of amount latent_noise will be
          added to the kernel.
+
         opt_per_iter: integer
          Number of update of each subset of parameters in each iteration, e.g., {'mog': 15000, 'hyp': 25, 'll': 25}
+
         max_iter: integer
          Maximum of global iterations used on optimization.
+
         n_threads: integer
          Maximum number of threads used.
+
         model_image_file: string
          The image file from the which the model will be initialized.
+
         xtol: float
          Tolerance of 'X' below which the optimization is determined as converged.
+
         ftol: float
          Tolerance of 'f' below which the optimization is determined as converged.
+
         partition_size: integer
-         The size which is used to partition training data. This is not the partition used for SGD.
-         Training data will be split to the partitions of size 'partition_size' and calculations will be done on each paritions
-         separately.
+         The size which is used to partition training data (This is not the partition used for SGD).
+         Training data will be split to the partitions of size ``partition_size`` and calculations will be done on each
+         partition separately. This aim of this partitioning of data is to make algorithm memory efficient.
 
         Returns
         -------
-        :return: a tuple, where the first element is the name of the folder in which results are stored, and the
-         second element is the model itself.
+        folder : string
+         the name of the folder in which results are stored
 
+        model : model
+         the fitted model itself.
         """
 
         if opt_per_iter is None:

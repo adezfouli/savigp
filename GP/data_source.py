@@ -11,8 +11,10 @@ import numpy as np
 
 class DataSource:
     """
-    Loading and preparing data. Some of the datasets are generated using the Matlab code, in order to ensure they are
-    same training and test points are the previous papers. The Matlab code to generate data is 'load_data.m'
+    Loading and preparing data for experiments. Some of the datasets are generated using the Matlab code
+    (see data/matlab_code_data), in order to ensure they are
+    the same training and test points that were used in the previous paper (Nguyen and Bonilla NIPS (2014)).
+    The Matlab code to generate data is ``load_data.m``
     """
 
     def __init__(self):
@@ -40,12 +42,13 @@ class DataSource:
     @staticmethod
     def wisconsin_breast_cancer_data():
         """
-        Loads and returns data of wisconsin breast cancer dataset. Note that `X` is standardized.
+        Loads and returns data of Wisconsin breast cancer dataset. Note that ``X`` is standardized.
 
         Returns
         -------
-        data : a list of length = 5, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 5, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         Notes
         -----
@@ -57,6 +60,7 @@ class DataSource:
           Oper Res. 1995;43(4);570-7
 
         """
+
         # uncomment these lines to read directly from original file
         # data_test = pandas.read_csv('../data/breast-cancer-wisconsin.csv', header=None)
         # # replacing Y values with -1 and 1
@@ -84,12 +88,13 @@ class DataSource:
     @staticmethod
     def USPS_data():
         """
-        Loads and returns data of USPS dataset. Note that 'X' is standardized. Only digits 4,7, and 9 are included.
+        Loads and returns data of USPS dataset. Note that ``X`` is standardized. Only digits 4,7, and 9 are included.
 
         Returns
         -------
-        data : a list of length = 5, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 5, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
@@ -97,6 +102,7 @@ class DataSource:
           Data is imported from the Matlab code.
 
         """
+
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/USPS/train_' + str(i) + '.csv', header=None)
@@ -122,17 +128,19 @@ class DataSource:
     @staticmethod
     def mining_data():
         """
-        Loads and returns data of Coal-mining disasters dataset. See 'get_mine_data.m' to see how data is transformed.
+        Loads and returns data of Coal-mining disasters dataset. See 'get_mine_data.m' to see how data is generated.
 
         Returns
         -------
-        data : a list of length = 1, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'. Training and test points are the same.
+        data : list
+         a list of length = 1, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``. Training and test points are the same.
 
         References
         ----------
         * Jarrett RG. A note on the intervals between coal-mining disasters. Biometrika. 1979;66(1):191-3.
         """
+
         data = []
         train = pandas.read_csv('data/mining/data.csv', header=None)
         data.append({
@@ -149,18 +157,21 @@ class DataSource:
     @staticmethod
     def boston_data():
         """
-        Loads and returns data of Boston housing dataset. Note data 'X' is standardized.
+        Loads and returns data of Boston housing dataset. Note data ``X`` is standardized.
 
         Returns
         -------
-        data : a list of length = 5, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 5, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
-        * Harrison Jr D, Rubinfeld DL. Hedonic housing prices and the demand for clean air. J Environ Econ Manage. 1978;5(1):81-102.
+        * Harrison Jr D, Rubinfeld DL. Hedonic housing prices and the demand for clean air. J Environ Econ Manage.
+        1978;5(1):81-102.
 
         """
+
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/boston_housing/train_' + str(i) + '.csv', header=None)
@@ -183,8 +194,9 @@ class DataSource:
 
         Returns
         -------
-        data: a list of length = 5, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 5, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
 
         References
@@ -192,6 +204,7 @@ class DataSource:
         * Bache K, Lichman M. {UCI} Machine Learning Repository [Internet]. 2013. Available from: http://archive.ics.uci.edu/ml
 
         """
+
         data = []
         for i in range(5, 11):
             train = pandas.read_csv('data/abalone/train_' + str(i) + '.csv', header=None)
@@ -214,15 +227,16 @@ class DataSource:
 
         Returns
         -------
-        data : a list of length = 5, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 5, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
         * Cole D, Martin-Moran C, Sheard AG, Bhadeshia HKDH, MacKay DJC.
         Modelling creep rupture strength of ferritic steel welds. Sci Technol Weld Join. 2000;5(2):81-9.
-
         """
+
         data = []
         for i in range(1, 6):
             train = pandas.read_csv('data/creep/train_' + str(i) + '.csv', header=None)
@@ -244,8 +258,9 @@ class DataSource:
 
         Returns
         -------
-        data : a list of length = 1, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 1, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
@@ -307,19 +322,19 @@ class DataSource:
     @staticmethod
     def sarcos_data():
         """
-        Loads and returns data of SARCOS dataset for joints 4 and 7. Note that 'X' is standardized.
+        Loads and returns data of SARCOS dataset for joints 4 and 7. Note that ``X`` is standardized.
 
         Returns
         -------
-        data : a list of length = 1, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 1, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
         * Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
-        The data here is directly imported from the Matlab code on Gaussian process networks. The Matlab code to generate
-        data is 'sarcos.m'
-
+        The data is directly imported from the Matlab code on Gaussian process networks. The Matlab code to generate
+        data is 'data/matlab_code_data/sarcos.m'
         """
 
         data = []
@@ -343,14 +358,15 @@ class DataSource:
 
         Returns
         -------
-        data : a list of length = 1, where each element is a dictionary which contains
-            'train_Y', 'train_X, 'test_Y', 'test_X', and 'id'
+        data : list
+         a list of length = 1, where each element is a dictionary which contains
+         ``train_Y``, ``train_X``, ``test_Y``, ``test_X``, and ``id``
 
         References
         ----------
         * Data is originally from this website: http://www.gaussianprocess.org/gpml/data/.
         The data here is directly imported from the Matlab code on Gaussian process networks.
-
+        The Matlab code to generate data is 'data/matlab_code_data/sarcos.m'
         """
 
         data = []

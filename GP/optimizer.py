@@ -53,7 +53,7 @@ class Optimizer:
         Parameters
         ----------
         model : object
-         any object which exposes `objective_function` and `objective_function_gradients`
+         any object which exposes ``objective_function`` and ``objective_function_gradients`` methods
 
         x0 : ndarray
          starting point of optimisation
@@ -65,15 +65,15 @@ class Optimizer:
          keeps track of objective function values
 
         logger : logger
-         use for logging objective function and gradients
+         the logger
 
         Returns
         -------
         f : callable
-         a function which returns objective function for the input parameter
+         a function which returns objective function for its input parameter
 
         f_grad : callable
-         a function which returns gradient of the objective function for the input parameter
+         a function which returns gradient of the objective function for its input parameter
 
         update : callable
          updates the model to reflect new parameters
@@ -141,7 +141,7 @@ class Optimizer:
     @staticmethod
     def BFGS(model, logger, opt_indices=None, max_fun=None, apply_bound=False):
         """
-        Optimise the `model` using l_bfgs_b algorithm.
+        Optimise the ``model`` using l_bfgs_b algorithm.
 
         Parameters
         ----------
@@ -151,13 +151,13 @@ class Optimizer:
         logger : logger
          logger used for logging
 
-        opt_indices : ndarray
+        opt_indices : ndarray (optional)
          indices of the parameters that will be optimised. If None, all the parameters will be optimised.
 
-        max_fun : int
+        max_fun : int (optional)
          maximum number of function evaluations
 
-        apply_bound : boolean
+        apply_bound : boolean (optional)
          whether to apply bounds. If True, parameters will be limited to be less than log (1e10)
 
         """
@@ -208,7 +208,7 @@ class Optimizer:
                        method=None, xtol=1e-4, iters_per_opt=[25, 25, 25], max_iters=200,
                        ftol =1e-5, callback=None, current_iter=None):
         """
-        Optimised model in an EM manner, i.e., each set of parameters are optimised independently, e.g.,
+        Optimised model in an EM manner, i.e., each set of parameters are optimised independently, i.e.,
 
                  |---> MoG ---> hyp ---> ll ----|
                  |---<-------- <--------<-------|
@@ -219,7 +219,7 @@ class Optimizer:
          the model to optimise
 
         max_fun_evals : int
-         maximum number of function evaluatioins
+         maximum number of function evaluations.
 
         logger : logger
          logger
@@ -344,6 +344,6 @@ class Optimizer:
 
 class OptTermination(Exception):
     """
-    a specific class when to indicate problems during optimisation, e.g., problems in function evaluation.
+    a specific class to indicate problems during optimisation, e.g., problems in function evaluation.
     """
     pass

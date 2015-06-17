@@ -6,25 +6,27 @@ from numpy.core.umath_tests import inner1d
 
 class ExtRBF(RBF):
     """
-    Extended-RBF class, which extends RBF class in order to provide fast methods for calculating gradients wrt to the
+    Extended-RBF, which extends RBF class in order to provide fast methods for calculating gradients wrt to the
     hyper-parameters of the kernel. The base class provides a similar functionality, but that implementation can be
-    slow.
+    slow when evaluating for multiple data points.
     """
 
-    def get_gradients_Kn(self, dL_dK, X, X2=None):
+    def get_gradients_Kn(self, A, X, X2=None):
         r"""
-        Assume we have a function Ln of the kernel, which its gradient wrt to the hyper-parameters is as follows:
+        Assume we have a function Ln of the kernel, which its gradient wrt to the hyper-parameters (H) is as follows:
 
-        dLn\\dH = (dLn\\dK) * dK(X2, Xn)\\dH
+         dLn\\dH = An * dK(X2, Xn)\\dH
 
-        where dLn_dK = dLn_dK[n, :], Xn = X[n, :]. The function then returns a matrix containing dLn_dH for all 'n's.
+        where An = A[n, :], Xn = X[n, :]. The function then returns a matrix containing dLn_dH for all 'n's.
 
         Parameters
         ----------
-        dL_dK : ndarray
-         dim(dL_dK) = N * M
+        A : ndarray
+         dim(A) = N * M
+
         X : ndarray
          dim(X) = N * D
+
         X2: ndarray
          dim(X2) = M * D
 
@@ -32,12 +34,13 @@ class ExtRBF(RBF):
 
         Returns
         -------
-        :return dL\\dH, which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
+        dL_dH : ndarray
+         dL\\dH, which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
 
         """
-        variance_gradient = inner1d(self.K(X, X2), dL_dK) *  1./ self.variance
+        variance_gradient = inner1d(self.K(X, X2), A) *  1./ self.variance
 
-        dL_dr = (self.dK_dr_via_X(X, X2) * dL_dK)
+        dL_dr = (self.dK_dr_via_X(X, X2) * A)
         if self.ARD:
             tmp = dL_dr * self._inv_dist(X, X2)
             if X2 is None: X2 = X
@@ -49,22 +52,23 @@ class ExtRBF(RBF):
 
         return np.hstack((variance_gradient[:, np.newaxis], lengthscale_gradient.T))
 
-
     def get_gradients_Kdiagn(self, X):
         r"""
         Assume we have a function Ln of the kernel we follows:
 
-        dL_n\\dH = dK(Xn, Xn)\\dH
+         dL_n\\dH = dK(Xn, Xn)\\dH
+
+        where Xn=X[n, :]. Then the function returns a matrix which contains dL_n\\dH for all 'n's.
 
         Parameters
         ----------
         X : ndarray
-         dim(X) = N * D, where D is the dimension of input. \n
-         where Xn=X[n, :]. Then the function returns a matrix which contains dL_n\dH for all 'n's
+         dim(X) = N * D, where D is the dimension of input.
 
         Returns
         -------
-        :return dL\\dH which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
+        dL_dH : ndarray
+         dL\\dH which is a matrix of dimension N * dim(H), where dim(H) is the number of hyper-parameters.
         """
 
         variance_gradient = self.Kdiag(X) * 1./self.variance
@@ -72,9 +76,10 @@ class ExtRBF(RBF):
 
     def get_gradients_Kzz(self, S, D, X, X2=None):
         r"""
-        Assume we have a function Ln, which its gradient wrt to the hyper-parameters (H), is as follows: \n
-        dLn\\dH = S[:, n] *  dK(X,X2)\\dH * D[n, :]
-        then this function calculates dLn\dH for all 'n's.
+        Assume we have a function Ln, which its gradient wrt to the hyper-parameters (H), is as follows:
+         dLn\\dH = S[:, n] *  dK(X,X2)\\dH * D[n, :]
+
+        then this function calculates dLn\\dH for all 'n's.
 
         Parameters
         ----------
@@ -89,7 +94,8 @@ class ExtRBF(RBF):
 
         Returns
         -------
-        :returns dL\\dH which is a matrix by dimensions N * dim(H), where dim(H) is the number of hyper-parameters.
+        dL_dH : ndarray
+         dL\\dH which is a matrix by dimensions N * dim(H), where dim(H) is the number of hyper-parameters.
         """
         variance_gradient = mdot(S, self.K(X, X2), D) * 1./self.variance
 
