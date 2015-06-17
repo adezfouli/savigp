@@ -98,14 +98,14 @@ class ModelLearn:
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
         file_name = 'train_'
-        header =['Y%d,' % (j) for j in range(Ytrain.shape[1])]
-        data= None
+        header = ['Y%d,' % (j) for j in range(Ytrain.shape[1])]
+        data = None
         if export_X:
             data = np.hstack((Ytrain, Xtrain))
             header += ['X%d,' % (j) for j in range(Xtrain.shape[1])]
         else:
             data = Ytrain
-        np.savetxt(path + file_name + '.csv', data , header=''.join(header), delimiter=',', comments='')
+        np.savetxt(path + file_name + '.csv', data, header=''.join(header), delimiter=',', comments='')
 
 
     @staticmethod
@@ -197,11 +197,10 @@ class ModelLearn:
         out += Ypred
         out += Yvar_pred
         out += [nlpd]
-        header =  ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
-            ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
-            ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] + \
-            ['nlpd,'] + ['NLPD_%d,' % (j) for j in range(nlpd.shape[1]-1)]
-
+        header = ['Ytrue%d,' % (j) for j in range(Ytrue.shape[1])] + \
+                 ['Ypred_%s_%d,' % (m, j) for m in pred_names for j in range(Ypred[0].shape[1])] + \
+                 ['Yvar_pred_%s_%d,' % (m, j) for m in pred_names for j in range(Yvar_pred[0].shape[1])] + \
+                 ['nlpd,'] + ['NLPD_%d,' % (j) for j in range(nlpd.shape[1] - 1)]
 
         if export_X:
             out.append(X)
@@ -267,7 +266,8 @@ class ModelLearn:
                 'obj_track': obj_track,
                 'obj_fun': model.objective_function()
             },
-                        open(path + 'opt.dump', 'w'))
+                open(path + 'opt.dump', 'w'))
+
         return callback
 
 
@@ -393,22 +393,22 @@ class ModelLearn:
         git_hash, git_branch = get_git()
 
         properties = {'method': method,
-                   'sparsify_factor': sparsify_factor,
-                   'sample_num': num_samples,
-                   'll': cond_ll.__class__.__name__,
-                   'opt_max_evals': opt_max_fun_evals,
-                   'opt_per_iter': opt_per_iter,
-                   'xtol': xtol,
-                   'ftol': ftol,
-                   'run_id': run_id,
-                   'experiment': name,
-                   'max_iter': max_iter,
-                   'git_hash': git_hash,
-                   'git_branch': git_branch,
-                   'random_Z': random_Z,
-                   'latent_noise:': latent_noise,
-                   'model_init': model_image_file
-                   }
+                      'sparsify_factor': sparsify_factor,
+                      'sample_num': num_samples,
+                      'll': cond_ll.__class__.__name__,
+                      'opt_max_evals': opt_max_fun_evals,
+                      'opt_per_iter': opt_per_iter,
+                      'xtol': xtol,
+                      'ftol': ftol,
+                      'run_id': run_id,
+                      'experiment': name,
+                      'max_iter': max_iter,
+                      'git_hash': git_hash,
+                      'git_branch': git_branch,
+                      'random_Z': random_Z,
+                      'latent_noise:': latent_noise,
+                      'model_init': model_image_file
+                      }
         logger.info('experiment started for:' + str(properties))
 
         model_image = None
@@ -423,19 +423,25 @@ class ModelLearn:
                         ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
-                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
+                                       kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
+                                       image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
+                                         ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
+                            image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
+                                         ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
-                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads, image=model_image, partition_size=partition_size)
+                            kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
+                            image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
-                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol, ModelLearn.opt_callback(folder_name), current_iter)
+                Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
+                                         ModelLearn.opt_callback(folder_name), current_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:
@@ -444,14 +450,15 @@ class ModelLearn:
         y_pred, var_pred, nlpd = m.predict(Xtest, Ytest)
         if not (tracker is None):
             ModelLearn.export_track(folder_name, tracker)
-        ModelLearn.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain), export_X)
+        ModelLearn.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain),
+                                export_X)
         ModelLearn.export_test(folder_name,
-                                transformer.untransform_X(Xtest),
-                                transformer.untransform_Y(Ytest),
-                                [transformer.untransform_Y(y_pred)],
-                                [transformer.untransform_Y_var(var_pred)],
-                                transformer.untransform_NLPD(nlpd),
-                                [''], export_X)
+                               transformer.untransform_X(Xtest),
+                               transformer.untransform_Y(Ytest),
+                               [transformer.untransform_Y(y_pred)],
+                               [transformer.untransform_Y_var(var_pred)],
+                               transformer.untransform_NLPD(nlpd),
+                               [''], export_X)
 
         if export_model and isinstance(m, SAVIGP):
             ModelLearn.export_model(m, folder_name)

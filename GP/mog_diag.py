@@ -13,10 +13,10 @@ class MoG_Diag(MoG):
 
      Attributes
      ----------
-     log_s: ndarray
+     log_s : ndarray
       Logarithm of the diagonal of covariance matrix
 
-     invC_klj_Sk: ndarray
+     invC_klj_Sk : ndarray
       (s[k,j] + s[l,j])^-1 * s[k,j]
 
     """

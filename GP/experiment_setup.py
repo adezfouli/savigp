@@ -38,10 +38,10 @@ class ExperimentSetup:
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                 num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 max_iter=200))
         return names
 
     @staticmethod
@@ -73,10 +73,10 @@ class ExperimentSetup:
         num_samples = 2000
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 max_iter=200))
         return names
 
 
@@ -98,16 +98,16 @@ class ExperimentSetup:
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
-        cond_ll = LogGaussianCox(math.log(191./811))
-        kernel[0].variance= 1.0
-        kernel[0].lengthscale= 13516.
+        cond_ll = LogGaussianCox(math.log(191. / 811))
+        kernel[0].variance = 1.0
+        kernel[0].lengthscale = 13516.
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], True, latent_noise=0.001,
-                                  opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
-                                  max_iter=1))
+                                 num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
+                                 config['log_level'], True, latent_noise=0.001,
+                                 opt_per_iter={'mog': 15000, 'hyp': 25, 'll': 25},
+                                 max_iter=1))
         return names
 
 
@@ -132,10 +132,10 @@ class ExperimentSetup:
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=300))
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 max_iter=300))
 
 
     @staticmethod
@@ -164,10 +164,10 @@ class ExperimentSetup:
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                 num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 max_iter=200))
 
 
     @staticmethod
@@ -200,10 +200,10 @@ class ExperimentSetup:
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                 num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 max_iter=200))
 
 
     @staticmethod
@@ -223,7 +223,7 @@ class ExperimentSetup:
         # uncomment these lines to delete unused features
         # features_rm = np.array([])
         # for n in range(Xtrain.shape[1]):
-        #     if Xtrain[:, n].sum() ==0:
+        # if Xtrain[:, n].sum() ==0:
         #         features_rm = np.append(features_rm, n)
         # Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
         # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
@@ -264,18 +264,17 @@ class ExperimentSetup:
         else:
             partition_size = 3000
 
-
         image = None
         if 'image' in config.keys():
             image = config['image']
 
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10},
-                                  max_iter=300, n_threads=n_threads, ftol=10,
-                                  model_image_file=image, partition_size=partition_size))
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 50, 'hyp': 10},
+                                 max_iter=300, n_threads=n_threads, ftol=10,
+                                 model_image_file=image, partition_size=partition_size))
 
     @staticmethod
     def sarcos_data(config):
@@ -297,7 +296,7 @@ class ExperimentSetup:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
 
-        cond_ll =CogLL(0.1, 2, 1)
+        cond_ll = CogLL(0.1, 2, 1)
 
         if 'n_thread' in config.keys():
             n_threads = config['n_thread']
@@ -313,17 +312,15 @@ class ExperimentSetup:
         if 'image' in config.keys():
             image = config['image']
 
-
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
-                                  max_iter=200,
-                                  partition_size=partition_size,
-                                  n_threads=n_threads,
-                                  model_image_file=image))
-
+                                 num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
+                                 max_iter=200,
+                                 partition_size=partition_size,
+                                 n_threads=n_threads,
+                                 model_image_file=image))
 
 
     @staticmethod
@@ -351,7 +348,7 @@ class ExperimentSetup:
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
 
-        cond_ll =CogLL(0.1, 7, 1)
+        cond_ll = CogLL(0.1, 7, 1)
 
         if 'n_thread' in config.keys():
             n_threads = config['n_thread']
@@ -367,17 +364,16 @@ class ExperimentSetup:
         if 'image' in config.keys():
             image = config['image']
 
-
         names.append(
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
-                                  num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
-                                  config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
-                                  max_iter=200,
-                                  partition_size=partition_size,
-                                  ftol=10,
-                                  n_threads=n_threads,
-                                  model_image_file=image))
+                                 num_samples, sparsify_factor, ['mog', 'll', 'hyp'], MeanStdYTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
+                                 max_iter=200,
+                                 partition_size=partition_size,
+                                 ftol=10,
+                                 n_threads=n_threads,
+                                 model_image_file=image))
 
 
     @staticmethod

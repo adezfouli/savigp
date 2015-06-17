@@ -382,7 +382,7 @@ class SAVIGP(Model):
         """
 
         for j in range(self.num_latent_proc):
-            self.MoG.updata_mean(j, init_m[:, j])
+            self.MoG.update_mean(j, init_m[:, j])
 
     def rand_init_mog(self):
         """
@@ -870,8 +870,8 @@ class SAVIGP(Model):
          sigma = Kj(X, X) - Aj Kzx + Aj Skj Aj
 
         """
-        return self.kernels[j].get_gradients_Kdiagn(X) \
-               - self.kernels[j].get_gradients_Kn(Aj, X, self.Z[j]) + \
+        return self.kernels[j].get_gradients_Kdiag(X) \
+               - self.kernels[j].get_gradients_AK(Aj, X, self.Z[j]) + \
                2. * self.dA_dhyper_mult_x(j, X, Aj,
                                           self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
 
@@ -905,8 +905,8 @@ class SAVIGP(Model):
         :returns dF \\dH where (dF \\dH)[n] = dfn \\ dH
         """
         w = mdot(self.invZ[j], m)
-        return self.kernels[j].get_gradients_Kn(w.T, X, self.Z[j]) - \
-               self.kernels[j].get_gradients_Kzz(Aj, w, self.Z[j])
+        return self.kernels[j].get_gradients_AK(w.T, X, self.Z[j]) - \
+               self.kernels[j].get_gradients_SKD(Aj, w, self.Z[j])
 
     def _dcorss_dm(self):
         r"""

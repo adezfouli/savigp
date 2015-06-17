@@ -16,7 +16,7 @@ class MoG_SingleComponent(MoG):
     Attributes
     ----------
     L : ndarray
-     Chlesky decomposition of the covariance matrix
+     Cholesky decomposition of the covariance matrix
     """
 
     def __init__(self, num_process, num_dim):

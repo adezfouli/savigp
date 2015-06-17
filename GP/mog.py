@@ -130,7 +130,7 @@ class MoG:
         """
         return self.num_comp * self.num_process * self.num_dim
 
-    def updata_mean(self, j, mj):
+    def update_mean(self, j, mj):
 
         """
         Update mean of the latent process ``j`` using ``mj`` for all components.

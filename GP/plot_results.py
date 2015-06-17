@@ -201,6 +201,7 @@ class PlotOutput:
         """
         Prints the name of all folders inside ``path`` which their config files satisfies ``filter``
         """
+
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         for m in dir:
             data_config = PlotOutput.read_config(path + m + '/' + 'config_' + '.csv')

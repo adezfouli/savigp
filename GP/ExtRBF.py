@@ -11,7 +11,7 @@ class ExtRBF(RBF):
     slow when evaluating for multiple data points.
     """
 
-    def get_gradients_Kn(self, A, X, X2=None):
+    def get_gradients_AK(self, A, X, X2=None):
         r"""
         Assume we have a function Ln of the kernel, which its gradient wrt to the hyper-parameters (H) is as follows:
 
@@ -52,7 +52,7 @@ class ExtRBF(RBF):
 
         return np.hstack((variance_gradient[:, np.newaxis], lengthscale_gradient.T))
 
-    def get_gradients_Kdiagn(self, X):
+    def get_gradients_Kdiag(self, X):
         r"""
         Assume we have a function Ln of the kernel we follows:
 
@@ -74,7 +74,7 @@ class ExtRBF(RBF):
         variance_gradient = self.Kdiag(X) * 1./self.variance
         return np.hstack((variance_gradient[:, np.newaxis], np.zeros((X.shape[0], self.lengthscale.shape[0]))))
 
-    def get_gradients_Kzz(self, S, D, X, X2=None):
+    def get_gradients_SKD(self, S, D, X, X2=None):
         r"""
         Assume we have a function Ln, which its gradient wrt to the hyper-parameters (H), is as follows:
          dLn\\dH = S[:, n] *  dK(X,X2)\\dH * D[n, :]

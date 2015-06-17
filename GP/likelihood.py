@@ -486,7 +486,6 @@ class CogLL(Likelihood):
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.f_num) \
             .reshape((self.f_num, self.n_samples))
 
-
     def ll_F_Y(self, F, Y):
         W = F[:, :, :self.P * self.Q].reshape(F.shape[0], F.shape[1], self.P, self.Q)
         f = F[:, :, self.P * self.Q:]

@@ -7,6 +7,9 @@ from multiprocessing.pool import Pool
 
 class ExperimentRunner:
 
+    def __init__(self):
+        pass
+
     @staticmethod
     def get_configs():
         """
@@ -163,4 +166,5 @@ if __name__ == '__main__':
     # ExperimentRunner.sarcos_experiment()
 
 
+    # uncomment to plots the outputs in results folder
     # ExperimentRunner.plot()
