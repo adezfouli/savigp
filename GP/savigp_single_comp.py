@@ -1,13 +1,16 @@
-from savigp import SAVIGP
-
 __author__ = 'AT'
 
+from savigp import SAVIGP
 from GPy.util.linalg import mdot
 from mog_single_comp import MoG_SingleComponent
 import numpy as np
 
 
 class SAVIGP_SingleComponent(SAVIGP):
+    """
+    Implementation of SAVIGP in the case the posterior covariance is full, and the mixture has only one component.
+    """
+
     def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples,
                  config_list, latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None, partition_size=3000):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,

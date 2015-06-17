@@ -9,8 +9,6 @@ from GPy.util.linalg import mdot
 import numpy as np
 from scipy.linalg import cho_solve, solve_triangular
 from GPy.core import Model
-
-from mog_diag import MoG_Diag
 from util import mdiag_dot, jitchol, pddet, inv_chol
 
 
@@ -84,6 +82,7 @@ class SAVIGP(Model):
      for memory efficiency, the algorithm partitions training data (X), to partitions of size `max_X_partition_size`,
      and calculated the quantities for each using a separate thread.
     """
+
     def __init__(self, X, Y,
                  num_inducing,
                  num_mog_comp,
@@ -208,9 +207,15 @@ class SAVIGP(Model):
 
         # uncomment to use sample samples for all data points
         # self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc) \
-        #     .reshape((self.num_latent_proc, self.n_samples))
+        # .reshape((self.num_latent_proc, self.n_samples))
         #
         # self.normal_samples = np.repeat(self.normal_samples[:, :, np.newaxis], self.partition_size, 2)
+
+        self.ll = None
+        """ evidence lower bound (ELBO) """
+
+        self.grad_ll = None
+        """ gradient of evidence lower bound (ELBO) wrt to the parameters """
 
         if image:
             self.set_all_params(image['params'])
@@ -328,6 +333,20 @@ class SAVIGP(Model):
         return Z, init_m
 
     def _random_inducing_points(self, X, Y):
+        """
+        Determines position of the inducing point by random positioning them on the training data.
+
+        Returns
+        -------
+        Z : ndarray
+         position of inducting points. Dimensions: Q * M * M
+
+        init_m : ndarray
+          initial value for the mean of posterior distribution which is the Y of the training data over which the
+          inducing point is positioned. Dimensions: M * Q
+
+        """
+
         np.random.seed(12000)
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
         init_m = np.empty((self.num_inducing, self.num_latent_proc))
@@ -343,22 +362,44 @@ class SAVIGP(Model):
         return Z, init_m
 
     def _update_latent_kernel(self):
+        """
+        Updates kernels by adding a latent noise to each kernel.
+        """
         self.kernels_latent = []
         for j in range(len(self.kernels)):
             self.kernels_latent.append(self.kernels[j] + GPy.kern.White(self.X.shape[1], variance=self.latent_noise))
-        self.hypers_changed= True
+        self.hypers_changed = True
 
     def init_mog(self, init_m):
+        """
+        Initialised MoG (posterior distribution).
+
+        Parameters
+        ----------
+        init_m : ndarray
+         a matrix of size M * Q, which is mean of posterior for each latent process
+
+        """
         for j in range(self.num_latent_proc):
             self.MoG.updata_mean(j, init_m[:, j])
 
     def rand_init_mog(self):
+        """
+        Randomly initialised the posterior distribution
+        """
         self.MoG.random_init()
 
     def _get_mog(self):
-        return MoG_Diag(self.num_mog_comp, self.num_latent_proc, self.num_inducing)
+        """
+        :returns: the MoG used for representing the posterior. It should be implemented by sub-classes.
+        """
+        raise NotImplementedError
 
     def get_param_names(self):
+        """
+        :returns: an array containing name of the parameters of the class given the current configuration.
+        Useful for example when checking gradients.
+        """
         if Configuration.MoG in self.config_list:
             self.param_names += ['m'] * self.MoG.get_m_size() + ['s'] * \
                                                                 self.MoG.get_s_size() + ['pi'] * self.num_mog_comp
@@ -371,21 +412,25 @@ class SAVIGP(Model):
 
         return self.param_names
 
-
     def get_all_param_names(self):
         param_names = []
         param_names += ['m'] * self.MoG.get_m_size() + ['s'] * \
-                                                            self.MoG.get_s_size() + ['pi'] * self.num_mog_comp
+                                                       self.MoG.get_s_size() + ['pi'] * self.num_mog_comp
         param_names += ['k'] * self.num_latent_proc * self.num_hyper_params
         param_names += ['ll'] * self.num_like_params
 
         return param_names
 
     def image(self):
+        """
+        :returns: a dictionary containing an image of the class which can be used to init the model from.
+        """
         return {'params': self.get_all_params(), 'Z': self.Z}
 
-
     def _update_inverses(self):
+        """
+        Calculated kernel, and its inverses.
+        """
         for j in range(self.num_latent_proc):
             self.Kzz[j, :, :] = self.kernels_latent[j].K(self.Z[j, :, :])
             self.chol[j, :, :] = jitchol(self.Kzz[j, :, :])
@@ -394,12 +439,19 @@ class SAVIGP(Model):
         self.hypers_changed = False
 
     def kernel_hyp_params(self):
+        """
+        :return: a matrix of dimension Q * |H|, containing hyper-parameters of all kernels.
+        """
         hyper_params = np.empty((self.num_latent_proc, self.num_hyper_params))
         for j in range(self.num_latent_proc):
             hyper_params[j] = self.kernels[j].param_array[:].copy()
         return hyper_params
 
     def _update(self):
+        """
+        Updates objective function and its gradients under current configuration and stores them in the corresponding
+        variables for future uses.
+        """
 
         self.ll = 0
 
@@ -436,7 +488,6 @@ class SAVIGP(Model):
                 grad_hyper += self._dcross_dhyper()
 
         self.ll += self.cached_cross
-
 
         if Configuration.ELL in self.config_list:
             xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell()
@@ -478,8 +529,9 @@ class SAVIGP(Model):
 
     def set_params(self, p):
         """
-        receives parameter from optimizer and transforms them
-        :param p: input parameters
+        Sets the internal parameters of the model.
+
+        :param p: input parameters. `p` should contain parameters specified in the configuration.
         """
         self.last_param = p
         index = 0
@@ -498,11 +550,9 @@ class SAVIGP(Model):
             self.cond_likelihood.set_params(p[index:index + self.num_like_params])
         self._update()
 
-
     def set_all_params(self, p):
         """
-        receives parameter from optimizer and transforms them
-        :param p: input parameters
+        Sets all the parameters of the model (not only those specified by the configuration).
         """
         self.last_param = p
         self.MoG.update_parameters(p[:self.MoG.num_parameters()])
@@ -519,7 +569,7 @@ class SAVIGP(Model):
 
     def get_params(self):
         """
-        exposes parameters to the optimizer
+        Return parameters of the model according to the configuration.
         """
         params = np.array([])
         if Configuration.MoG in self.config_list:
@@ -535,7 +585,7 @@ class SAVIGP(Model):
 
     def get_all_params(self):
         """
-        returns all the parameters in the model
+        Returns all internal parameters of the model.
         """
         params = self.MoG.parameters
         params = np.hstack([params, np.log(self.kernel_hyp_params().flatten())])
@@ -548,39 +598,59 @@ class SAVIGP(Model):
     def _log_likelihood_gradients(self):
         return self.grad_ll
 
-    def _get_data_partition(self):
-        return self.X, self.Y
-
     def _A(self, j, K):
         """
-        calculating A for latent process j (eq 4)
+        calculates A for latent process j
         """
         return cho_solve((self.chol[j, :, :], True), K).T
 
     def _Kdiag(self, p_X, K, A, j):
         """
-        calculating diagonal terms of K_tilda for latent process j (eq 4)
+        calculates diagonal terms of K_tilda for latent process j
         """
         return self.kernels_latent[j].Kdiag(p_X) - mdiag_dot(A, K)
 
 
     def _b(self, k, j, Aj, Kzx):
         """
-        calculating [b_k(n)]j for latent process j (eq 19) for all k
-        returns: a
+        calculating [b_k]j for latent process j for all k
+
+        :returns: an ndarray of dimension N * 1
+
         """
         return mdot(Aj, self.MoG.m[k, j, :].T)
 
     def _sigma(self, k, j, Kj, Aj, Kzx):
         """
-        calculating [sigma_k(n)]j,j for latent process j (eq 20) for all k
+        calculates [sigma_k]j,j for latent process j for all k
+
+        :returns: an ndarray of dimension N * 1
         """
         return Kj + self.MoG.aSa(Aj, k, j)
 
     # @profile
     def _get_A_K(self, p_X):
-        A = np.empty((self.num_latent_proc, len(p_X), self.num_inducing))
-        K = np.empty((self.num_latent_proc, len(p_X)))
+        """
+        Calculates A, Ktilda, and Kzx for partition X
+
+        Parameters
+        ----------
+        p_X : ndarray
+         input of dimension P * D
+
+        Returns
+        -------
+        A : ndarray
+         dimensions: Q * P * M
+
+        Kzx : ndarray
+         dimensions: Q * M * P
+
+        K : ndarray
+         dimensions: Q * P
+        """
+        A = np.empty((self.num_latent_proc, p_X.shape[0], self.num_inducing))
+        K = np.empty((self.num_latent_proc, p_X.shape[0]))
         Kzx = np.empty((self.num_latent_proc, self.num_inducing, p_X.shape[0]))
         for j in range(self.num_latent_proc):
             Kzx[j, :, :] = self.kernels_latent[j].K(self.Z[j, :, :], p_X)
@@ -589,9 +659,16 @@ class SAVIGP(Model):
         return A, Kzx, K
 
     def _dell_ds(self, k, j, cond_ll, A, n_sample, sigma_kj):
+        """
+        Returns gradient of ell wrt to the posterior covariance for component `k` and latent process `j`.
+        """
         raise Exception("method not implemented")
 
     def _ell(self):
+        """
+        Calculates ell and its gradient for each partition of data, and adds them together. Each partition
+        is ran in a separate thread, with maximum `self.n_threads` threads.
+        """
 
         threadLimiter = threading.BoundedSemaphore(self.n_threads)
 
@@ -611,6 +688,7 @@ class SAVIGP(Model):
                     self.Executemycode()
                 finally:
                     threadLimiter.release()
+
             def Executemycode(self):
                 out = self.savigp._parition_ell(self.X, self.Y)
                 lock.acquire()
@@ -636,11 +714,32 @@ class SAVIGP(Model):
 
         return total_out[0]
 
-
     def _parition_ell(self, X, Y):
         """
-        calculating expected log-likelihood, and it's derivatives
-        :returns ell, normal ell, dell / dm, dell / ds, dell/dpi
+        calculating expected log-likelihood, and it's derivatives for input `X` and output `Y`.
+
+        Returns
+        -------
+        total_ell : float
+         expected log likelihood, calculated either using sampling or exact likelihood
+
+        d_ell_dm : ndarray
+         gradient of ell wrt to the mean posterior. Dimensions: K, Q, M; where K is the number of
+         mixture componenets.
+
+        d_ell_ds : ndarray
+         gradient of ell wrt to the covariance posterior. Dimensions: K, Q, `self.MoG.S_dim()`
+
+        d_ell_dPi : ndarray
+         gradient of ell wrt to mixture component weights. Dimensions: Q * 1
+
+        d_ell_d_hyper : ndarray
+         gradient wrt to the hyper-parameters. Dimensions: Q * |H|; where |H| is the number of
+         hyper-parameters.
+
+        d_ell_d_ll : ndarray
+         gradient wrt to the likelihood parameters. Dimensions: |L|; where |L| is the number of
+         likelihood parameters.
         """
 
         # print 'ell started'
@@ -659,9 +758,9 @@ class SAVIGP(Model):
             d_ell_d_ll = 0
 
         if Configuration.MoG in self.config_list or \
-            Configuration.LL in self.config_list or \
-            self.cached_ell is None or \
-            self.calculate_dhyper():
+                        Configuration.LL in self.config_list or \
+                        self.cached_ell is None or \
+                self.calculate_dhyper():
             total_ell = 0
             A, Kzx, K = self._get_A_K(X)
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
@@ -670,25 +769,25 @@ class SAVIGP(Model):
             for k in range(self.num_mog_comp):
                 for j in range(self.num_latent_proc):
                     norm_samples = self.normal_samples[j, :, :X.shape[0]]
-                    mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
-                    sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
-                    F[:, :, j] = (norm_samples * np.sqrt(sigma_kj[k,j]))
-                    F[:, :, j] = F[:, :, j] + mean_kj[k,j]
+                    mean_kj[k, j] = self._b(k, j, A[j], Kzx[j].T)
+                    sigma_kj[k, j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
+                    F[:, :, j] = (norm_samples * np.sqrt(sigma_kj[k, j]))
+                    F[:, :, j] = F[:, :, j] + mean_kj[k, j]
                 cond_ll, grad_ll = self.cond_likelihood.ll_F_Y(F, Y)
                 for j in range(self.num_latent_proc):
                     norm_samples = self.normal_samples[j, :, :X.shape[0]]
-                    m = self._average(cond_ll, norm_samples / np.sqrt(sigma_kj[k,j]), True)
-                    d_ell_dm[k,j] = self._proj_m_grad(j, mdot(m, Kzx[j].T)) * self.MoG.pi[k]
-                    d_ell_ds[k,j] = self._dell_ds(k, j, cond_ll, A, sigma_kj, norm_samples)
+                    m = self._average(cond_ll, norm_samples / np.sqrt(sigma_kj[k, j]), True)
+                    d_ell_dm[k, j] = self._proj_m_grad(j, mdot(m, Kzx[j].T)) * self.MoG.pi[k]
+                    d_ell_ds[k, j] = self._dell_ds(k, j, cond_ll, A, sigma_kj, norm_samples)
                     if self.calculate_dhyper():
                         ds_dhyp = self._dsigma_dhyp(j, k, A[j], Kzx, X)
                         db_dhyp = self._db_dhyp(j, k, A[j], X)
                         for h in range(self.num_hyper_params):
-                            d_ell_d_hyper[j, h] += -1./2 * self.MoG.pi[k] * (
-                                                self._average(cond_ll,
-                                                np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dhyp[:, h] +
-                                                -2. * norm_samples / np.sqrt(sigma_kj[k,j]) * db_dhyp[:, h]
-                                                - np.square(norm_samples)/sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
+                            d_ell_d_hyper[j, h] += -1. / 2 * self.MoG.pi[k] * (
+                                self._average(cond_ll,
+                                              np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dhyp[:, h] +
+                                              -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dhyp[:, h]
+                                              - np.square(norm_samples) / sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
 
                 sum_cond_ll = cond_ll.sum() / self.n_samples
                 total_ell += sum_cond_ll * self.MoG.pi[k]
@@ -701,19 +800,37 @@ class SAVIGP(Model):
                 total_ell = 0
                 for n in range(len(X)):
                     for k in range(self.num_mog_comp):
-                            total_ell += self.cond_likelihood.ell(np.array(mean_kj[k, :, n]), np.array(sigma_kj[k, :, n]), Y[n, :]) * self.MoG.pi[k]
+                        total_ell += self.cond_likelihood.ell(np.array(mean_kj[k, :, n]), np.array(sigma_kj[k, :, n]),
+                                                              Y[n, :]) * self.MoG.pi[k]
 
         return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
 
     def _average(self, condll, X, variance_reduction):
+        """
+        calculates (condll * X).mean(axis=1) using variance reduction method.
+
+        number of control variables = number of samples / 10
+
+        Parameters
+        ----------
+        condll : ndarray
+         dimensions: s * N
+
+        X : ndarray
+         dimensions: s * N
+
+        Returns
+        -------
+        :returns: a matrix of dimension N
+        """
         if variance_reduction:
             X = X.T
             condll = condll.T
             cvsamples = self.n_samples / 10
             pz = X[:, 0:cvsamples]
             py = np.multiply(condll[:, 0:cvsamples], pz)
-            above = np.multiply((py.T-py.mean(1)), pz.T).sum(axis=0)/(cvsamples-1)
-            below = np.square(pz).sum(axis=1)/(cvsamples-1)
+            above = np.multiply((py.T - py.mean(1)), pz.T).sum(axis=0) / (cvsamples - 1)
+            below = np.square(pz).sum(axis=1) / (cvsamples - 1)
             cvopt = np.divide(above, below)
             cvopt = np.nan_to_num(cvopt)
 
@@ -722,41 +839,66 @@ class SAVIGP(Model):
             grads = np.multiply(condll.T, X.T)
         return grads.mean(axis=1)
 
-
     def calculate_dhyper(self):
+        """
+        whether to calculate gradients of ell wrt to the hyper parameters. Note that when the model is not sparse
+         gradients of ell wrt to the hyper-parameters are zero.
+        """
         return self.sparse and Configuration.HYPER in self.config_list
 
     def _proj_m_grad(self, j, dl_dm):
+        r"""
+        Projects gradients wrt to the kernel space, i.e,. returns
+
+        :returns K^-1 dl\\dm
+        """
         return cho_solve((self.chol[j, :, :], True), dl_dm)
 
     def _dsigma_dhyp(self, j, k, Aj, Kzx, X):
+        """
+        calculates gradient of `sigma` for component k and latent process j wrt to the
+        hyper parameters.
+        """
         return self.kernels[j].get_gradients_Kdiagn(X) \
                - self.kernels[j].get_gradients_Kn(Aj, X, self.Z[j]) + \
-               2 * self.dA_dhyper_mult_x(j, X, Aj,
-                                         self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
+               2. * self.dA_dhyper_mult_x(j, X, Aj,
+                                          self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
 
     def _db_dhyp(self, j, k, Aj, X):
-        return self.dA_dhyper_mult_x(j, X, Aj, np.repeat(self.MoG.m[k,j][:, np.newaxis], X.shape[0], axis=1))
-
-
-    def dKzxn_dhyper_mult_x(self, j, x_n, x):
-        self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
-        return self.kernels[j].gradient.copy()
-
-    def dKx_dhyper(self, j, x_n):
-        self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
-        return self.kernels[j].gradient.copy()
+        """
+        calculates gradients of `b` for latent process j and component k wrt to the
+        hyper-parameters.
+        """
+        return self.dA_dhyper_mult_x(j, X, Aj, np.repeat(self.MoG.m[k, j][:, np.newaxis], X.shape[0], axis=1))
 
     def dA_dhyper_mult_x(self, j, X, Aj, m):
+        r"""
+
+        Assume:
+
+        dfn \\ dH = dAn \\ dH * m
+
+        where:
+
+        dAn \\ dH = (dK(X[n, :], Z[j]) \\ dH  - An d K(Z[j], Z[j]) \\ dH) K(Z[j], Z[j]) ^ -1
+
+        and An = A[n, :]
+
+        then this function returns dfn \\ dH for all `n`s:
+
+        :returns dF \\dH where (dF \\dH)[n] = dfn \\ dH
+        """
         w = mdot(self.invZ[j], m)
         return self.kernels[j].get_gradients_Kn(w.T, X, self.Z[j]) - \
-            self.kernels[j].get_gradients_Kzz(Aj, w, self.Z[j])
-
+               self.kernels[j].get_gradients_Kzz(Aj, w, self.Z[j])
 
     def _dcorss_dm(self):
+        r"""
+        calculates d corss \\ dm
+
+        :returns a matrix of dimension K * Q * M, where K is the number of mixture components
         """
-        calculating d corss / dm
-        """
+
         dcdm = np.empty((self.num_mog_comp, self.num_latent_proc, self.num_inducing))
         for j in range(self.num_latent_proc):
             dcdm[:, j, :] = -cho_solve((self.chol[j, :, :], True), self.MoG.m[:, j, :].T).T * self.MoG.pi[:, np.newaxis]
@@ -764,7 +906,7 @@ class SAVIGP(Model):
 
     def _dcross_ds(self):
         """
-        calculating L_corss by s_k for all k's
+        calculates L_corss by s_k for all k's, and transforms the results to the raw space.
         """
         dc_ds = np.empty((self.num_mog_comp, self.num_latent_proc, self.MoG.get_sjk_size()))
         for j in range(self.num_latent_proc):
@@ -773,10 +915,15 @@ class SAVIGP(Model):
         return dc_ds
 
     def transform_dcorss_dS(self):
+        r"""
+        calculates dcross \\ dL, where L is the representation of the covariance matrix. For example, in the case of
+        full posterior covariance matrix, L is the lower triangular elements of the Cholesky decomposition of
+        posterior covariance matrix.
+        """
         return self._dcross_ds().flatten()
 
     # def _cross_dcorss_dpi(self, N):
-    #     """
+    # """
     #     calculating L_corss by pi_k, and also calculates the cross term
     #     :returns d cross / d pi, cross
     #     """
@@ -798,8 +945,13 @@ class SAVIGP(Model):
 
     def _cross_dcorss_dpi(self, N):
         """
-        calculating L_corss by pi_k, and also calculates the cross term
-        :returns d cross / d pi, cross
+        Returns
+        --------
+        cross : float
+         the cross term of ELBO
+
+        d_pi : ndarray
+         dcross \\ dpi
         """
         cross = 0
         d_pi = np.zeros(self.num_mog_comp)
@@ -809,7 +961,7 @@ class SAVIGP(Model):
                 d_pi[k] += \
                     N * math.log(2 * math.pi) + \
                     self.log_detZ[j] + \
-                     + np.dot(a, a.T) + \
+                    + np.dot(a, a.T) + \
                     self.MoG.tr_AinvS(self.chol[j, :, :], k, j)
         for k in range(self.num_mog_comp):
             cross += self.MoG.pi[k] * d_pi[k]
@@ -818,8 +970,14 @@ class SAVIGP(Model):
         cross *= -1. / 2
         return cross, d_pi
 
-
     def _dcross_K(self, j):
+        r"""
+        Gradient of the cross term of ELBO wrt to the kernel of latent process `j`.
+
+        Returns
+        -------
+        :returns: dcross \\ dK(Z[j], Z[j]). Dimensions: M * M
+        """
         dc_dK = np.zeros((self.num_inducing, self.num_inducing))
         for k in range(self.num_mog_comp):
             dc_dK += -0.5 * self.MoG.pi[k] * (self.invZ[j]
@@ -828,6 +986,13 @@ class SAVIGP(Model):
         return dc_dK
 
     def _dcross_dhyper(self):
+        r"""
+        Gradient of the cross term of ELBO wrt to the hyper-parameters (H).
+
+        Returns
+        -------
+        :returns: dcross \\ dH. Dimensions: Q * |H|
+        """
         dc_dh = np.empty((self.num_latent_proc, self.num_hyper_params))
         for j in range(self.num_latent_proc):
             self.kernels_latent[j].update_gradients_full(self._dcross_K(j), self.Z[j])
@@ -836,9 +1001,24 @@ class SAVIGP(Model):
         return dc_dh
 
     def _dent_dhyper(self):
+        r"""
+        Gradient of the entropy term of ELBO wrt to the hyper-parameters, which is always zero in the case of
+        this model.
+
+        Returns
+        -------
+        :returns: a zero matrix of dimensions: Q * |H|
+        """
         return np.zeros((self.num_latent_proc, self.num_hyper_params))
 
     def _d_ent_d_m_kj(self, k, j):
+        r"""
+        Gradient of the entropy term of ELBO wrt to the posterior mean for component `k` and latent process `j`.
+
+        Returns
+        -------
+        d ent \\ dm[k,j]. Dimensions: M * 1
+        """
         m_k = np.zeros(self.num_inducing)
         for l in range(self.num_mog_comp):
             m_k += self.MoG.pi[k] * self.MoG.pi[l] * (np.exp(self.log_N_kl[k, l] - self.log_z[k]) +
@@ -846,13 +1026,70 @@ class SAVIGP(Model):
                    (self.MoG.C_m(j, k, l))
         return m_k
 
-    def _predict_comp(self, Xs, Ys):
+    def _d_ent_d_m(self):
+        r"""
+        Calculates gradients of the entropy term of ELBO wrt to the posterior mean.
+
+        Returns
+        -------
+        :returns: d ent \\ dm. Dimensions: K * Q * M
         """
-        predicting at test points t_X
-        :param Xs: test point
+        raise NotImplementedError
+
+    def _d_ent_d_pi(self):
+        r"""
+        Calculates gradient of the entropy term of ELBO wrt to the mixture weights (p)
+
+        Returns
+        -------
+        dpi : ndarray
+         d ent \\ dpi. Dimensions : K * 1
         """
 
-        # print 'ell started'
+        raise NotImplementedError
+
+    def _l_ent(self):
+        """ returns entropy term of the ELBO. """
+        raise NotImplementedError
+
+    def _transformed_d_ent_d_S(self):
+        r"""
+        Calculates gradient of the entropy term wrt to the posterior covariance, and transforms it to the raw space
+        and returns a flatten array.
+        """
+        raise  NotImplementedError
+
+
+    def _predict_comp(self, Xs, Ys):
+        """
+        Predicts output for test points `Xs`, and also calculates NLPD if `Ys` is provided. The prediction is
+        made for mixture component separately.
+
+        P(Ys|Xs) = \integral P(Ys|f) N(f|b, sigma) df
+
+        Parameters
+        ----------
+        Xs : ndarray
+         test points. Dimension : N * D, where N is the number of test points.
+
+        Ys : ndarray (or None)
+         output at test points. Dimensions : N * O
+
+        Returns
+        -------
+        predicted_mu : ndarray
+         returns E[P(Ys|Xs)]. Dimensions N * K * O, where K is the number of mixture components
+
+        predicted_var : ndarray
+         returns var[P(Ys|Xs)]. Dimensions N * K * O, where K is the number of mixture components
+
+        NLPD : ndarray
+         returns -log [P(Ys|Xs)]. Dimensions N * |NLPD|, wheree |NLPD| is the number of NLPDs returned
+         by the likelihood. |NLPD| is generally 1, but likelihood is allowed to return multiple likelihoods
+         for example in the case of multi-output models.
+
+        """
+
         A, Kzx, K = self._get_A_K(Xs)
 
         predicted_mu = np.empty((Xs.shape[0], self.num_mog_comp, self.cond_likelihood.output_dim()))
@@ -865,8 +1102,8 @@ class SAVIGP(Model):
         sigma_kj = np.empty((self.num_mog_comp, self.num_latent_proc, Xs.shape[0]))
         for k in range(self.num_mog_comp):
             for j in range(self.num_latent_proc):
-                mean_kj[k,j] = self._b(k, j, A[j], Kzx[j].T)
-                sigma_kj[k,j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
+                mean_kj[k, j] = self._b(k, j, A[j], Kzx[j].T)
+                sigma_kj[k, j] = self._sigma(k, j, K[j], A[j], Kzx[j].T)
 
             if not (Ys is None):
                 predicted_mu[:, k, :], predicted_var[:, k, :], nlpd[:, :, k] = \
@@ -878,12 +1115,36 @@ class SAVIGP(Model):
         return predicted_mu, predicted_var, -logsumexp(nlpd, 2, self.MoG.pi)
 
     def predict(self, Xs, Ys=None):
+        """
+        Makes prediction for test points `Xs`, and calculates NLPD for `Ys` if it is provided.
 
-        X_paritions, Y_paritions, n_partitions, partition_size = self._partition_data(Xs, Ys)
+        Parameters
+        ----------
+        Xs : ndarray
+         test points. Dimensions N * D, where N is the number of test points, and D is input dimensionality.
 
-        mu, var, nlpd = self._predict_comp(X_paritions[0], Y_paritions[0])
-        for p in range(1, len(X_paritions)):
-            p_mu, p_var, p_nlpd = self._predict_comp(X_paritions[p], Y_paritions[p])
+        Ys : ndarray (optional)
+         output at test points. Dimensions N * O, where O is the output dimensionality.
+
+        Returns
+        -------
+        mean : ndarray
+         mean of the prediction at the test point. Dimensions : N * O
+
+        var : ndarray
+         variance of the prediction at the test point. Dimensions : N * O (?)
+
+        NLPD : ndarray
+         NLPD at the test points in the case that `Ys` is provided.
+
+
+        """
+
+        X_partitions, Y_partitions, n_partitions, partition_size = self._partition_data(Xs, Ys)
+
+        mu, var, nlpd = self._predict_comp(X_partitions[0], Y_partitions[0])
+        for p in range(1, len(X_partitions)):
+            p_mu, p_var, p_nlpd = self._predict_comp(X_partitions[p], Y_partitions[p])
             mu = np.concatenate((mu, p_mu), axis=0)
             var = np.concatenate((var, p_var), axis=0)
             nlpd = np.concatenate((nlpd, p_nlpd), axis=0)

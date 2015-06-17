@@ -146,7 +146,9 @@ class MoG:
         raise NotImplementedError
 
     def get_s_size(self):
-        """ return size of s when flattened """
+        """ returns the size of the representation of covariance when flattened. For example, in the case of diagonal
+        covariance the size will be K * Q * M (K : number of components; Q : number of latent processes;
+        M : number of inducing points)"""
         raise NotImplementedError
 
     def S_dim(self):

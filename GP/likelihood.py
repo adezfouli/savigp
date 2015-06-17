@@ -10,7 +10,6 @@ from scipy.special import erfinv
 from scipy.special._ufuncs import gammaln
 import numpy as np
 
-from GPstruct.prepare_from_data_chain import log_likelihood_function_numba
 from util import cross_ent_normal
 
 
@@ -452,68 +451,6 @@ class WarpLL(object, Likelihood):
 
     def get_num_params(self):
         return 1
-
-class StructLL(Likelihood):
-    def __init__(self, ll_func, dataset, test_dataset):
-        Likelihood.__init__(self)
-        self.ll_func = ll_func
-        self.dataset = dataset
-        self.test_dataset = test_dataset
-        seq_size = dataset.object_size
-        last_pos = 0
-        self.seq_poses = np.empty((seq_size.shape[0] + 1))
-        for n in range(seq_size.shape[0]):
-            last_pos += seq_size[n]
-            self.seq_poses[n+1] = last_pos
-        self.seq_poses = self.seq_poses.astype(int)
-        self.n_samples = 4000
-        self.dim = self.dataset.n_labels + self.dataset.n_labels ** 2
-        self.normal_samples = np.random.normal(0, 1, self.n_samples * self.dim) \
-            .reshape((self.dim, self.n_samples))
-
-
-    def ll_F_Y(self, F, Y):
-
-        ll = np.empty((F.shape[0], self.dataset.object_size.sum()))
-        for s in range(F.shape[0]):
-            for n in range(self.dataset.N):
-                unaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], 0:self.dataset.n_labels]
-                binaries = F[s, self.seq_poses[n]: self.seq_poses[n+1], self.dataset.n_labels:].reshape((self.dataset.object_size[n], self.dataset.n_labels, self.dataset.n_labels))
-                ll[s, self.seq_poses[n]: self.seq_poses[n+1]] = log_likelihood_function_numba(unaries, binaries, self.dataset.Y[n], self.dataset.object_size[n], self.dataset.n_labels)
-
-        return ll, None
-
-
-    def set_params(self, p):
-        if p.shape[0] != 0:
-            raise Exception("struct ll function does not have free parameters")
-
-    def get_params(self):
-        return []
-
-    def get_num_params(self):
-        return 0
-
-    def predict(self, mu, sigma, Ys, model=None):
-        F = np.empty((self.n_samples, mu.shape[0], self.dim))
-        for j in range(self.dim):
-            F[:, :, j] = np.outer(self.normal_samples[j, :], np.sqrt(sigma[:, j])) + mu[:, j]
-
-        Ys= np.empty((self.n_samples, mu.shape[0], self.test_dataset.n_labels))
-        for s in range(F.shape[0]):
-            current_pos=0
-            for n in range(self.test_dataset.N):
-                unaries = F[s, current_pos:current_pos + self.test_dataset.object_size[n], 0:self.test_dataset.n_labels]
-                binaries = F[s, current_pos:current_pos + self.test_dataset.object_size[n], self.dataset.n_labels:].\
-                    reshape((self.test_dataset.object_size[n], self.test_dataset.n_labels, self.test_dataset.n_labels))
-                Ys[s, current_pos:current_pos + self.test_dataset.object_size[n], :] = \
-                    marginals_function(unaries, binaries, self.test_dataset.object_size[n], self.test_dataset.n_labels)
-                current_pos = self.test_dataset.object_size[n]
-        return Ys.mean(axis=0), None, Ys.mean(axis=0)[:, 0]
-
-    def output_dim(self):
-        return self.dataset.n_labels
-
 
 class CogLL(Likelihood):
     """

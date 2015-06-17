@@ -115,3 +115,10 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
     def calculate_dhyper(self):
         return Configuration.HYPER in self.config_list
 
+    def dKzxn_dhyper_mult_x(self, j, x_n, x):
+        self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
+        return self.kernels[j].gradient.copy()
+
+    def dKx_dhyper(self, j, x_n):
+        self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
+        return self.kernels[j].gradient.copy()

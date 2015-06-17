@@ -6,7 +6,6 @@ from model_learn import ModelLearn
 from likelihood import *
 from data_transformation import *
 from ExtRBF import ExtRBF
-from gpstruct_wrapper import gpstruct_wrapper
 
 
 class ExperimentSetup:
@@ -38,8 +37,8 @@ class ExperimentSetup:
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                   num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
                                   config['log_level'], False, latent_noise=0.001,
-                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-                                  max_iter=200))
+                                  opt_per_iter={'mog': 1, 'hyp': 1, 'll': 1},
+                                  max_iter=1))
         return names
 
     @staticmethod
@@ -274,52 +273,6 @@ class ExperimentSetup:
                                   opt_per_iter={'mog': 50, 'hyp': 10},
                                   max_iter=300, n_threads=n_threads, ftol=10,
                                   model_image_file=image, partition_size=partition_size))
-
-
-    @staticmethod
-    def struct_data(config):
-        method = config['method']
-        sparsify_factor = config['sparse_factor']
-        np.random.seed(12000)
-
-        (ll_train,
-        posterior_marginals_test,
-        compute_error_nlm,
-        ll_test,
-        average_marginals,
-        write_marginals,
-        read_marginals,
-        n_labels,
-        Xtrain,
-        Xtest,
-         train_dataset,
-         test_dataset)  = gpstruct_wrapper()
-        name = 'struct'
-        n_latent_processes = n_labels + 1
-
-        Xtrain = np.array(Xtrain.todense())
-        Xtest = np.array(Xtest.todense())
-        kernel = [ExtRBF(Xtrain.shape[1], variance=.1, lengthscale=np.array((.1,)), ARD=False)] * n_latent_processes
-        # number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
-        num_samples = 2000
-        cond_ll = StructLL(ll_train, train_dataset, test_dataset)
-        names = []
-        image = None
-        if 'image' in config.keys():
-            image = config['image']
-
-
-        Ytest_labels = np.hstack(np.array(test_dataset.Y))
-        Ytest = np.zeros((Xtest.shape[0], test_dataset.n_labels))
-        Ytest[np.arange(Xtest.shape[0]), Ytest_labels] = 1
-        names.append(
-            ModelLearn.run_model(Xtest, Xtrain, Ytest, np.empty((Xtrain.shape[0], 1)), cond_ll, kernel, method, name, 1, num_inducing,
-                                  num_samples, sparsify_factor, ['mog'], IdentityTransformation, True,
-                                  config['log_level'], False,  latent_noise=0.001,
-                                  opt_per_iter={'mog': 1, 'hyp': 3},
-                                  max_iter=1, n_threads=20,
-                                   model_image_file=image))
 
     @staticmethod
     def sarcos_data(config):

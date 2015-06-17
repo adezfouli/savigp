@@ -74,7 +74,7 @@ class ExperimentRunner:
 
     @staticmethod
     def boston_experiment():
-        ExperimentSetup.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
+        ExperimentSetup.boston_data({'method': 'mix2', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
@@ -130,10 +130,6 @@ class ExperimentRunner:
                                 # 'image': '../results/mnist_1/'
                                 })
 
-    @staticmethod
-    def struct_experiment():
-        ExperimentSetup.struct_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
-
 
     @staticmethod
     def plot():
@@ -166,15 +162,14 @@ if __name__ == '__main__':
     # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
-    # ExperimentRunner.boston_experiment()
+    ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
     # ExperimentRunner.mnist_experiment()
-    # ExperimentRunner.struct_experiment()
     # ExperimentRunner.sarcos_all_joins_experiment()
-    ExperimentRunner.sarcos_experiment()
+    # ExperimentRunner.sarcos_experiment()
 
 
     # ExperimentRunner.plot()
