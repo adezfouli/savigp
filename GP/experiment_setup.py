@@ -319,8 +319,8 @@ class ExperimentSetup:
         # Xtrain = X_train_resized
         # Xtest = X_test_resized
 
-        Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)
-        Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)
+        Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)[:, np.newaxis]
+        Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)[:, np.newaxis]
 
         kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(10)]
         # number of inducing points
