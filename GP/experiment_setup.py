@@ -276,6 +276,80 @@ class ExperimentSetup:
                                  max_iter=300, n_threads=n_threads, ftol=10,
                                  model_image_file=image, partition_size=partition_size))
 
+
+    @staticmethod
+    def MNIST_binary_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mnist_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain_full = d['train_Y']
+        Xtest = d['test_X']
+        Ytest_full = d['test_Y']
+        name = 'mnist_binary'
+
+        # uncomment these lines to delete unused features
+        # features_rm = np.array([])
+        # for n in range(Xtrain.shape[1]):
+        # if Xtrain[:, n].sum() ==0:
+        #         features_rm = np.append(features_rm, n)
+        # Xtrain = np.delete(Xtrain, features_rm.astype(int), 1)
+        # Xtest = np.delete(Xtest, features_rm.astype(int), 1)
+
+
+        # uncomment these lines to change the resolution
+        # res = 13
+        # current_res = int(np.sqrt(Xtrain.shape[1]))
+        # X_train_resized = np.empty((Xtrain.shape[0], res * res))
+        # X_test_resized = np.empty((Xtest.shape[0], res * res))
+        # for n in range(Xtrain.shape[0]):
+        #     im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_train_resized[n] = np.array(im).flatten()
+        #
+        # for n in range(Xtest.shape[0]):
+        #     im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_test_resized[n] = np.array(im).flatten()
+        #
+        #
+        # Xtrain = X_train_resized
+        # Xtest = X_test_resized
+
+        Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)
+        Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)
+
+        kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(10)]
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = LogisticLL()
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
+
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+        names.append(
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 50, 'hyp': 10},
+                                 max_iter=300, n_threads=n_threads, ftol=10,
+                                 model_image_file=image, partition_size=partition_size))
+
     @staticmethod
     def sarcos_data(config):
         method = config['method']
