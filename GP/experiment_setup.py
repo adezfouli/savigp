@@ -322,7 +322,7 @@ class ExperimentSetup:
         Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)[:, np.newaxis]
         Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)[:, np.newaxis]
 
-        kernel = [ExtRBF(Xtrain.shape[1], variance=1, lengthscale=np.array((1.,)), ARD=False) for j in range(1)]
+        kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(1)]
         # number of inducing points
         num_inducing = int(Xtrain.shape[0] * sparsify_factor)
         num_samples = 2000
