@@ -281,11 +281,6 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
-                if callback is not None:
-                    logger.info('callback...')
-                    callback(model, current_iter + 1, total_evals, delta_m, delta_s, obj_track)
-                    logger.info('callback finished')
-
                 # check for convergence
                 new_params_m, new_params_s = model.get_posterior_params()
                 if last_param_m is not None:
@@ -323,6 +318,10 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
+                if callback is not None:
+                    logger.info('callback...')
+                    callback(model, current_iter + 1, total_evals, delta_m, delta_s, obj_track)
+                    logger.info('callback finished')
 
                 if not (max_fun_evals is None) and total_evals > max_fun_evals:
                     break
