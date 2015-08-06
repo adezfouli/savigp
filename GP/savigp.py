@@ -224,7 +224,7 @@ class SAVIGP(Model):
 
             self._update_inverses()
 
-            self.init_mog(init_m)
+            # self.init_mog(init_m)
 
         self.set_configuration(self.config_list)
 

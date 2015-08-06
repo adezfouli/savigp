@@ -106,10 +106,10 @@ class PlotOutput:
 
                     if data_config['ll'] in [LogisticLL.__name__]:
                         NLPD = np.array(data_test['nlpd'])
-                        PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array([(((Ypred[0] > 0.5) & (Ytrue[0] == -1))
+                        PlotOutput.add_to_list(graphs['ER'],  str(times[t]), np.array([(((Ypred[0] > 0.5) & (Ytrue[0] == -1))
                                                                      | ((Ypred[0] < 0.5) & (Ytrue[0] == 1))
                                                                      ).mean()]))
-                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
+                        PlotOutput.add_to_list(graphs['NLPD'], str(times[t]), NLPD)
 
                     if data_config['ll'] in [SoftmaxLL.__name__]:
                         NLPD = np.array(data_test['nlpd'])
