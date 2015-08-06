@@ -490,7 +490,7 @@ class ExperimentSetup:
                                  num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
                                  config['log_level'], False, latent_noise=0.001,
                                  opt_per_iter={'mog': 10, 'hyp': 5},
-                                 max_iter=20, n_threads=n_threads, ftol=10,
+                                 max_iter=8, n_threads=n_threads, ftol=10,
                                  model_image_file=image, partition_size=partition_size, opt_callback=callback))
 
     @staticmethod
