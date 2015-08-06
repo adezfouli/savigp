@@ -141,6 +141,17 @@ class ExperimentRunner:
                                 # 'image': '../results/mnist_1/'
                                 })
 
+
+    @staticmethod
+    def mnist_binary_timing_experiment():
+        ExperimentSetup.MNIST_binary_timing({'method': 'full',
+                                'sparse_factor': 2000. / 60000,
+                                'run_id': 1,
+                                'log_level': logging.DEBUG,
+                                'n_thread': 10,
+                                'partition_size': 2000
+                                })
+
     @staticmethod
     def plot():
         PlotOutput.plot_output_all('abalone_timing', ModelLearn.get_output_path(),
@@ -177,10 +188,11 @@ if __name__ == '__main__':
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
     # ExperimentRunner.mnist_binary_experiment()
+    ExperimentRunner.mnist_binary_timing_experiment()
     # ExperimentRunner.abalone_experiment_timing()
     # ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 
 
     # uncomment to plots the outputs in results folder
-    ExperimentRunner.plot()
+    # ExperimentRunner.plot()

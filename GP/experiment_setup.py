@@ -414,6 +414,85 @@ class ExperimentSetup:
                                  max_iter=300, n_threads=n_threads, ftol=10,
                                  model_image_file=image, partition_size=partition_size))
 
+
+    @staticmethod
+    def MNIST_binary_timing(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mnist_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain_full = d['train_Y']
+        Xtest = d['test_X']
+        Ytest_full = d['test_Y']
+        name = 'mnist_binary'
+
+        Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)[:, np.newaxis]
+        Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)[:, np.newaxis]
+
+        kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(1)]
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = LogisticLL()
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
+
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+
+        transformer = IdentityTransformation.get_transformation(Ytrain, Xtrain)
+
+        prediction_times = []
+
+        def callback(folder_name):
+            previous_time = {'last': int(round(time.time() * 1000)), 'total': 0}
+            path = ModelLearn.get_output_path() + folder_name + '/'
+            check_dir_exists(path)
+            # with open(path + '/times.csv', "w") as myfile:
+            #     pass
+
+            with open(path + '/times.csv', "a") as myfile:
+                myfile.write(str(previous_time['total']))
+
+            def opt_callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
+                ModelLearn.opt_callback(folder_name)(model, current_iter, total_evals, delta_m, delta_s, obj_track)
+                prediction_times.append(int(round(time.time() * 1000)) - previous_time['last'])
+                previous_time['total'] = previous_time['total'] + int(round(time.time() * 1000)) - previous_time['last']
+                with open(path + '/times.csv', "a") as myfile:
+                    myfile.write(',' + str(previous_time['total']))
+                y_pred, var_pred, nlpd = model.predict(transformer.transform_X(Xtest), transformer.transform_Y(Ytest))
+                ModelLearn.export_test(folder_name ,
+                                       Xtest,
+                                       Ytest,
+                                       [transformer.untransform_Y(y_pred)],
+                                       [transformer.untransform_Y_var(var_pred)],
+                                       transformer.untransform_NLPD(nlpd),
+                               [''], False, str(current_iter))
+                previous_time['last'] = int(round(time.time() * 1000))
+            return opt_callback
+
+
+        names.append(
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp'], IdentityTransformation, False,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 10, 'hyp': 5},
+                                 max_iter=300, n_threads=n_threads, ftol=10,
+                                 model_image_file=image, partition_size=partition_size, opt_callback=callback))
+
     @staticmethod
     def sarcos_data(config):
         method = config['method']
