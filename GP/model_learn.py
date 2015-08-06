@@ -157,7 +157,7 @@ class ModelLearn:
 
 
     @staticmethod
-    def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names=[''], export_X=False):
+    def export_test(name, X, Ytrue, Ypred, Yvar_pred, nlpd, pred_names=[''], export_X=False, post_fix= ''):
         """
         Exports test data and the predictions into a csv file
 
@@ -191,7 +191,7 @@ class ModelLearn:
 
         path = ModelLearn.get_output_path() + name + '/'
         check_dir_exists(path)
-        file_name = 'test_'
+        file_name = 'test_' + post_fix
         out = []
         out.append(Ytrue)
         out += Ypred
@@ -275,7 +275,7 @@ class ModelLearn:
     def run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, run_id, num_inducing, num_samples,
                   sparsify_factor, to_optimize, trans_class, random_Z, logging_level, export_X,
                   latent_noise=0.001, opt_per_iter=None, max_iter=200, n_threads=1, model_image_file=None,
-                  xtol=1e-3, ftol=1e-5, partition_size=3000):
+                  xtol=1e-3, ftol=1e-5, partition_size=3000, opt_callback = None):
         """
         Fits a model to the data (Xtrain, Ytrain) using the method provided by 'method', and makes predictions on
          'Xtest' and 'Ytest', and exports the result to csv files.
@@ -366,6 +366,10 @@ class ModelLearn:
          Training data will be split to the partitions of size ``partition_size`` and calculations will be done on each
          partition separately. This aim of this partitioning of data is to make algorithm memory efficient.
 
+        opt_callback: callable
+         A function which will be called at the end of each optimisation global iteration. If it is None, then it will be
+         set to the ModelLearn.opt_callback
+
         Returns
         -------
         folder : string
@@ -411,6 +415,9 @@ class ModelLearn:
                       }
         logger.info('experiment started for:' + str(properties))
 
+        if opt_callback is None:
+            opt_callback = ModelLearn.opt_callback
+
         model_image = None
         current_iter = None
         if model_image_file is not None:
@@ -421,27 +428,30 @@ class ModelLearn:
         if model_image:
             logger.info('loaded model - iteration started from: ' + str(opt_params['current_iter']) +
                         ' Obj fun: ' + str(opt_params['obj_fun']) + ' fun evals: ' + str(opt_params['total_evals']))
+        cb = opt_callback(folder_name)
         if method == 'full':
             m = SAVIGP_SingleComponent(Xtrain, Ytrain, num_inducing, cond_ll,
                                        kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
                                        image=model_image, partition_size=partition_size)
+
+            cb(m, 0, 0, 0, 0, None)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
-                                         ModelLearn.opt_callback(folder_name), current_iter)
+                                         cb, current_iter)
         if method == 'mix1':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 1, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
                             image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
-                                         ModelLearn.opt_callback(folder_name), current_iter)
+                                         opt_callback(folder_name), current_iter)
         if method == 'mix2':
             m = SAVIGP_Diag(Xtrain, Ytrain, num_inducing, 2, cond_ll,
                             kernel, num_samples, None, latent_noise, False, random_Z, n_threads=n_threads,
                             image=model_image, partition_size=partition_size)
             _, timer_per_iter, total_time, tracker, total_evals = \
                 Optimizer.optimize_model(m, opt_max_fun_evals, logger, to_optimize, xtol, opt_per_iter, max_iter, ftol,
-                                         ModelLearn.opt_callback(folder_name), current_iter)
+                                         opt_callback(folder_name), current_iter)
         if method == 'gp':
             m = GPy.models.GPRegression(Xtrain, Ytrain, kernel[0])
             if 'll' in to_optimize and 'hyp' in to_optimize:

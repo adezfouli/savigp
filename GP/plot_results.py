@@ -64,57 +64,64 @@ class PlotOutput:
         graph_n = {}
         for m in model_names:
             data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
-            if filter is None or filter(data_config):
-                data_test = pandas.read_csv(infile_path + m + '/' + 'test_' +  '.csv')
-                cols = data_test.columns
-                dim = 0
-                for element in cols:
-                    if element.startswith('Ytrue'):
-                        dim += 1
+            times = np.array([[0]])
+            if os.path.isfile(infile_path + m + '/' + 'times' +  '.csv'):
+                times = np.loadtxt(infile_path + m + '/' + 'times' + '.csv', delimiter=',')
 
-                data_train = pandas.read_csv(infile_path + m + '/' + 'train_' + '.csv')
-                Y_mean = data_train['Y0'].mean()
+            for t in range(1, (times.shape[0])):
+                # if t == 0:
+                #     t = ''
+                if filter is None or filter(data_config):
+                    data_test = pandas.read_csv(infile_path + m + '/' + 'test_' + str(t-1) +  '.csv')
+                    cols = data_test.columns
+                    dim = 0
+                    for element in cols:
+                        if element.startswith('Ytrue'):
+                            dim += 1
 
-                Ypred = np.array([data_test['Ypred__%d' % (d)] for d in range(dim)])
-                Ytrue = np.array([data_test['Ytrue%d' % (d)] for d in range(dim)])
-                Yvar = np.array([data_test['Yvar_pred__%d' % (d)] for d in range(dim)])
+                    data_train = pandas.read_csv(infile_path + m + '/' + 'train_' + '.csv')
+                    Y_mean = data_train['Y0'].mean()
 
-                if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
-                    graph_n[PlotOutput.config_to_str(data_config)] = 0
-                graph_n[PlotOutput.config_to_str(data_config)] += 1
+                    Ypred = np.array([data_test['Ypred__%d' % (d)] for d in range(dim)])
+                    Ytrue = np.array([data_test['Ytrue%d' % (d)] for d in range(dim)])
+                    Yvar = np.array([data_test['Yvar_pred__%d' % (d)] for d in range(dim)])
 
-                if data_config['ll'] in [CogLL.__name__]:
-                    for i in range(Ytrue.shape[0]):
-                        Y_mean = data_train['Y' + str(i)].mean()
-                        PlotOutput.add_to_list(graphs['MSSE'], PlotOutput.config_to_str(data_config) + '_' + str(i),
-                                               ((Ypred[i] - Ytrue[i])**2).mean() / ((Y_mean - Ytrue[i]) ** 2).mean())
-                        NLPD = np.array(data_test['NLPD_' + str(i)])
-                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config) + '_' + str(i), NLPD)
+                    if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
+                        graph_n[PlotOutput.config_to_str(data_config)] = 0
+                    graph_n[PlotOutput.config_to_str(data_config)] += 1
 
-                if data_config['ll'] in [UnivariateGaussian.__name__, WarpLL.__name__]:
-                    NLPD = np.array(data_test['nlpd'])
-                    PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config),
-                                           (Ypred[0] - Ytrue[0])**2 / ((Y_mean - Ytrue[0]) **2).mean())
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
+                    if data_config['ll'] in [CogLL.__name__]:
+                        for i in range(Ytrue.shape[0]):
+                            Y_mean = data_train['Y' + str(i)].mean()
+                            PlotOutput.add_to_list(graphs['MSSE'], PlotOutput.config_to_str(data_config) + '_' + str(i),
+                                                   ((Ypred[i] - Ytrue[i])**2).mean() / ((Y_mean - Ytrue[i]) ** 2).mean())
+                            NLPD = np.array(data_test['NLPD_' + str(i)])
+                            PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config) + '_' + str(i), NLPD)
 
-                if data_config['ll'] in [LogisticLL.__name__]:
-                    NLPD = np.array(data_test['nlpd'])
-                    PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array([(((Ypred[0] > 0.5) & (Ytrue[0] == -1))
-                                                                 | ((Ypred[0] < 0.5) & (Ytrue[0] == 1))
-                                                                 ).mean()]))
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
+                    if data_config['ll'] in [UnivariateGaussian.__name__, WarpLL.__name__]:
+                        NLPD = np.array(data_test['nlpd'])
+                        PlotOutput.add_to_list(graphs['SSE'], PlotOutput.config_to_str(data_config) + str(times[t]),
+                                               (Ypred[0] - Ytrue[0])**2 / ((Y_mean - Ytrue[0]) **2).mean())
+                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config) + str(times[t]), NLPD)
 
-                if data_config['ll'] in [SoftmaxLL.__name__]:
-                    NLPD = np.array(data_test['nlpd'])
-                    PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array(
-                        [(np.argmax(Ytrue, axis=0) != np.argmax(Ypred, axis=0)).mean()]))
-                    PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
+                    if data_config['ll'] in [LogisticLL.__name__]:
+                        NLPD = np.array(data_test['nlpd'])
+                        PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array([(((Ypred[0] > 0.5) & (Ytrue[0] == -1))
+                                                                     | ((Ypred[0] < 0.5) & (Ytrue[0] == 1))
+                                                                     ).mean()]))
+                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
-                if data_config['ll'] in [LogGaussianCox.__name__]:
-                    X0 = np.array([data_test['X0']])
+                    if data_config['ll'] in [SoftmaxLL.__name__]:
+                        NLPD = np.array(data_test['nlpd'])
+                        PlotOutput.add_to_list(graphs['ER'], PlotOutput.config_to_str(data_config), np.array(
+                            [(np.argmax(Ytrue, axis=0) != np.argmax(Ypred, axis=0)).mean()]))
+                        PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
-                    PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
-                                           np.array([X0[0,:]/365+1851.2026, Ypred[0, :], Yvar[0, :], Ytrue[0, :]]).T)
+                    if data_config['ll'] in [LogGaussianCox.__name__]:
+                        X0 = np.array([data_test['X0']])
+
+                        PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
+                                               np.array([X0[0,:]/365+1851.2026, Ypred[0, :], Yvar[0, :], Ytrue[0, :]]).T)
 
         for n, g in graphs.iteritems():
             if g:

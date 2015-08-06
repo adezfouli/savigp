@@ -81,6 +81,10 @@ class ExperimentRunner:
         ExperimentSetup.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
+    def abalone_experiment_timing():
+        ExperimentSetup.abalone_data_timing({'method': 'full', 'sparse_factor': 0.2, 'run_id': 1, 'log_level': logging.DEBUG})
+
+    @staticmethod
     def creep_experiment():
         ExperimentSetup.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
@@ -139,7 +143,7 @@ class ExperimentRunner:
 
     @staticmethod
     def plot():
-        PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
+        PlotOutput.plot_output_all('abalone_timing', ModelLearn.get_output_path(),
                                    lambda x: x['method'] == 'full', False)
 
         # plots all the files
@@ -172,10 +176,11 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.mnist_binary_experiment()
+    # ExperimentRunner.mnist_binary_experiment()
+    # ExperimentRunner.abalone_experiment_timing()
     # ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 
 
     # uncomment to plots the outputs in results folder
-    # ExperimentRunner.plot()
+    ExperimentRunner.plot()

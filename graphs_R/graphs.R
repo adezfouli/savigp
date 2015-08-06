@@ -44,6 +44,15 @@ p2 = draw_boxplot_models(data, "NLPD", "right")
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
 
+# abalone data timing
+name= 'abalone'
+data = read.csv('../../graph_data/abalone_timing_SSE_data.csv')
+data$X = NULL
+g = draw_bar_timing(data, "", "")
+ggsave(file=paste(output_path, "abalone_timing", ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
+
+
+
 
 # creep data
 name = "creep"
@@ -119,6 +128,38 @@ rename_model <- function(data){
   data$model[data$model == 'FULL'] = "FG"
   data
 }
+
+draw_bar_timing <- function(data, y_lab, leg_pos){
+  data = melt(data)
+  data$time = as.integer(substr(data$variable, 9, 15))
+  
+  plot_data = aggregate(value ~ time, FUN = mean, data =data)
+  
+  p = ggplot(plot_data, aes(x=time / 1000, y = value)) + 
+    geom_point() + 
+    geom_line() + 
+    coord_cartesian(ylim = c(y_min - abs(y_min) * 0.1 , y_max + abs(y_max) * 0.1)) +
+    theme_bw() + 
+    scale_colour_brewer( palette="Set1") +
+    ylab("SSE") +
+    xlab("time (s)")
+    theme(legend.direction = "vertical", legend.position = leg_pos, legend.box = "vertical", 
+          axis.line = element_line(colour = "black"),
+          panel.grid.major=element_blank(), 
+          panel.grid.minor=element_blank(),      
+          panel.border = element_blank(),
+          panel.margin = unit(.4, "lines"),
+          text=element_text(family="Arial", size=10),
+          legend.key = element_blank(),
+          strip.background = element_rect(colour = "white", fill = "white",
+                                          size = 0.5, linetype = "solid")
+    ) 
+    
+    guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))
+    p
+    
+}  
+
 
 draw_bar_models <- function(data, y_lab, leg_pos){
   data$X = NULL

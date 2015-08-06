@@ -1,3 +1,6 @@
+import time
+from util import check_dir_exists
+
 __author__ = 'AT'
 
 from data_source import DataSource
@@ -169,6 +172,67 @@ class ExperimentSetup:
                                  opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200))
 
+    @staticmethod
+    def abalone_data_timing(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.abalone_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain = d['train_Y']
+        Xtest = d['test_X']
+        Ytest = d['test_Y']
+        name = 'abalone'
+        kernel = ExperimentSetup.get_kernels(Xtrain.shape[1], 1, False)
+
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+
+        cond_ll = WarpLL(np.array([-2.0485, 1.7991, 1.5814]),
+                         np.array([2.7421, 0.9426, 1.7804]),
+                         np.array([0.1856, 0.7024, -0.7421]),
+                         np.log(0.1))
+
+        transformer = MinTransformation.get_transformation(Ytrain, Xtrain)
+
+        prediction_times = []
+
+        def callback(folder_name):
+            previous_time = {'last': int(round(time.time() * 1000)), 'total': 0}
+            path = ModelLearn.get_output_path() + folder_name + '/'
+            check_dir_exists(path)
+            # with open(path + '/times.csv', "w") as myfile:
+            #     pass
+
+            with open(path + '/times.csv', "a") as myfile:
+                myfile.write(str(previous_time['total']))
+
+            def opt_callback(model, current_iter, total_evals, delta_m, delta_s, obj_track):
+                ModelLearn.opt_callback(folder_name)(model, current_iter, total_evals, delta_m, delta_s, obj_track)
+                prediction_times.append(int(round(time.time() * 1000)) - previous_time['last'])
+                previous_time['total'] = previous_time['total'] + int(round(time.time() * 1000)) - previous_time['last']
+                with open(path + '/times.csv', "a") as myfile:
+                    myfile.write(',' + str(previous_time['total']))
+                y_pred, var_pred, nlpd = model.predict(transformer.transform_X(Xtest), transformer.transform_Y(Ytest))
+                ModelLearn.export_test(folder_name ,
+                                       Xtest,
+                                       Ytest,
+                                       [transformer.untransform_Y(y_pred)],
+                                       [transformer.untransform_Y_var(var_pred)],
+                                       transformer.untransform_NLPD(nlpd),
+                               [''], False, str(current_iter))
+                previous_time['last'] = int(round(time.time() * 1000))
+            return opt_callback
+
+        names.append(
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp', 'll'], MinTransformation, True,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 5, 'hyp': 5, 'll': 5},
+                                 max_iter=6, opt_callback=callback))
 
     @staticmethod
     def creep_data(config):
