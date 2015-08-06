@@ -11,6 +11,27 @@ class ExtRBF(RBF):
     slow when evaluating for multiple data points.
     """
 
+    def get_gradients_X_AK(self, A, X, X2=None):
+        invdist = self._inv_dist(X, X2)
+        dL_dr = self.dK_dr_via_X(X, X2) * A
+        tmp = invdist*dL_dr
+        if X2 is None:
+            tmp = tmp + tmp.T
+            X2 = X
+
+        #The high-memory numpy way:
+        #d =  X[:, None, :] - X2[None, :, :]
+        #ret = np.sum(tmp[:,:,None]*d,1)/self.lengthscale**2
+
+        #the lower memory way with a loop
+        ret = np.empty(A.shape + (X.shape[1],), dtype=np.float64)
+        for q in xrange(self.input_dim):
+            ret[:,:,q] = tmp*(X[:,q][:,None]-X2[:,q][None,:])
+        ret /= self.lengthscale**2
+
+        return ret
+
+
     def get_gradients_AK(self, A, X, X2=None):
         r"""
         Assume we have a function Ln of the kernel, which its gradient wrt to the hyper-parameters (H) is as follows:
@@ -44,7 +65,8 @@ class ExtRBF(RBF):
         if self.ARD:
             tmp = dL_dr * self._inv_dist(X, X2)
             if X2 is None: X2 = X
-            lengthscale_gradient = np.array([np.einsum('ij,ij,...->i', tmp, np.square(X[:,q:q+1] - X2[:,q:q+1].T), -1./self.lengthscale[q]**3) for q in xrange(self.input_dim)])
+            lengthscale_gradient = np.array([np.einsum('ij,ij,...->i', tmp, np.square(X[:,q:q+1] - X2[:,q:q+1].T), -1./self.lengthscale[q]**3)
+                                             for q in xrange(self.input_dim)])
         else:
             r = self._scaled_dist(X, X2)
             lengthscale_gradient = -np.sum(dL_dr*r, axis=1)/self.lengthscale
@@ -97,6 +119,21 @@ class ExtRBF(RBF):
         dL_dH : ndarray
          dL\\dH which is a matrix by dimensions N * dim(H), where dim(H) is the number of hyper-parameters.
         """
+        variance_gradient = mdot(S, self.K(X, X2), D) * 1./self.variance
+
+        if X2 is None: X2 = X
+        if self.ARD:
+            rinv = self._inv_dist(X, X2)
+            d =  X[:, None, :] - X2[None, :, :]
+            x_xl3 = np.square(d) * (rinv * self.dK_dr_via_X(X, X2))[:,:,None]
+            lengthscale_gradient = -np.tensordot(D, np.tensordot(S, x_xl3, (1,0)), (0,1)) / self.lengthscale**3
+            lengthscale_gradient = np.diagonal(lengthscale_gradient).T
+        else:
+            lengthscale_gradient = np.diagonal(-mdot(S, (self._scaled_dist(X, X2) * self.dK_dr_via_X(X, X2)).T, D) / self.lengthscale)[:, np.newaxis]
+
+        return np.hstack((np.diagonal(variance_gradient)[:, np.newaxis], lengthscale_gradient))
+
+    def get_gradients_X_SKD(self, S, D, X, X2=None):
         variance_gradient = mdot(S, self.K(X, X2), D) * 1./self.variance
 
         if X2 is None: X2 = X

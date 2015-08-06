@@ -167,12 +167,12 @@ if __name__ == '__main__':
     # ExperimentRunner.run_parallel(3)
 
     # runs an individual configuration
-    # ExperimentRunner.boston_experiment()
+    ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.mnist_binary_experiment()
+    # ExperimentRunner.mnist_binary_experiment()
     # ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 

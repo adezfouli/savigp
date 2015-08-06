@@ -870,6 +870,7 @@ class SAVIGP(Model):
          sigma = Kj(X, X) - Aj Kzx + Aj Skj Aj
 
         """
+        self.kernels[j].get_gradients_X_AK(Aj.T, self.Z[j], X)
         return self.kernels[j].get_gradients_Kdiag(X) \
                - self.kernels[j].get_gradients_AK(Aj, X, self.Z[j]) + \
                2. * self.dA_dhyper_mult_x(j, X, Aj,
