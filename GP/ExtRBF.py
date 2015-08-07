@@ -77,7 +77,7 @@ class ExtRBF(RBF):
     def get_gradients_SKD(self, S, D, X, X2=None):
         r"""
         Assume we have a function Ln, which its gradient wrt to the hyper-parameters (H), is as follows:
-         dLn\\dH = S[:, n] *  dK(X,X2)\\dH * D[n, :]
+         dLn\\dH = S[n, :] *  dK(X,X2)\\dH * D[:, n]
 
         then this function calculates dLn\\dH for all 'n's.
 
