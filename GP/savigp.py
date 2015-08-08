@@ -788,6 +788,8 @@ class SAVIGP(Model):
 
         if Configuration.INDUCING in self.config_list:
             d_ell_d_induc = np.zeros((self.num_latent_proc, self.num_inducing, self.input_dim))
+        else:
+            d_ell_d_induc = 0
 
         if Configuration.LL in self.config_list:
             d_ell_d_ll = np.zeros(self.num_like_params)
@@ -832,14 +834,22 @@ class SAVIGP(Model):
                         ds_dinduc = self._dsigma_dinduc(j, k, A[j], Kzx, X)
                         ds_dinduc = ds_dinduc.reshape(ds_dinduc.shape[0], ds_dinduc.shape[1] * ds_dinduc.shape[2])
                         db_dinduc = db_dinduc.reshape(db_dinduc.shape[0], db_dinduc.shape[1] * db_dinduc.shape[2])
-                        tmp_induc = np.empty(ds_dinduc.shape[1])
-                        for q in range(ds_dinduc.shape[1]):
-                            tmp_induc[q] += -1. / 2 * self.MoG.pi[k] * (
-                                self._average(cond_ll,
-                                              np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dinduc[:, q] +
-                                              -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dinduc[:, q]
-                                              - np.square(norm_samples) / sigma_kj[k, j] * ds_dinduc[:, q], True)).sum()
-                        d_ell_d_induc[j, :, :] = tmp_induc.reshape((self.num_inducing, self.input_dim))
+
+                        d_ell_d_induc[j, :, :] = -1. / 2 * self.MoG.pi[k] *(mdot((cond_ll / sigma_kj[k,j]), ds_dinduc).mean(axis=0) + \
+                                                    -2. * mdot(cond_ll * norm_samples / np.sqrt(sigma_kj[k, j]), db_dinduc).mean(axis=0) \
+                                                    - mdot(cond_ll * np.square(norm_samples) / sigma_kj[k, j], ds_dinduc).mean(axis=0)).reshape((self.num_inducing, self.input_dim))
+
+                        # tmp_induc = np.empty(ds_dinduc.shape[1])
+                        # ds_dinduc[:, 1:1000].T[..., np.newaxis, np.newaxis] * (np.ones(cond_ll.shape) / sigma_kj[k, j])[:, None, :].T[np.newaxis, ...] + \
+                        # -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dinduc[:, q] \
+                        # - np.square(norm_samples) / sigma_kj[k, j] * ds_dinduc[:, q]
+                        # for q in range(ds_dinduc.shape[1]):
+                        #     tmp_induc[q] += -1. / 2 * self.MoG.pi[k] * (
+                        #         self._average(cond_ll,
+                        #                       np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dinduc[:, q] +
+                        #                       -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dinduc[:, q]
+                        #                       - np.square(norm_samples) / sigma_kj[k, j] * ds_dinduc[:, q], True)).sum()
+                        # d_ell_d_induc[j, :, :] = tmp_induc.reshape((self.num_inducing, self.input_dim))
 
                 sum_cond_ll = cond_ll.sum() / self.n_samples
                 total_ell += sum_cond_ll * self.MoG.pi[k]
