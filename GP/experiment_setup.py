@@ -351,6 +351,52 @@ class ExperimentSetup:
                                  model_image_file=image, partition_size=partition_size))
 
     @staticmethod
+    def MNIST_binary_inducing_data(config):
+        method = config['method']
+        sparsify_factor = config['sparse_factor']
+        np.random.seed(12000)
+        data = DataSource.mnist_data()
+        names = []
+        d = data[config['run_id'] - 1]
+        Xtrain = d['train_X']
+        Ytrain_full = d['train_Y']
+        Xtest = d['test_X']
+        Ytest_full = d['test_Y']
+        name = 'mnist_binary'
+
+        Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)[:, np.newaxis]
+        Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)[:, np.newaxis]
+
+        kernel = [ExtRBF(Xtrain.shape[1], variance=11, lengthscale=np.array((9.,)), ARD=False) for j in range(1)]
+        # number of inducing points
+        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_samples = 2000
+        cond_ll = LogisticLL()
+
+        if 'n_thread' in config.keys():
+            n_threads = config['n_thread']
+        else:
+            n_threads = 1
+
+        if 'partition_size' in config.keys():
+            partition_size = config['partition_size']
+        else:
+            partition_size = 3000
+
+        image = None
+        if 'image' in config.keys():
+            image = config['image']
+
+        names.append(
+            ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
+                                 num_samples, sparsify_factor, ['mog', 'hyp', 'inducing'], IdentityTransformation, False,
+                                 config['log_level'], False, latent_noise=0.001,
+                                 opt_per_iter={'mog': 50, 'hyp': 10, 'inducing': 10},
+                                 max_iter=300, n_threads=n_threads, ftol=10,
+                                 model_image_file=image, partition_size=partition_size))
+
+
+    @staticmethod
     def sarcos_data(config):
         method = config['method']
         sparsify_factor = config['sparse_factor']

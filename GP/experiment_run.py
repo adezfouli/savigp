@@ -137,6 +137,18 @@ class ExperimentRunner:
                                 # 'image': '../results/mnist_1/'
                                 })
 
+
+    @staticmethod
+    def mnist_binary_inducing_experiment():
+        ExperimentSetup.MNIST_binary_inducing_data({'method': 'full',
+                                'sparse_factor': 200. / 60000,
+                                'run_id': 1,
+                                'log_level': logging.DEBUG,
+                                'n_thread': 20,
+                                'partition_size': 2000,
+                                # 'image': '../results/mnist_1/'
+                                })
+
     @staticmethod
     def plot():
         PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
@@ -167,12 +179,12 @@ if __name__ == '__main__':
     # ExperimentRunner.run_parallel(3)
 
     # runs an individual configuration
-    ExperimentRunner.boston_experiment()
+    # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_binary_experiment()
+    ExperimentRunner.mnist_binary_inducing_experiment()
     # ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 
