@@ -367,23 +367,23 @@ class ExperimentSetup:
         name = 'mnist_binary'
 
         # uncomment these lines to change the resolution
-        res = 13
-        current_res = int(np.sqrt(Xtrain.shape[1]))
-        X_train_resized = np.empty((Xtrain.shape[0], res * res))
-        X_test_resized = np.empty((Xtest.shape[0], res * res))
-        for n in range(Xtrain.shape[0]):
-            im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
-            im = im.resize((res, res))
-            X_train_resized[n] = np.array(im).flatten()
-
-        for n in range(Xtest.shape[0]):
-            im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
-            im = im.resize((res, res))
-            X_test_resized[n] = np.array(im).flatten()
-
-
-        Xtrain = X_train_resized
-        Xtest = X_test_resized
+        # res = 13
+        # current_res = int(np.sqrt(Xtrain.shape[1]))
+        # X_train_resized = np.empty((Xtrain.shape[0], res * res))
+        # X_test_resized = np.empty((Xtest.shape[0], res * res))
+        # for n in range(Xtrain.shape[0]):
+        #     im = Image.fromarray(Xtrain[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_train_resized[n] = np.array(im).flatten()
+        #
+        # for n in range(Xtest.shape[0]):
+        #     im = Image.fromarray(Xtest[n, :].reshape((current_res, current_res)))
+        #     im = im.resize((res, res))
+        #     X_test_resized[n] = np.array(im).flatten()
+        #
+        #
+        # Xtrain = X_train_resized
+        # Xtest = X_test_resized
 
         Ytrain = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytrain_full).astype(int)[:, np.newaxis]
         Ytest = np.apply_along_axis(lambda x: x[1:10:2].sum() - x[0:10:2].sum(), 1, Ytest_full).astype(int)[:, np.newaxis]
@@ -412,8 +412,8 @@ class ExperimentSetup:
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                  num_samples, sparsify_factor, ['mog', 'hyp', 'inducing'], IdentityTransformation, False,
                                  config['log_level'], False, latent_noise=0.001,
-                                 opt_per_iter={'mog': 50, 'hyp': 10, 'inducing': 10},
-                                 max_iter=300, n_threads=n_threads, ftol=10,
+                                 opt_per_iter={'mog': 60, 'hyp': 15, 'inducing': 6},
+                                 max_iter=9, n_threads=n_threads, ftol=10,
                                  model_image_file=image, partition_size=partition_size))
 
 

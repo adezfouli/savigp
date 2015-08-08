@@ -144,8 +144,8 @@ class ExperimentRunner:
                                 'sparse_factor': 200. / 60000,
                                 'run_id': 1,
                                 'log_level': logging.DEBUG,
-                                'n_thread': 10,
-                                'partition_size': 2000,
+                                'n_thread': 12,
+                                'partition_size': 1000,
                                 # 'image': '../results/mnist_1/'
                                 })
 
