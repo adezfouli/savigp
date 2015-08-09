@@ -129,7 +129,7 @@ class ExperimentRunner:
     @staticmethod
     def mnist_binary_experiment():
         ExperimentSetup.MNIST_binary_data({'method': 'full',
-                                'sparse_factor': 2000. / 60000,
+                                'sparse_factor': 200. / 60000,
                                 'run_id': 1,
                                 'log_level': logging.DEBUG,
                                 'n_thread': 20,
@@ -184,7 +184,8 @@ if __name__ == '__main__':
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    ExperimentRunner.mnist_binary_inducing_experiment()
+    # ExperimentRunner.mnist_binary_inducing_experiment()
+    ExperimentRunner.mnist_binary_experiment()
     # ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 
