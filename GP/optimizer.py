@@ -323,6 +323,17 @@ class Optimizer:
                     obj_track += tracker
                     total_evals += d['funcalls']
 
+                if 'inducing' in method:
+                    logger.info('inducing params')
+                    model.set_configuration([
+                        Configuration.ENTROPY,
+                        Configuration.CROSS,
+                        Configuration.ELL,
+                        Configuration.INDUCING
+                    ])
+                    d, tracker = Optimizer.BFGS(model, logger, max_fun=iters_per_opt['inducing'], apply_bound=True)
+                    obj_track += tracker
+                    total_evals += d['funcalls']
 
                 if not (max_fun_evals is None) and total_evals > max_fun_evals:
                     break

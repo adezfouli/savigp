@@ -19,6 +19,7 @@ class Configuration(Enum):
     HYPER = 'HYP'
     MoG = 'MOG'
     LL = 'LL'
+    INDUCING = 'INDUC'
 
 
 class SAVIGP(Model):
@@ -413,6 +414,9 @@ class SAVIGP(Model):
         if Configuration.LL in self.config_list:
             self.param_names += ['ll'] * self.num_like_params
 
+        if Configuration.INDUCING in self.config_list:
+            self.param_names += ['indu'] * self.num_latent_proc * self.num_inducing * self.input_dim
+
         return self.param_names
 
     def get_all_param_names(self):
@@ -442,6 +446,7 @@ class SAVIGP(Model):
             self.invZ[j, :, :] = inv_chol(self.chol[j, :, :])
             self.log_detZ[j] = pddet(self.chol[j, :, :])
         self.hypers_changed = False
+        self.inducing_changed = False
 
     def kernel_hyp_params(self):
         """
@@ -470,7 +475,10 @@ class SAVIGP(Model):
             self.hyper_params = self.kernel_hyp_params()
             grad_hyper = np.zeros(self.hyper_params.shape)
 
-        if self.hypers_changed:
+        if Configuration.INDUCING in self.config_list:
+            grad_inducing = np.zeros((self.num_latent_proc, self.num_inducing, self.input_dim))
+
+        if self.hypers_changed or self.inducing_changed:
             self._update_inverses()
 
         if Configuration.ENTROPY in self.config_list or (self.cached_ent is None):
@@ -492,11 +500,13 @@ class SAVIGP(Model):
                 grad_pi += xdcorss_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += self._dcross_dhyper()
+            if Configuration.INDUCING in self.config_list:
+                grad_inducing += self._dcross_dinducing()
 
         self.ll += self.cached_cross
 
         if Configuration.ELL in self.config_list:
-            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll = self._ell()
+            xell, xdell_dm, xdell_ds, xdell_dpi, xdell_hyper, xdell_dll, xdell_dinduc = self._ell()
             self.cached_ell = xell
             self.ll += xell
             if Configuration.MoG in self.config_list:
@@ -505,6 +515,8 @@ class SAVIGP(Model):
                 grad_pi += xdell_dpi
             if Configuration.HYPER in self.config_list:
                 grad_hyper += xdell_hyper
+            if Configuration.INDUCING in self.config_list:
+                grad_inducing += xdell_dinduc
 
         self.grad_ll = np.array([])
         if Configuration.MoG in self.config_list:
@@ -521,6 +533,11 @@ class SAVIGP(Model):
         if Configuration.LL in self.config_list:
             self.grad_ll = np.hstack([self.grad_ll,
                                       xdell_dll
+                                      ])
+
+        if Configuration.INDUCING in self.config_list:
+            self.grad_ll = np.hstack([self.grad_ll,
+                                      grad_inducing.flatten()
                                       ])
 
     def set_configuration(self, config_list):
@@ -554,6 +571,12 @@ class SAVIGP(Model):
 
         if Configuration.LL in self.config_list:
             self.cond_likelihood.set_params(p[index:index + self.num_like_params])
+            index += self.num_like_params
+
+        if Configuration.INDUCING in self.config_list:
+            self.Z = p[index:].reshape((self.num_latent_proc, self.num_inducing, self.input_dim))
+            self.inducing_changed = True
+
         self._update()
 
     def set_all_params(self, p):
@@ -584,6 +607,8 @@ class SAVIGP(Model):
             params = np.hstack([params, np.log(self.hyper_params.flatten())])
         if Configuration.LL in self.config_list:
             params = np.hstack([params, self.cond_likelihood.get_params()])
+        if Configuration.INDUCING in self.config_list:
+            params = np.hstack([params, self.Z.flatten()])
         return params.copy()
 
     def get_posterior_params(self):
@@ -596,6 +621,7 @@ class SAVIGP(Model):
         params = self.MoG.parameters
         params = np.hstack([params, np.log(self.kernel_hyp_params().flatten())])
         params = np.hstack([params, self.cond_likelihood.get_params()])
+        params = np.hstack([params, self.Z.flatten()])
         return params
 
     def log_likelihood(self):
@@ -760,6 +786,11 @@ class SAVIGP(Model):
         else:
             d_ell_d_hyper = 0
 
+        if Configuration.INDUCING in self.config_list:
+            d_ell_d_induc = np.zeros((self.num_latent_proc, self.num_inducing, self.input_dim))
+        else:
+            d_ell_d_induc = 0
+
         if Configuration.LL in self.config_list:
             d_ell_d_ll = np.zeros(self.num_like_params)
         else:
@@ -768,7 +799,8 @@ class SAVIGP(Model):
         if Configuration.MoG in self.config_list or \
                         Configuration.LL in self.config_list or \
                         self.cached_ell is None or \
-                self.calculate_dhyper():
+                self.calculate_dhyper() or \
+                Configuration.INDUCING in self.config_list:
             total_ell = 0
             A, Kzx, K = self._get_A_K(X)
             mean_kj = np.empty((self.num_mog_comp, self.num_latent_proc, X.shape[0]))
@@ -797,6 +829,28 @@ class SAVIGP(Model):
                                               -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dhyp[:, h]
                                               - np.square(norm_samples) / sigma_kj[k, j] * ds_dhyp[:, h], True)).sum()
 
+                    if Configuration.INDUCING in self.config_list:
+                        db_dinduc = self._db_dinduc(j, k, A[j], X)
+                        ds_dinduc = self._dsigma_dinduc(j, k, A[j], Kzx, X)
+                        ds_dinduc = ds_dinduc.reshape(ds_dinduc.shape[0], ds_dinduc.shape[1] * ds_dinduc.shape[2])
+                        db_dinduc = db_dinduc.reshape(db_dinduc.shape[0], db_dinduc.shape[1] * db_dinduc.shape[2])
+
+                        d_ell_d_induc[j, :, :] = -1. / 2 * self.MoG.pi[k] *(mdot((cond_ll / sigma_kj[k,j]), ds_dinduc).mean(axis=0) + \
+                                                    -2. * mdot(cond_ll * norm_samples / np.sqrt(sigma_kj[k, j]), db_dinduc).mean(axis=0) \
+                                                    - mdot(cond_ll * np.square(norm_samples) / sigma_kj[k, j], ds_dinduc).mean(axis=0)).reshape((self.num_inducing, self.input_dim))
+
+                        # tmp_induc = np.empty(ds_dinduc.shape[1])
+                        # ds_dinduc[:, 1:1000].T[..., np.newaxis, np.newaxis] * (np.ones(cond_ll.shape) / sigma_kj[k, j])[:, None, :].T[np.newaxis, ...] + \
+                        # -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dinduc[:, q] \
+                        # - np.square(norm_samples) / sigma_kj[k, j] * ds_dinduc[:, q]
+                        # for q in range(ds_dinduc.shape[1]):
+                        #     tmp_induc[q] += -1. / 2 * self.MoG.pi[k] * (
+                        #         self._average(cond_ll,
+                        #                       np.ones(cond_ll.shape) / sigma_kj[k, j] * ds_dinduc[:, q] +
+                        #                       -2. * norm_samples / np.sqrt(sigma_kj[k, j]) * db_dinduc[:, q]
+                        #                       - np.square(norm_samples) / sigma_kj[k, j] * ds_dinduc[:, q], True)).sum()
+                        # d_ell_d_induc[j, :, :] = tmp_induc.reshape((self.num_inducing, self.input_dim))
+
                 sum_cond_ll = cond_ll.sum() / self.n_samples
                 total_ell += sum_cond_ll * self.MoG.pi[k]
                 d_ell_dPi[k] = sum_cond_ll
@@ -811,7 +865,7 @@ class SAVIGP(Model):
                         total_ell += self.cond_likelihood.ell(np.array(mean_kj[k, :, n]), np.array(sigma_kj[k, :, n]),
                                                               Y[n, :]) * self.MoG.pi[k]
 
-        return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll
+        return total_ell, d_ell_dm, d_ell_ds, d_ell_dPi, d_ell_d_hyper, d_ell_d_ll, d_ell_d_induc
 
     def _average(self, condll, X, variance_reduction):
         """
@@ -875,6 +929,18 @@ class SAVIGP(Model):
                2. * self.dA_dhyper_mult_x(j, X, Aj,
                                           self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
 
+    def _dsigma_dinduc(self, j, k, Aj, Kzx, X):
+        """
+        calculates gradient of ``sigma`` for component ``k`` and latent process ``j`` wrt to the
+        location of inducing points. ``sigma`` is as follows:
+
+         sigma = Kj(X, X) - Aj Kzx + Aj Skj Aj
+
+        """
+        return -self.kernels[j].get_gradients_X_AK(Aj.T, self.Z[j], X) + \
+               2. * self.dA_dinduc_mult_x(j, X, Aj,
+                                          self.MoG.Sa(Aj.T, k, j) - Kzx[j] / 2)
+
     def _db_dhyp(self, j, k, Aj, X):
         """
         calculates gradients of ``b`` for latent process ``j`` and component ``k`` wrt to the
@@ -884,6 +950,16 @@ class SAVIGP(Model):
 
         """
         return self.dA_dhyper_mult_x(j, X, Aj, np.repeat(self.MoG.m[k, j][:, np.newaxis], X.shape[0], axis=1))
+
+    def _db_dinduc(self, j, k, Aj, X):
+        """
+        calculates gradients of ``b`` for latent process ``j`` and component ``k`` wrt to the
+        location of inducing points. ``b`` is as follows:
+
+         b = Aj mkj
+
+        """
+        return self.dA_dinduc_mult_x(j, X, Aj, np.repeat(self.MoG.m[k, j][:, np.newaxis], X.shape[0], axis=1))
 
     def dA_dhyper_mult_x(self, j, X, Aj, m):
         r"""
@@ -907,6 +983,30 @@ class SAVIGP(Model):
         w = mdot(self.invZ[j], m)
         return self.kernels[j].get_gradients_AK(w.T, X, self.Z[j]) - \
                self.kernels[j].get_gradients_SKD(Aj, w, self.Z[j])
+
+
+    def dA_dinduc_mult_x(self, j, X, Aj, m):
+        r"""
+
+        Assume:
+
+         dfn \\ dH = dAn \\ dH * m
+
+        where:
+
+         dAn \\ dH = (dK(X[n, :], Z[j]) \\ dH  - An d K(Z[j], Z[j]) \\ dH) K(Z[j], Z[j]) ^ -1
+
+        and
+         An = A[n, :]
+
+        then this function returns
+         dfn \\ dH for all `n`s:
+
+        :returns dF \\dH where (dF \\dH)[n] = dfn \\ dH
+        """
+        w = mdot(self.invZ[j], m)
+        return self.kernels[j].get_gradients_X_AK(w, self.Z[j], X) - \
+               self.kernels[j].get_gradients_X_SKD(Aj, w, self.Z[j])
 
     def _dcorss_dm(self):
         r"""
@@ -1025,6 +1125,21 @@ class SAVIGP(Model):
             dc_dh[j] = self.kernels[j].gradient.copy()
 
         return dc_dh
+
+    def _dcross_dinducing(self):
+        r"""
+        Gradient of the cross term of ELBO wrt to the location of inducing points (Z).
+
+        Returns
+        -------
+        :returns: dcross \\ dH. Dimensions: Q * M * D
+        """
+
+        dc_dindu = np.empty((self.num_latent_proc, self.num_inducing, self.input_dim))
+        for j in range(self.num_latent_proc):
+            dc_dindu[j] = self.kernels_latent[j].gradients_X(self._dcross_K(j), self.Z[j])
+
+        return dc_dindu
 
     def _dent_dhyper(self):
         r"""

@@ -44,7 +44,8 @@ class ExtRBF(RBF):
         if self.ARD:
             tmp = dL_dr * self._inv_dist(X, X2)
             if X2 is None: X2 = X
-            lengthscale_gradient = np.array([np.einsum('ij,ij,...->i', tmp, np.square(X[:,q:q+1] - X2[:,q:q+1].T), -1./self.lengthscale[q]**3) for q in xrange(self.input_dim)])
+            lengthscale_gradient = np.array([np.einsum('ij,ij,...->i', tmp, np.square(X[:,q:q+1] - X2[:,q:q+1].T), -1./self.lengthscale[q]**3)
+                                             for q in xrange(self.input_dim)])
         else:
             r = self._scaled_dist(X, X2)
             lengthscale_gradient = -np.sum(dL_dr*r, axis=1)/self.lengthscale
@@ -110,3 +111,43 @@ class ExtRBF(RBF):
             lengthscale_gradient = np.diagonal(-mdot(S, (self._scaled_dist(X, X2) * self.dK_dr_via_X(X, X2)).T, D) / self.lengthscale)[:, np.newaxis]
 
         return np.hstack((np.diagonal(variance_gradient)[:, np.newaxis], lengthscale_gradient))
+
+    def get_gradients_X_SKD(self, S, D, X):
+        X2 = X
+        invdist = self._inv_dist(X, X2)
+        dL_dr = self.dK_dr_via_X(X, X2)
+        tmp = invdist*dL_dr
+        if X2 is None:
+            tmp = tmp + tmp.T
+            X2 = X
+
+        #The high-memory numpy way:
+        #d =  X[:, None, :] - X2[None, :, :]
+        #ret = np.sum(tmp[:,:,None]*d,1)/self.lengthscale**2
+
+        #the lower memory way with a loop
+        ret = np.empty(S.shape + (self.input_dim,))
+        for q in xrange(self.input_dim):
+            ret[:, :, q] = mdot(tmp * (X[:,q][:,None]-X2[:,q][None,:]), D).T * S + mdot(tmp * (X[:,q][:,None]-X2[:,q][None,:]), S.T).T * D.T
+        ret /= self.lengthscale**2
+
+        return ret
+
+    def get_gradients_X_AK(self, A, X, X2=None):
+        invdist = self._inv_dist(X, X2)
+        dL_dr = self.dK_dr_via_X(X, X2) * A
+        tmp = invdist*dL_dr
+        if X2 is None:
+            tmp = tmp + tmp.T
+            X2 = X
+
+        #The high-memory numpy way:
+        #d =  X[:, None, :] - X2[None, :, :]
+        #ret = np.sum(tmp[:,:,None]*d,1)/self.lengthscale**2
+
+        #the lower memory way with a loop
+        ret = np.empty(A.T.shape + (X.shape[1],), dtype=np.float64)
+        for q in xrange(self.input_dim):
+            ret[:,:,q] = (tmp*(X[:,q][:, None]-X2[:,q][None, :])).T
+        ret /= self.lengthscale**2
+        return ret
