@@ -42,7 +42,7 @@ class ExperimentSetup:
             ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel, method, name, d['id'], num_inducing,
                                  num_samples, sparsify_factor, ['hyp', 'mog', 'll'], MeanTransformation, True,
                                  config['log_level'], False, latent_noise=0.001,
-                                 opt_per_iter={'mog': 1, 'hyp': 25, 'll': 25},
+                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200))
         return names
 
