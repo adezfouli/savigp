@@ -59,7 +59,8 @@ class SAVIGP(Model):
 
      config_list = [Configuration.CROSS, Configuration.ELL, Configuration.ENTROPY, Configuration.MOG], which means that
      posterior parameters will be in the objective function gradient. Similarly, including Configuration.HYP, and
-     Configuration.LL mean that hyper-parameters, and likelihood parameters will be in the objective function gradient.
+     Configuration.LL and configuration.INDUCING mean that hyper-parameters, and likelihood parameters and location of
+     inducing points will be in the objective function gradient.
 
     latent_noise : float
      the amount of latent noise that will be added to the kernel.
@@ -932,7 +933,7 @@ class SAVIGP(Model):
     def _dsigma_dinduc(self, j, k, Aj, Kzx, X):
         """
         calculates gradient of ``sigma`` for component ``k`` and latent process ``j`` wrt to the
-        location of inducing points. ``sigma`` is as follows:
+        location of inducing points (Z[j]). ``sigma`` is as follows:
 
          sigma = Kj(X, X) - Aj Kzx + Aj Skj Aj
 
@@ -954,7 +955,7 @@ class SAVIGP(Model):
     def _db_dinduc(self, j, k, Aj, X):
         """
         calculates gradients of ``b`` for latent process ``j`` and component ``k`` wrt to the
-        location of inducing points. ``b`` is as follows:
+        location of inducing points (Z[j]). ``b`` is as follows:
 
          b = Aj mkj
 
@@ -990,19 +991,19 @@ class SAVIGP(Model):
 
         Assume:
 
-         dfn \\ dH = dAn \\ dH * m
+         dfn \\ dZ[j] = dAn \\ dZ[j] * m
 
         where:
 
-         dAn \\ dH = (dK(X[n, :], Z[j]) \\ dH  - An d K(Z[j], Z[j]) \\ dH) K(Z[j], Z[j]) ^ -1
+         dAn \\ dZ[j] = (dK(X[n, :], Z[j]) \\ dZ[j]  - An d K(Z[j], Z[j]) \\ dZ[j]) K(Z[j], Z[j]) ^ -1
 
         and
          An = A[n, :]
 
         then this function returns
-         dfn \\ dH for all `n`s:
+         dfn \\ dZ[j] for all `n`s:
 
-        :returns dF \\dH where (dF \\dH)[n] = dfn \\ dH
+        :returns dF \\dZ[j] where (dF \\dH)[n] = dfn \\ dZ[j]
         """
         w = mdot(self.invZ[j], m)
         return self.kernels[j].get_gradients_X_AK(w, self.Z[j], X) - \
@@ -1132,7 +1133,7 @@ class SAVIGP(Model):
 
         Returns
         -------
-        :returns: dcross \\ dH. Dimensions: Q * M * D
+        :returns: dcross \\ dZ. Dimensions: Q * M * D
         """
 
         dc_dindu = np.empty((self.num_latent_proc, self.num_inducing, self.input_dim))

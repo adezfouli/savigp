@@ -113,6 +113,27 @@ class ExtRBF(RBF):
         return np.hstack((np.diagonal(variance_gradient)[:, np.newaxis], lengthscale_gradient))
 
     def get_gradients_X_SKD(self, S, D, X):
+        r"""
+        Assume we have a function Ln, which its gradient wrt to the location of X, is as follows:
+         dLn\\dX = S[n, :] *  dK(X)\\dX * D[:, n]
+
+        then this function calculates dLn\\dX for all 'n's.
+
+        Parameters
+        ----------
+        S : ndarray
+            dim(S) = N * M
+        D : ndarray
+            dim(D) = M * N
+        X : ndarray
+            dim(X) = M * d, where d is the input dimensionality \n
+
+        Returns
+        -------
+        dL_dH : ndarray
+         dL\\dX which is a matrix by dimensions N * d
+        """
+
         X2 = X
         invdist = self._inv_dist(X, X2)
         dL_dr = self.dK_dr_via_X(X, X2)
@@ -134,6 +155,34 @@ class ExtRBF(RBF):
         return ret
 
     def get_gradients_X_AK(self, A, X, X2=None):
+        r"""
+        Assume we have a function Ln of the kernel, which its gradient wrt to the location of X is as follows:
+
+         dLn\\dX = An * dK(X2, Xn)\\dX
+
+        where An = A[n, :], Xn = X[n, :]. The function then returns a matrix containing dLn_dX for all 'n's.
+
+        Parameters
+        ----------
+        A : ndarray
+         dim(A) = N * M
+
+        X : ndarray
+         dim(X) = N * D
+
+        X2: ndarray
+         dim(X2) = M * D
+
+        where D is the dimensionality of input.
+
+        Returns
+        -------
+        dL_dX : ndarray
+         dL\\dX, which is a matrix of dimension N * D
+
+        """
+
+
         invdist = self._inv_dist(X, X2)
         dL_dr = self.dK_dr_via_X(X, X2) * A
         tmp = invdist*dL_dr

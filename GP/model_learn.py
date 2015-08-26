@@ -322,7 +322,7 @@ class ModelLearn:
          the number of inducing points
 
         to_optimize : list
-         The set of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', e.g.,
+         The set of parameters to optimize. It should be a list, and it can include 'll', 'mog', 'hyp', 'inducing' e.g.,
          it can be ['ll', 'mog'] in which case posterior and ll will be optimised.
 
         trans_class : subclass of DataTransformation

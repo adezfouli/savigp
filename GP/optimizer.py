@@ -210,8 +210,8 @@ class Optimizer:
         """
         Optimised model in an EM manner, i.e., each set of parameters are optimised independently, i.e.,
 
-                 |---> MoG ---> hyp ---> ll ----|
-                 |---<-------- <--------<-------|
+                 |---> MoG ---> hyp ---> ll ----> inducing points ---->|
+                 |---<-------- <--------<--------<--------<-------<----|
 
         Parameters
         ----------
@@ -270,7 +270,7 @@ class Optimizer:
             while (max_iters is None) or current_iter < max_iters:
                 logger.info('iter started ' + str(current_iter))
                 if 'mog' in method:
-                    logger.info('mog params')
+                    logger.info('MoG params')
                     model.set_configuration([
                         Configuration.MoG,
                         Configuration.ENTROPY,
