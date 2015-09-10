@@ -189,8 +189,8 @@ if __name__ == '__main__':
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
     # ExperimentRunner.mnist_binary_inducing_experiment()
-    ExperimentRunner.mnist_binary_experiment()
-    # ExperimentRunner.sarcos_all_joins_experiment()
+    # ExperimentRunner.mnist_binary_experiment()
+    ExperimentRunner.sarcos_all_joins_experiment()
     # ExperimentRunner.sarcos_experiment()
 
 
