@@ -1,33 +1,28 @@
+__author__ = 'AT'
+
 import logging
-from numpy.random import random
-from scipy.stats import uniform
 from data_source import DataSource
-from data_transformation import MeanTransformation, IdentityTransformation
-from experiments import Experiments
+from data_transformation import IdentityTransformation
+from model_learn import ModelLearn
 from plot_results import PlotOutput
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
-
-__author__ = 'AT'
-
-from copy import deepcopy, copy
-import warnings
-from numpy.ma import trace
-from scipy.linalg import inv, det
-from sklearn import preprocessing
+from copy import deepcopy
 import GPy
 from matplotlib.pyplot import show
-from GPy.util.linalg import mdot
-import numpy as np
 from optimizer import *
 from savigp import Configuration
 from likelihood import UnivariateGaussian, MultivariateGaussian
 from grad_checker import GradChecker
 from plot import plot_fit
-from util import chol_grad, jitchol, bcolors
+from util import bcolors
 
 
 class SAVIGP_Test:
+    r"""
+    Testing SAVIGP models.
+    """
+
     def __init__(self):
         pass
 
@@ -112,6 +107,9 @@ class SAVIGP_Test:
 
     @staticmethod
     def test_grad(verbose=False):
+        """
+        Test gradient of the model
+        """
         configs = [
             [
                 Configuration.MoG,
@@ -176,43 +174,15 @@ class SAVIGP_Test:
 
 
     @staticmethod
-    def init_test():
-        np.random.seed(12000)
-        num_input_samples = 3
-        num_samples = 100
-        gaussian_sigma = 0.2
-
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
-
-        s1 = SAVIGP_Diag(X, Y, num_input_samples, 2, MultivariateGaussian(np.array([[gaussian_sigma]])),
-
-                     [kernel], num_samples, [
-                Configuration.MoG,
-                Configuration.ENTROPY,
-                Configuration.CROSS,
-                Configuration.ELL,
-                Configuration.HYPER
-            ], 0, True)
-        Optimizer.BFGS(s1, max_fun=3)
-
-        s1 = SAVIGP_SingleComponent(X, Y, num_input_samples, MultivariateGaussian(np.array([[gaussian_sigma]])),
-                                      [kernel], num_samples, [
-                Configuration.MoG,
-                Configuration.ENTROPY,
-                Configuration.CROSS,
-                Configuration.ELL,
-                Configuration.HYPER
-            ], 0, True)
-        Optimizer.BFGS(s1, max_fun=3)
-
-
-    @staticmethod
     def gpy_prediction(X, Y, vairiance, kernel):
         m = GPy.core.GP(X, Y, kernel=kernel, likelihood=GPy.likelihoods.Gaussian(None, vairiance))
         return m
 
     @staticmethod
-    def test_savigp(config):
+    def test_model_learn(config):
+        """
+        Compares the model output with exact GP
+        """
         method = config['method']
         sparsify_factor = config['sparse_factor']
         np.random.seed(12000)
@@ -227,8 +197,8 @@ class SAVIGP_Test:
         Ytrain = Y[:train_n, :]
         Xtest = X[train_n:, :]
         Ytest = Y[train_n:, :]
-        kernel1 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
-        kernel2 = Experiments.get_kernels(Xtrain.shape[1], 1, True)
+        kernel1 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
+        kernel2 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
         gaussian_sigma = 1.0
 
         #number of inducing points
@@ -236,20 +206,23 @@ class SAVIGP_Test:
         num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        n1, _ = Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
-                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+        n1, _ = ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
+                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation, True,
                                            logging.DEBUG, True)
 
-        n2, _ =Experiments.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
-                                           'test_' + Experiments.get_ID(), 'test', num_inducing,
+        n2, _ =ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
+                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
                                      num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
 
-        PlotOutput.plot_output('test', Experiments.get_output_path(), [n1, n2], None, False)
+        PlotOutput.plot_output('test', ModelLearn.get_output_path(), [n1, n2], None, False)
 
 
     @staticmethod
     def test_gp(plot=False, method='full'):
+        """
+        Compares model prediction with an exact GP (without optimisation)
+        """
         # note that this test fails without latent noise in the case of full Gaussian
         np.random.seed(111)
         num_input_samples = 10
@@ -273,8 +246,8 @@ class SAVIGP_Test:
         # m.MoG.update_covariance(0, gp_var - gaussian_sigma * np.eye(10))
 
         try:
-            folder_name = 'test' + '_' + Experiments.get_ID()
-            logger = Experiments.get_logger(folder_name, logging.DEBUG)
+            folder_name = 'test' + '_' + ModelLearn.get_ID()
+            logger = ModelLearn.get_logger(folder_name, logging.DEBUG)
 
             Optimizer.optimize_model(m, 10000, logger, ['mog'])
         except KeyboardInterrupt:
@@ -301,7 +274,6 @@ class SAVIGP_Test:
 
 
 if __name__ == '__main__':
-    # SAVIGP_Test.test_gp(True, method='full')
-    # SAVIGP_Test.init_test()
     SAVIGP_Test.test_grad()
-    # SAVIGP_Test.test_savigp({'method': 'full', 'sparse_factor': 1.0})
+    # SAVIGP_Test.test_gp(True, method='full')
+    # SAVIGP_Test.test_model_learn({'method': 'full', 'sparse_factor': 1.0})

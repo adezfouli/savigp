@@ -1,13 +1,16 @@
-from savigp import SAVIGP
-
 __author__ = 'AT'
 
+from savigp import SAVIGP
 from GPy.util.linalg import mdot
 from mog_single_comp import MoG_SingleComponent
 import numpy as np
 
 
 class SAVIGP_SingleComponent(SAVIGP):
+    """
+    Implementation of SAVIGP in the case that the posterior covariance is full, and the mixture has only one component.
+    """
+
     def __init__(self, X, Y, num_inducing, likelihood, kernels, n_samples,
                  config_list, latent_noise, is_exact_ell, inducing_on_Xs, n_threads =1, image=None, partition_size=3000):
         super(SAVIGP_SingleComponent, self).__init__(X, Y, num_inducing, 1, likelihood,
@@ -47,16 +50,6 @@ class SAVIGP_SingleComponent(SAVIGP):
     def _d_ent_d_pi(self):
         return -self.log_z[0] - 1
 
-    def _d_ent_d_S_kj(self, k, j):
-        return self.MoG.invC_klj[0,0,j]
-
-    def _d_ent_d_S(self):
-        dent_ds = np.empty((self.num_mog_comp, self.num_latent_proc) + self.MoG.S_dim())
-        for k in range(self.num_mog_comp):
-            for j in range(self.num_latent_proc):
-                dent_ds[k,j] = self._d_ent_d_S_kj(k,j)
-        return dent_ds
-
     def _l_ent(self):
         return -np.dot(self.MoG.pi,  self.log_z)
 
@@ -66,4 +59,12 @@ class SAVIGP_SingleComponent(SAVIGP):
             self.log_z[0] += self.MoG.log_pdf(j, 0, 0)
 
     def _transformed_d_ent_d_S(self):
+        r"""
+        In the case of posterior distribution with a single component, the gradients of the entropy term wrt to the
+        Cholesky decomposition of the posterior covariance (L) is an identity matrix, i.e., \n
+
+        dEntropy \\ dL = I
+
+        Therefore this function returns a flatten identity matrix.
+        """
         return self.MoG.transform_eye_grad()

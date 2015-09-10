@@ -1,14 +1,19 @@
 import logging
-from experiments import Experiments
+from experiment_setup import ExperimentSetup
+from model_learn import ModelLearn
 from plot_results import PlotOutput
 from multiprocessing.pool import Pool
 
+
 class ExperimentRunner:
+
+    def __init__(self):
+        pass
 
     @staticmethod
     def get_configs():
         """
-        Builds an array of configuration for running
+        Builds an array of configuration for running (in parallel)
         """
 
         configs = []
@@ -32,7 +37,7 @@ class ExperimentRunner:
     @staticmethod
     def get_experiments():
         """
-        Builds an array of experiments to run
+        Builds an array of experiments to run in parallel (the array can contain more than one experiment)
         """
 
         # return [Experiments.boston_data.__name__,
@@ -45,77 +50,66 @@ class ExperimentRunner:
         return [Experiments.USPS_data.__name__]
         # return [Experiments.creep_data.__name__]
         # return [Experiments.abalone_data.__name__]
-        return [Experiments.mining_data.__name__]
+        return [ExperimentSetup.mining_data.__name__]
     #
 
     @staticmethod
     def run_parallel(n_process):
         """
-        :param n_process number of processes to run in parallel
-        Runs experiments in parallel.
+        Creates a process for each element in the array returned by ``get_configs()`` and the experiment corresponding
+        the each element. The maximum number of processes to run in parallel is determined by ``n_process``
         """
 
         p = Pool(n_process)
         p.map(run_config, ExperimentRunner.get_configs())
 
-    @staticmethod
-    def run_serial():
-        """
-        Runs experiments in serial.
-        """
-        for c in ExperimentRunner.get_configs():
-            run_config(c)
-
 
     @staticmethod
     def get_log_level():
-        return logging.DEBUG
-        # return logging.INFO
+        """ debug level """
+        # return logging.DEBUG
+        return logging.INFO
 
-
-    @staticmethod
-    def get_expr_names():
-        return str(ExperimentRunner.get_experiments())[2:6]
 
     @staticmethod
     def boston_experiment():
-        Experiments.boston_data({'method': 'full', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
+        ExperimentSetup.boston_data({'method': 'mix2', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
 
     @staticmethod
     def wisconsin_breast_experiment():
-        Experiments.wisconsin_breast_cancer_data(
+        ExperimentSetup.wisconsin_breast_cancer_data(
             {'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def abalone_experiment():
-        Experiments.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def creep_experiment():
-        Experiments.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def USPS_experiment():
-        Experiments.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def mining_experiment():
-        Experiments.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
+        ExperimentSetup.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
     @staticmethod
     def sarcos_experiment():
-        Experiments.sarcos_data({'method': 'full',
+        ExperimentSetup.sarcos_data({'method': 'full',
                                  'sparse_factor': 0.04,
                                  'run_id': 0,
                                  'log_level': logging.DEBUG,
                                  'n_thread': 15,
                                  'partition_size': 2000,
-                                 #'image': '../results/sarcos_1/'
+                                 # 'image': '../results/all/'
     })
 
     @staticmethod
     def sarcos_all_joins_experiment():
-        Experiments.sarcos_all_joints_data({'method': 'full',
+        ExperimentSetup.sarcos_all_joints_data({'method': 'full',
                                  'sparse_factor': 0.04,
                                  'run_id': 0,
                                  'log_level': logging.DEBUG,
@@ -126,8 +120,8 @@ class ExperimentRunner:
 
     @staticmethod
     def mnist_experiment():
-        Experiments.MNIST_data({'method': 'full',
-                                'sparse_factor': 0.04,
+        ExperimentSetup.MNIST_data({'method': 'full',
+                                'sparse_factor': 0.004,
                                 'run_id': 1,
                                 'log_level': logging.DEBUG,
                                 'n_thread': 10,
@@ -135,14 +129,33 @@ class ExperimentRunner:
                                 'image': '../results/mnist_2/'
                                 })
 
-    @staticmethod
-    def struct_experiment():
-        Experiments.struct_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
 
+    @staticmethod
+    def mnist_binary_experiment():
+        ExperimentSetup.MNIST_binary_data({'method': 'full',
+                                'sparse_factor': 200. / 60000,
+                                'run_id': 1,
+                                'log_level': logging.DEBUG,
+                                'n_thread': 20,
+                                'partition_size': 2000,
+                                # 'image': '../results/mnist_1/'
+                                })
+
+
+    @staticmethod
+    def mnist_binary_inducing_experiment():
+        ExperimentSetup.MNIST_binary_inducing_data({'method': 'full',
+                                'sparse_factor': 200. / 60000,
+                                'run_id': 1,
+                                'log_level': logging.DEBUG,
+                                'n_thread': 8,
+                                'partition_size': 1000,
+                                # 'image': '../results/mnist_1/'
+                                })
 
     @staticmethod
     def plot():
-        PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
+        PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
                                    lambda x: x['method'] == 'full', False)
 
         # plots all the files
@@ -153,30 +166,33 @@ class ExperimentRunner:
         # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
         #                            lambda x: x['experiment'] == 'abalone', False)
 
+
 def run_config(config):
     try:
         logger.info('started config: ' + str(config))
-        getattr(Experiments, config['method_to_run'])(config)
+        getattr(ModelLearn, config['method_to_run'])(config)
         logger.info('finished config: ' + str(config))
     except Exception as e:
         logger.exception(config)
 
 
 if __name__ == '__main__':
-    logger = Experiments.get_logger('general_' + Experiments.get_ID(), logging.DEBUG)
+    logger = ModelLearn.get_logger('general_' + ModelLearn.get_ID(), logging.DEBUG)
 
+    # uncomment to run experiments in parallel
     # ExperimentRunner.run_parallel(3)
-    # run_config_serial(ExperimentRunner.get_configs())
 
     # runs an individual configuration
-
     # ExperimentRunner.boston_experiment()
     # ExperimentRunner.wisconsin_breast_experiment()
     # ExperimentRunner.USPS_experiment()
     # ExperimentRunner.mining_experiment()
     # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_experiment()
-    # ExperimentRunner.struct_experiment()
-    ExperimentRunner.sarcos_all_joins_experiment()
+    # ExperimentRunner.mnist_binary_inducing_experiment()
+    ExperimentRunner.mnist_binary_experiment()
+    # ExperimentRunner.sarcos_all_joins_experiment()
+    # ExperimentRunner.sarcos_experiment()
 
+
+    # uncomment to plots the outputs in results folder
     # ExperimentRunner.plot()

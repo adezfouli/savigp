@@ -1,16 +1,23 @@
-from scipy.linalg import cho_solve, solve_triangular
-from mog import MoG
-
 __author__ = 'AT'
 
+from scipy.linalg import cho_solve, solve_triangular
+from mog import MoG
 from GPy.util.linalg import mdot
 import math
-from numpy.ma import trace
 import numpy as np
-from util import chol_grad, pddet, inv_chol, jitchol, tr_AB
+from util import chol_grad, pddet, jitchol, tr_AB
 
 
 class MoG_SingleComponent(MoG):
+    """
+    Implementation of posterior distribution when it is a single component Gaussian distribution with full
+    covariance matrix.
+
+    Attributes
+    ----------
+    L : ndarray
+     Cholesky decomposition of the covariance matrix
+    """
 
     def __init__(self, num_process, num_dim):
         MoG.__init__(self, 1, num_process, num_dim)
@@ -25,17 +32,11 @@ class MoG_SingleComponent(MoG):
         self._update()
         self.num_free_params = self.parameters.shape[0]
 
-    def ratio(self, j, k, l1, l2):
-        return 1.0
-
     def log_pdf(self, j, k, l):
         return -((self.s[0, j, :, :].shape[0])/2) * (math.log(2 * math.pi) + math.log(2.0)) - \
                0.5 * pddet(self.L[0,j,:])
 
-    def aSa(self, a, j):
-        return mdot(a.T, self.s[:,j,:,:], a)
-
-    def aSkja(self, a, k, j):
+    def aSa(self, a, k, j):
         return np.diagonal(mdot(a, self.s[k,j,:,:], a.T))
 
     def mmTS(self, k, j):
@@ -45,6 +46,11 @@ class MoG_SingleComponent(MoG):
         return mdot(self.s[k,j], a)
 
     def transform_eye_grad(self):
+        """
+        In the case of posterior distribution with one component, gradients of the
+        entropy term wrt to the posterior covariance is identity. This function returns flatten lower-triangular terms
+        of the identity matrices for all processes.
+        """
         grad = np.empty((self.num_comp, self.num_process, self.get_sjk_size()))
         meye = np.eye((self.num_dim))[np.tril_indices_from(self.L[0,0])]
         for k in range(self.num_comp):
@@ -94,9 +100,6 @@ class MoG_SingleComponent(MoG):
     def S_dim(self):
         return self.num_dim, self.num_dim
 
-    def full_s_dim(self):
-        return (self.num_comp, self.num_process, self.num_dim, self.num_dim)
-
     def m_from_array(self, ma):
         self.m = ma.reshape((self.num_comp, self.num_process, self.num_dim))
 
@@ -108,21 +111,12 @@ class MoG_SingleComponent(MoG):
     def get_m_S_params(self):
         return self.m, self.L_flatten
 
-    def tr_Ainv_mult_S(self, L, k, j):
+    def tr_AinvS(self, L, k, j):
         a = solve_triangular(L, self.L[k, j, :], lower=True)
         return tr_AB(a.T, a)
 
-    def tr_A_mult_S(self, A, k, j):
+    def tr_AS(self, A, k, j):
         return tr_AB(A, self.s[k, j, :])
-
-    def C_m(self, j, k, l):
-        return mdot(self.invC_klj[k, l, j], (self.m[k, j, :] - self.m[l, j, :]))
-
-    def C_m_C(self, j, k, l):
-        return (self.invC_klj[k, l, j] -
-                mdot(self.invC_klj[k, l, j], (self.m[k, j, :] - self.m[l, j, :]),
-                (self.m[k, j, :] - self.m[l, j, :]).T, self.invC_klj[k, l, j]))
-
 
     def dAinvS_dS(self, L, k, j):
         tmp = 2 * cho_solve((L, True), self.L[k,j])
@@ -134,8 +128,16 @@ class MoG_SingleComponent(MoG):
         tmp[np.diag_indices_from(tmp)] *= self.L[k,j][np.diag_indices_from(tmp)]
         return tmp[np.tril_indices_from(self.L[k,j])]
 
-
     def transform_S_grad(self, g):
+        r"""
+        Assume:
+
+        g = df \\ dS
+
+        then this function returns:
+        :returns df \\ dL, where L is the Cholesky decomposition of S
+        """
+
         grad = np.empty((self.num_comp, self.num_process, self.get_sjk_size()))
         for k in range(self.num_comp):
             for j in range(self.num_process):
@@ -143,7 +145,6 @@ class MoG_SingleComponent(MoG):
                 tmp[np.diag_indices_from(tmp)] *= self.L[k,j][ np.diag_indices_from(tmp)]
                 grad[k,j] = tmp[np.tril_indices_from(self.L[k,j])]
         return grad.flatten()
-
 
     def _update(self):
         self.parameters = self.get_parameters()

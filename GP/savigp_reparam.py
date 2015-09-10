@@ -72,7 +72,7 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
                     N * math.log(2 * math.pi) + \
                     self.log_detZ[j] + \
                     mdot(self.MoG.m[k, j, :].T, self.Kzz[j, :, :], self.MoG.m[k, j, :].T) + \
-                    self.MoG.tr_A_mult_S(self.Kzz[j, :, :], k, j)
+                    self.MoG.tr_AS(self.Kzz[j, :, :], k, j)
         for k in range(self.num_mog_comp):
             cross += self.MoG.pi[k] * d_pi[k]
 
@@ -109,10 +109,16 @@ class SAVIGP_Reparam(SAVIGP_SingleComponent):
                - self.dKzxn_dhyper_mult_x(j, xn, A[j, n]) + \
                2 * self.dKzxn_dhyper_mult_x(j, xn, self.MoG.Sa(Kxnz, k, j))
 
-
     def _db_n_dhyp(self, j, k, A, n, xn):
         return self.dKzxn_dhyper_mult_x(j, xn, self.MoG.m[k, j])
 
     def calculate_dhyper(self):
         return Configuration.HYPER in self.config_list
 
+    def dKzxn_dhyper_mult_x(self, j, x_n, x):
+        self.kernels[j].update_gradients_full(x[:, np.newaxis], self.Z[j], x_n)
+        return self.kernels[j].gradient.copy()
+
+    def dKx_dhyper(self, j, x_n):
+        self.kernels[j].update_gradients_full(np.array([[1]]), x_n)
+        return self.kernels[j].gradient.copy()

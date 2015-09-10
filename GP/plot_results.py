@@ -1,20 +1,60 @@
 import csv
-import math
 import os
-from re import match
-from matplotlib.lines import Line2D
+
 from matplotlib.pyplot import show, ion, savefig
 import pandas
 from pandas.util.testing import DataFrame, Series
-from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL, CogLL
-from util import check_dir_exists
 import numpy as np
 import matplotlib.pyplot as plt
 
+from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL, CogLL
+from util import check_dir_exists
+
+
 class PlotOutput:
+    """
+    A class for plotting and exporting predictions for various sorts of likelihoods.
+    """
+
+    def __init__(self):
+        pass
 
     @staticmethod
     def plot_output(name, infile_path, model_names, filter, export_pdf):
+        """
+        Reads predictions from csv files and generates plots and output csv. Input csv files should be in the
+        infile_path with following structure:
+
+        ``infile_path`` /
+                    ../any_name/
+                                ../config.csv, test_.csv,train_.csv
+                    ../any_name2
+                                ../config.csv, test_.csv,train_.csv
+
+        The function also exports the data used to generate graphs as csv files the following folder:
+            ../graph_data
+        these csv files can be used to reproduce outputs.
+
+        Parameters
+        ----------
+        name : string
+         name of the csv files to which data will be exported
+
+        infile_path : string
+         the folder which contains csv for configs and test and train
+
+        model_names : list
+         name of the sub-directories in ``infile_path`` to consider
+
+        filter : callable
+         a filter which will be applied in config files to filter which configs should be considered. For example,
+         lambda x: x['method'] == 'full' will only consider outputs which used 'full' method
+
+        export_pdf : boolean
+         whether to export the final plot as the pdf.
+
+        :return: None
+        """
         graphs = {}
         graphs['SSE'] = {}
         graphs['MSSE'] = {}
@@ -132,12 +172,36 @@ class PlotOutput:
 
     @staticmethod
     def plot_output_all(name, path, filter, export_pdf):
+        """
+        A helper function which will extract plot data for all the folders in ``path`` which satisfy the filter.
+
+        Parameters
+        ----------
+        name : string
+         name of the folder used to export csv files
+
+        path : string
+         path which contains folders to plot
+
+        filter : callable
+         a filter which will be applied in config files to filter which configs should be considered. For example,
+         lambda x: x['method'] == 'full' will only consider outputs which used 'full' method
+
+        export_pdf: boolean
+         whether to export output graphs as pdf
+
+        :return: None
+        """
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         PlotOutput.plot_output(name, path, dir, filter, export_pdf)
 
 
     @staticmethod
     def find_all(path, filter):
+        """
+        Prints the name of all folders inside ``path`` which their config files satisfies ``filter``
+        """
+
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         for m in dir:
             data_config = PlotOutput.read_config(path + m + '/' + 'config_' + '.csv')

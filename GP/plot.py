@@ -1,9 +1,11 @@
+"""
+Note: this class is directly adapted from the GPy package, and is changed to plot 1D Gaussian processes.
+"""
+
 import warnings
 
 from GPy.plotting.matplot_dep.base_plots import x_frame1D, gpplot, x_frame2D
 
-
-__author__ = 'AT'
 
 # Copyright (c) 2012, GPy authors (see AUTHORS.txt).
 # Licensed under the BSD 3-clause license (see LICENSE.txt)
@@ -158,12 +160,3 @@ def plot_fit(model, plot_limits=None, which_data_rows='all',
     else:
         raise NotImplementedError, "Cannot define a frame with more than two input dimensions"
     return plots
-
-def plot_fit_f(model, *args, **kwargs):
-    """
-    Plot the GP's view of the world, where the data is normalized and before applying a likelihood.
-
-    All args and kwargs are passed on to models_plots.plot.
-    """
-    kwargs['plot_raw'] = True
-    plot_fit(model,*args, **kwargs)
