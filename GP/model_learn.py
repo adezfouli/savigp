@@ -41,12 +41,15 @@ class ModelLearn:
         return '../logs/'
 
     @staticmethod
-    def get_logger(name, level):
+    def get_logger(path, name, level):
         """
         Creates loggers
 
         Parameters
         ----------
+        path : string
+         path for save the log file in
+
         name : string
          name of the log file
 
@@ -61,8 +64,8 @@ class ModelLearn:
 
         logger = logging.getLogger(name)
         logger.setLevel(level)
-        check_dir_exists(ModelLearn.get_logger_path())
-        fh = logging.FileHandler(ModelLearn.get_logger_path() + name + '.log')
+        check_dir_exists(path)
+        fh = logging.FileHandler(path + '/'+ name + '.log')
         fh.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
@@ -378,7 +381,6 @@ class ModelLearn:
         if opt_per_iter is None:
             opt_per_iter = {'mog': 40, 'hyp': 40, 'll': 40}
         folder_name = name + '_' + ModelLearn.get_ID()
-        logger = ModelLearn.get_logger(folder_name, logging_level)
         transformer = trans_class.get_transformation(Ytrain, Xtrain)
         Ytrain = transformer.transform_Y(Ytrain)
         Ytest = transformer.transform_Y(Ytest)
@@ -409,6 +411,8 @@ class ModelLearn:
                       'latent_noise:': latent_noise,
                       'model_init': model_image_file
                       }
+
+        logger = ModelLearn.get_logger(ModelLearn.get_output_path() + folder_name, folder_name, logging_level)
         logger.info('experiment started for:' + str(properties))
 
         model_image = None
@@ -447,7 +451,9 @@ class ModelLearn:
             if 'll' in to_optimize and 'hyp' in to_optimize:
                 m.optimize('bfgs')
 
+        logger.debug("prediction started...")
         y_pred, var_pred, nlpd = m.predict(Xtest, Ytest)
+        logger.debug("prediction finished")
         if not (tracker is None):
             ModelLearn.export_track(folder_name, tracker)
         ModelLearn.export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain),

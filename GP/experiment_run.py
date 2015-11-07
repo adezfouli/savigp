@@ -41,12 +41,12 @@ class ExperimentRunner:
         """
 
         # uncomment to run desired experiment
-        # return [Experiments.boston_data.__name__]
-        # return [Experiments.wisconsin_breast_cancer_data.__name__]
-        # return [Experiments.USPS_data.__name__]
-        # return [Experiments.creep_data.__name__]
-        # return [Experiments.abalone_data.__name__]
-        return [ExperimentSetup.mining_data.__name__]
+        return [ExperimentSetup.boston_data.__name__]
+        # return [ExperimentSetup.wisconsin_breast_cancer_data.__name__]
+        # return [ExperimentSetup.USPS_data.__name__]
+        # return [ExperimentSetup.creep_data.__name__]
+        # return [ExperimentSetup.abalone_data.__name__]
+        # return [ExperimentSetup.mining_data.__name__]
     #
 
     @staticmethod
@@ -63,8 +63,8 @@ class ExperimentRunner:
     @staticmethod
     def get_log_level():
         """ debug level """
-        # return logging.DEBUG
-        return logging.INFO
+        return logging.DEBUG
+        # return logging.INFO
 
 
     @staticmethod
@@ -166,14 +166,14 @@ class ExperimentRunner:
 def run_config(config):
     try:
         logger.info('started config: ' + str(config))
-        getattr(ModelLearn, config['method_to_run'])(config)
+        getattr(ExperimentSetup, config['method_to_run'])(config)
         logger.info('finished config: ' + str(config))
     except Exception as e:
         logger.exception(config)
 
 
 if __name__ == '__main__':
-    logger = ModelLearn.get_logger('general_' + ModelLearn.get_ID(), logging.DEBUG)
+    logger = ModelLearn.get_logger(ModelLearn.get_logger_path(), 'general_' + ModelLearn.get_ID(), logging.DEBUG)
 
     # uncomment to run experiments in parallel
     # ExperimentRunner.run_parallel(3)
