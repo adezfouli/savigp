@@ -1,8 +1,11 @@
-**Overview**
+**Big and Black GP**
 
-This code is an implementation of the inference framework for Gaussian process models proposed in [1]. The framework is able to perform
-inference for Gaussian process models with arbitrary likelihood function and it is scalable to large datasets.
 
+This code is an implementation of the inference framework for Gaussian process (GP) models proposed in [1]. The framework is able to perform
+inference for Gaussian process models with arbitrary likelihood function (Black) and it is scalable to large datasets (Big).
+
+
+The method is also referred to as SAVIGP, which stands for Scalable Automated Variational Inference for Gaussian Process Models.
 
 **Experiments**
 
