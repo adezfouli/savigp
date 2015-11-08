@@ -2,34 +2,34 @@
 
 
 This code is an implementation of the inference framework for Gaussian process (GP) models proposed in [1]. The framework is able to perform
-inference for Gaussian process models with arbitrary likelihood function (Black) and it is scalable to large datasets (Big).
+inference for Gaussian process models with arbitrary likelihood functions (Black) and it is scalable to large datasets (Big).
 
 
-The method is also referred to as SAVIGP, which stands for Scalable Automated Variational Inference for Gaussian Process Models.
+The method is also referred to as SAVIGP, which stands for Scalable Automated Variational Inference for Gaussian Process models.
 
 **Experiments**
 
-Several example usages for different forms of likelihood functions are available in `GP/experiment_setup.py` file. 
+Several examples for different forms of likelihood functions are available in the `GP/experiment_setup.py` file. 
 
-In order to replicate the experiments reported in the paper, the corresponding line in `GP/experiment_run.py` file should be uncommented. For example, 
-the following line in the file will run the experiment using Boston dataset:
+In order to replicate the experiments reported in the paper, the corresponding line in the `GP/experiment_run.py` file should be uncommented. For example, 
+the following line in the file will run the experiment using the Boston dataset:
 ```python
 ExperimentRunner.boston_experiment()
 ```
 
-The experiments also can be ran concurrently, as it is shown in the file.
+The experiments can also be run concurrently, as it is shown in the file.
 
 **Output**
 
-After running an experiment is finished, the results will be saved in a directory called `resutls`, which is a folder one level higher than the directory of the code. 
+After an experiment is finished, the results will be saved in a directory called `resutls`, which is a folder one level higher than the directory of the code. 
 The result of each experiment will be saved in a separate directory which contains several files, as follows:
 
 | File        | content|
 | ------------- |:-----|
 | test_.csv      | Result of the prediction on test data |
 | train_.csv      | Training data used. Model can be configured to not save these data, in the case the training dataset is large|
-| model.dump | An image of the model. After each iteration of the optimisation this image will be updated, and it can be used to initialize the model|
-|opt.dump| Last state of the optimiser that can be used to continue the optimisation from the last iteration|
+| model.dump | An image of the model. After each iteration of the optimisation this image will be updated, and it can be used later on to initialize the model|
+|opt.dump|Last state of the optimiser. It can be used to continue the optimisation from the last iteration|
 |config_.csv| Configuration of the model|
 |\*.log|Log file|
 
@@ -47,18 +47,18 @@ Following are required for tests:
 * DerApproximator (0.52)
 * texttable (0.8.2)
 
-Numbers in the paranthesis indicate the tested version.
+Numbers in the parenthesis indicate the tested version.
 
 **Visualization**
 
-In order to plot the results generated, the the last line in the `GP/experiment_run.py` file should be uncommented:
+In order to plot the results generated, the last line in the `GP/experiment_run.py` file should be uncommented:
 
 ```Python
 ExperimentRunner.plot()
 ```
 
-In the case that the results of several experiments are in the result folder, then this method will plot average of the results. The type of plots
-depends on the likelihood function. For example bar-charts are generated in the case of classification, and box-plots in the case of regression models. The 
+In the case that the results of more than one experiment are in the result folder, then this method will plot the average of the results. The types of plots
+depend on the likelihood function. For example bar-charts are generated in the case of classification, and box-plots in the case of regression models. The 
 type of likelihood is extracted from the `config_.csv` file. The plot function also exports the data used for graphs (e.g., the height of the bar charts and 
 size of error-bars) into a separate folder called `graph_data`, which is one lever higher than the code folder. These data can be used to regenerate the plots
 using other tools. I used an R code for the plots in the paper. The code is in the file `graphs_R/graphs.R`.
@@ -71,7 +71,7 @@ The code comes with a set of pre-defined likelihood functions as follows:
 | ------------- |:-----|
 |Likelihood.UnivariateGaussian|Normal Gaussian process regression with single output|
 |Likelihood.MultivariateGaussian|Normal Gaussian process regression with multi-dimensional output|
-|Likelihood.LogGaussianCox|Log Gaussian Cox process. Can be used for example for the prediction of rate of incidents|
+|Likelihood.LogGaussianCox|Log Gaussian Cox process. Can be used for example for the prediction of the rate of incidents|
 |Likelihood.LogisticLL|Logistic likelihood function. Can be used for binary classification|
 |Likelihood.SoftmaxLL|SoftmaxLL likelihood function. Can be used for multi-class classification|
 |Likelihood.WarpLL|Likelihood corresponding to Warp Gaussian process|
@@ -83,7 +83,7 @@ See the class documentation for more details.
 
 **Example**
 
-Below is a short example using Boston dataset:
+Below is a short example using the Boston dataset:
 
 ```python
 import logging
@@ -109,7 +109,7 @@ Ytrain = d['train_Y']
 Xtest = d['test_X']
 Ytest = d['test_Y']
 
-# is is just of name that will be used for the name of folders and files when exporting results
+# it is just a name that will be used for naming folders and files when exporting results
 name = 'boston'
 
 # defining the likelihood function
@@ -140,7 +140,7 @@ ModelLearn.run_model(Xtest,
                      # Transform data before training
                      MeanTransformation,
 
-                     # place inducting points on training data. If False, they will be places using clustering
+                     # place inducting points on training data. If False, they will be placed using clustering
                      True,
                      
                      # level of logging
@@ -149,7 +149,7 @@ ModelLearn.run_model(Xtest,
                      # do not export training data into csv files
                      False,
                      
-                     # add a small latent noise to the kernel for stability of numerical computations
+                     # add a small latent noise to the kernel for the stability of numerical computations
                      latent_noise=0.001,
 
                      # for how many iterations each set of parameters will be optimised
