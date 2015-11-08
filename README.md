@@ -1,4 +1,5 @@
-**Big and Black GP**
+Big and Black GP
+----------------
 
 
 This code is an implementation of the inference framework for Gaussian process (GP) models proposed in [1]. The framework is able to perform
@@ -32,22 +33,6 @@ The result of each experiment will be saved in a separate directory which contai
 |opt.dump|Last state of the optimiser. It can be used to continue the optimisation from the last iteration|
 |config_.csv| Configuration of the model|
 |\*.log|Log file|
-
-**Dependences**
-
-Following packages are required:
-* Python 2.7 (2.7.6)
-* Scipy (0.15.1)
-* Numpy (1.9.1)
-* GPy (0.6.0)
-* pandas (0.16.0)
-* scikit-learn (0.14.1)
-
-Following are required for tests:
-* DerApproximator (0.52)
-* texttable (0.8.2)
-
-Numbers in the parenthesis indicate the tested version.
 
 **Visualization**
 
@@ -169,6 +154,23 @@ ModelLearn.run_model(Xtest,
 The code shows how to configure the model. There are two options that can significantly affect the speed of the code and 
 the amount of memory usage: `n_threads` and `partition_size`. The whole dataset is divided into partitions of size
  `partition_size` and calculations on each partition is performed on a separate thread, where the maximum number of threads is `n_threads`. 
+
+**Dependences**
+
+Following packages are required:
+* Python 2.7 (2.7.6)
+* Scipy (0.15.1)
+* Numpy (1.9.1)
+* GPy (0.6.0)
+* pandas (0.16.0)
+* scikit-learn (0.14.1)
+
+Following are required for tests:
+* DerApproximator (0.52)
+* texttable (0.8.2)
+
+Numbers in the parenthesis indicate the tested version.
+
 
 References
 ----------
