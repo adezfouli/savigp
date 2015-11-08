@@ -172,8 +172,7 @@ Following are required for tests:
 Numbers in the parenthesis indicate the tested version.
 
 
-References
-----------
+**References**
 
 **[1]** A. Dezfouli, E. V. Bonilla. Scalable Inference for Gaussian Process Models with Black-Box Likelihoods
     Processes, Advances in Neural and Information Processing Systems (NIPS),
