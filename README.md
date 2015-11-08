@@ -1,4 +1,4 @@
-Big and Black GP
+Big & Black GP
 ----------------
 
 
