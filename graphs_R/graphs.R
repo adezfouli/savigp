@@ -25,10 +25,10 @@ output_path = "../../SAVIGP_paper/nips2015/figures/raw/"
 # boston data
 name= 'boston'
 data = read.csv('../../graph_data/boston_SSE_data.csv')
-p1 = draw_boxplot_models(data, "SSE", "None")
+p1 = draw_boxplot_models_with_X(data, "SSE", "None")
 
 data = read.csv('../../graph_data/boston_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLPD", "right")
+p2 = draw_boxplot_models_with_X(data, "NLPD", "right")
 
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
@@ -36,10 +36,10 @@ ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, unit
 # abalone data
 name= 'abalone'
 data = read.csv('../../graph_data/abalone_SSE_data.csv')
-p1 = draw_boxplot_models(data, "SSE", "None")
+p1 = draw_boxplot_models_with_X(data, "SSE", "None")
 
 data = read.csv('../../graph_data/abalone_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLPD", "right")
+p2 = draw_boxplot_models_with_X(data, "NLPD", "right")
 
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
@@ -48,10 +48,10 @@ ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, unit
 # creep data
 name = "creep"
 data = read.csv('../../graph_data/creep_SSE_data.csv')
-p1 = draw_boxplot_models(data, "SSE", "None")
+p1 = draw_boxplot_models_with_X(data, "SSE", "None")
 
 data = read.csv('../../graph_data/creep_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLPD", "right")
+p2 = draw_boxplot_models_with_X(data, "NLPD", "right")
 
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
@@ -78,7 +78,7 @@ data = read.csv('../../graph_data/wisc_ER_data.csv')
 p1 = draw_bar_models(data, "error rate", "None")
 
 data = read.csv('../../graph_data/wisc_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLP",  "right")
+p2 = draw_boxplot_models_with_X(data, "NLP",  "right")
 
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
@@ -90,7 +90,7 @@ data = read.csv('../../graph_data/usps_ER_data.csv')
 p1 = draw_bar_models(data, "error rate", "None")
 
 data = read.csv('../../graph_data/usps_NLPD_data.csv')
-p2 = draw_boxplot_models(data, "NLP", "right")
+p2 = draw_boxplot_models_with_X(data, "NLP", "right")
 
 g = arrangeGrob(p1, p2, ncol=2,  widths=c(9/20, 11/20))
 ggsave(file=paste(output_path, name, ".pdf", sep = ""),  width=w, height=h, units = "cm" , device=cairo_pdf, g)      
