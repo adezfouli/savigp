@@ -22,7 +22,7 @@ The experiments can also be run concurrently, as it is shown in the file.
 
 **Output**
 
-After an experiment is finished, the results will be saved in a directory called `resutls`, which is a folder one level higher than the directory of the code. 
+After an experiment is finished, the results will be saved in a directory called `results`, which is a folder one level higher than the directory of the code. 
 The result of each experiment will be saved in a separate directory which contains several files, as follows:
 
 | File        | content|
@@ -60,7 +60,7 @@ The code comes with a set of pre-defined likelihood functions as follows:
 |Likelihood.LogisticLL|Logistic likelihood function. Can be used for binary classification|
 |Likelihood.SoftmaxLL|SoftmaxLL likelihood function. Can be used for multi-class classification|
 |Likelihood.WarpLL|Likelihood corresponding to Warp Gaussian process|
-|Likelihood.CogLLL|Likelihood corresponding to Gaussian process networks|
+|Likelihood.CogLLL|Likelihood corresponding to Gaussian process regression networks|
 
 
 For defining a new likelihood function the class `Likelihood.likelihood` should be extended and the required functions should be implemented.
@@ -164,6 +164,7 @@ Following packages are required:
 * GPy (0.6.0)
 * pandas (0.16.0)
 * scikit-learn (0.14.1)
+* matplotlib (1.3.1)
 
 Following are required for tests:
 * DerApproximator (0.52)
@@ -174,6 +175,6 @@ Numbers in the parenthesis indicate the tested version.
 
 **References**
 
-**[1]** A. Dezfouli, E. V. Bonilla. Scalable Inference for Gaussian Process Models with Black-Box Likelihoods
-    Processes, Advances in Neural and Information Processing Systems (NIPS),
+**[1]** A. Dezfouli, E. V. Bonilla. Scalable Inference for Gaussian Process Models with Black-Box Likelihoods, 
+    Advances in Neural and Information Processing Systems (NIPS),
     Montreal, December 2015
