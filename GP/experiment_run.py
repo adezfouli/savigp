@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""A script to run a set of experiments under differing configurations."""
+"""A script to run a set of gaussian process experiments under differing configurations."""
 
 import argparse
 import json
@@ -101,6 +101,7 @@ def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run
                                                'run_id': run_id,
                                                'log_level': LOG_LEVEL})
 
+    # Now run the experiments.
     pool = Pool(num_processes)
     pool.map(run_config, experiment_configs)
 
