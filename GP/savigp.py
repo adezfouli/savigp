@@ -2,7 +2,6 @@ import threading
 import math
 
 import GPy
-from atom.enum import Enum
 from scipy.misc import logsumexp
 from sklearn.cluster import MiniBatchKMeans, KMeans
 from GPy.util.linalg import mdot
@@ -12,7 +11,7 @@ from GPy.core import Model
 from util import mdiag_dot, jitchol, pddet, inv_chol
 
 
-class Configuration(Enum):
+class Configuration(object):
     ENTROPY = 'ENT'
     CROSS = 'CRO'
     ELL = 'ELL'
