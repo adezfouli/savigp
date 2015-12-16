@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""A script to run a set of experiments under differing configurations."""
 
 import argparse
 import json
@@ -7,7 +8,7 @@ from multiprocessing.pool import Pool
 
 import experiment_setup
 from model_learn import ModelLearn
-import plot_results
+from plot_results import PlotOutput
 
 EXPERIMENTS = {
     'boston': experiment_setup.boston_experiment,
@@ -26,15 +27,17 @@ EXPERIMENTS = {
 METHODS = ['mix1', 'mix2', 'full']
 LOG_LEVEL = logging.DEBUG
 
-logger = ModelLearn.get_logger(ModelLearn.get_logger_path(), 'general_' + ModelLearn.get_ID(), LOG_LEVEL)
+logger = ModelLearn.get_logger(ModelLearn.get_logger_path(), 'general_' +
+                                ModelLearn.get_ID(), LOG_LEVEL)
 
 def main():
+    """Run the experiments requested by the user."""
     args = setup_args()
     if 'file' in args:
         # Run multiple experiments from a configuration file.
         with open(args['file']) as config_file:
             config = json.loads(config_file.read())
-            run_parallel(config) 
+            run_parallel(**config)
     elif 'experiment' in args:
         # Run a single experiment from commmandline arguments.
         experiment = EXPERIMENTS[args['experiment_name']]
@@ -48,6 +51,7 @@ def main():
     # plot()
 
 def setup_args():
+    """Get the commandline arguments and return them in a dictionary."""
     parser = argparse.ArgumentParser(description='Experimental framework for savigp.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-e', '--experiment_name', choices=EXPERIMENTS, default=argparse.SUPPRESS,
@@ -68,28 +72,40 @@ def setup_args():
                         help='The size of sample partitions for a large scale experiment.')
     return vars(parser.parse_args())
 
-def run_parallel(config):
+def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run_ids):
     """
-    Creates a process for each element in the array returned by ``get_configs()`` and the experiment corresponding
-    the each element. The maximum number of processes to run in parallel is determined by ``n_process``
-    """
+    Run multiple experiments in parallel.
 
+    Parameters
+    ----------
+    num_processes : int
+        The maximum number of processes that can run concurrently.
+    experiment_names : list of str
+        The names of experiments to run.
+    methods : list of str
+        The methods to run the experiments under (mix1, mix2, or full).
+    sparsity_factors : list of float
+        The sparsity of inducing points to run the experiments at.
+    run_ids : list of int
+        The ids of the configurations under which to run the experiments.
+    """
     # Setup an array of individual experiment configurations.
     experiment_configs = []
-    for e in config['experiment_names']:
-        for m in config['methods']:
-            for s in config['sparsity_factors']:
-                for r in config['run_ids']:
-                    experiment_configs.append({'experiment_name': e,
-                                               'method': m,
-                                               'sparsity_factor': s,
-                                               'run_id': r,
+    for experiment in experiment_names:
+        for method in methods:
+            for sparsity_factor in sparsity_factors:
+                for run_id in run_ids:
+                    experiment_configs.append({'experiment_name': experiment,
+                                               'method': method,
+                                               'sparsity_factor': sparsity_factor,
+                                               'run_id': run_id,
                                                'log_level': LOG_LEVEL})
 
-    pool = Pool(config['num_processes'])
+    pool = Pool(num_processes)
     pool.map(run_config, experiment_configs)
 
 def plot():
+    """Plot the results and generate graph data."""
     PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
                                lambda x: x['method'] == 'full', False)
 
@@ -101,17 +117,13 @@ def plot():
     # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
     #                            lambda x: x['experiment'] == 'abalone', False)
 
-
 def run_config(config):
-    try:
-        logger.info('started config: ' + str(config))
-        experiment = EXPERIMENTS[config['experiment_name']]
-        del config['experiment_name']
-        experiment(**config)
-        logger.info('finished config: ' + str(config))
-    except Exception as e:
-        logger.exception(config)
-
+    """Runs an experiment under the given configuration."""
+    logger.info('started config: ' + str(config))
+    experiment = EXPERIMENTS[config['experiment_name']]
+    del config['experiment_name']
+    experiment(**config)
+    logger.info('finished config: ' + str(config))
 
 if __name__ == '__main__':
     main()
