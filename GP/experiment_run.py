@@ -6,8 +6,10 @@ import json
 import logging
 from multiprocessing.pool import Pool
 
+import numpy as np
+
 import experiment_setup
-from model_learn import ModelLearn
+import model_learn
 from plot_results import PlotOutput
 
 EXPERIMENTS = {
@@ -23,16 +25,17 @@ EXPERIMENTS = {
     'sarcos': experiment_setup.sarcos_experiment,
 }
 
-# TODO: Change methods into an enum.
 METHODS = ['mix1', 'mix2', 'full']
 LOG_LEVEL = logging.DEBUG
 
-logger = ModelLearn.get_logger(ModelLearn.get_logger_path(), 'general_' +
-                                ModelLearn.get_ID(), LOG_LEVEL)
+logger = model_learn.get_logger(model_learn.LOGGER_PATH, 'general_' +
+                                model_learn.get_ID(), LOG_LEVEL)
 
 def main():
     """Run the experiments requested by the user."""
     args = setup_args()
+    np.random.seed(1)
+
     if 'file' in args:
         # Run multiple experiments from a configuration file.
         with open(args['file']) as config_file:
@@ -48,7 +51,7 @@ def main():
         print 'You must either chose an experiment (-e) or a config file (-f).'
 
     # uncomment to plots the outputs in results folder
-    # plot()
+    plot()
 
 def setup_args():
     """Get the commandline arguments and return them in a dictionary."""
@@ -107,8 +110,8 @@ def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run
 
 def plot():
     """Plot the results and generate graph data."""
-    PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
-                               lambda x: x['method'] == 'full', False)
+    PlotOutput.plot_output_all('boston', model_learn.OUTPUT_PATH,
+                               lambda x: x['experiment'] == 'boston', False)
 
     # plots all the files
     # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),

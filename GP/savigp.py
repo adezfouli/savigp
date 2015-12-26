@@ -201,7 +201,6 @@ class SAVIGP(Model):
         # self._sub_parition()
         self.X_partitions, self.Y_partitions, self.n_partitions, self.partition_size = self._partition_data(X, Y)
 
-        np.random.seed(12000)
         self.normal_samples = np.random.normal(0, 1, self.n_samples * self.num_latent_proc * self.partition_size) \
             .reshape((self.num_latent_proc, self.n_samples, self.partition_size))
         """ samples from a normal distribution with mean 0 and variance 1. Dimensions: Q * S * partition_size """
@@ -307,7 +306,6 @@ class SAVIGP(Model):
 
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
         init_m = np.empty((self.num_inducing, self.num_latent_proc))
-        np.random.seed(12000)
         if self.num_inducing == X.shape[0]:
             for j in range(self.num_latent_proc):
                 Z[j, :, :] = X.copy()
@@ -348,7 +346,6 @@ class SAVIGP(Model):
 
         """
 
-        np.random.seed(12000)
         Z = np.array([np.zeros((self.num_inducing, self.input_dim))] * self.num_latent_proc)
         init_m = np.empty((self.num_inducing, self.num_latent_proc))
         for j in range(self.num_latent_proc):
