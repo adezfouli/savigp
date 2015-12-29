@@ -3,7 +3,6 @@
 
 import argparse
 import json
-import logging
 from multiprocessing.pool import Pool
 
 import numpy as np
@@ -26,10 +25,6 @@ EXPERIMENTS = {
 }
 
 METHODS = ['mix1', 'mix2', 'full']
-LOG_LEVEL = logging.DEBUG
-
-logger = model_learn.get_logger(model_learn.LOGGER_PATH, 'general_' +
-                                model_learn.get_ID(), LOG_LEVEL)
 
 def main():
     """Run the experiments requested by the user."""
@@ -45,7 +40,6 @@ def main():
         # Run a single experiment from commmandline arguments.
         experiment = EXPERIMENTS[args['experiment_name']]
         del args['experiment_name']
-        args['log_level'] = LOG_LEVEL
         experiment(**args)
     else:
         print 'You must either chose an experiment (-e) or a config file (-f).'
@@ -101,8 +95,7 @@ def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run
                     experiment_configs.append({'experiment_name': experiment,
                                                'method': method,
                                                'sparsity_factor': sparsity_factor,
-                                               'run_id': run_id,
-                                               'log_level': LOG_LEVEL})
+                                               'run_id': run_id})
 
     # Now run the experiments.
     pool = Pool(num_processes)
@@ -123,11 +116,9 @@ def plot():
 
 def run_config(config):
     """Runs an experiment under the given configuration."""
-    logger.info('started config: ' + str(config))
     experiment = EXPERIMENTS[config['experiment_name']]
     del config['experiment_name']
     experiment(**config)
-    logger.info('finished config: ' + str(config))
 
 if __name__ == '__main__':
     main()

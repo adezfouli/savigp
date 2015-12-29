@@ -16,8 +16,9 @@ from util import id_generator, check_dir_exists, get_git
 
 OUTPUT_PATH = '../results/'
 LOGGER_PATH = '../logs/'
+LOG_LEVEL = logging.DEBUG
 
-def get_logger(path, name, level):
+def get_logger(path, name):
     """
     Creates loggers
 
@@ -29,9 +30,6 @@ def get_logger(path, name, level):
     name : string
      name of the log file
 
-    level : string
-     level of debugging
-
     Returns
     -------
     logger : logger
@@ -39,7 +37,7 @@ def get_logger(path, name, level):
     """
 
     logger = logging.getLogger(name)
-    logger.setLevel(level)
+    logger.setLevel(LOG_LEVEL)
     check_dir_exists(path)
     fh = logging.FileHandler(path + '/'+ name + '.log')
     fh.setLevel(logging.DEBUG)
@@ -238,28 +236,46 @@ def opt_callback(name):
 
     return callback
 
-def run_model(Xtrain, Ytrain, Xtest, Ytest, cond_ll, kernel, method, name, run_id, sparsity_factor, to_optimize,
-              trans_class, random_Z, logging_level, export_X, num_samples=2000,
-              latent_noise=0.001, opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
-              max_iter=200, n_threads=1, model_image_file=None,
-              xtol=1e-3, ftol=1e-5, partition_size=3000):
+def run_model(Xtrain,
+              Ytrain,
+              Xtest,
+              Ytest,
+              cond_ll,
+              kernel,
+              method,
+              name,
+              run_id,
+              sparsity_factor,
+              to_optimize,
+              trans_class,
+              random_Z,
+              export_X,
+              num_samples=2000,
+              latent_noise=0.001,
+              opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+              max_iter=200,
+              n_threads=1,
+              model_image_file=None,
+              xtol=1e-3,
+              ftol=1e-5,
+              partition_size=3000):
     """
-    Fits a model to the data (Xtrain, Ytrain) using the method provided by 'method', and makes predictions on
-     'Xtest' and 'Ytest', and exports the result to csv files.
+    Fit a model to the data (Xtrain, Ytrain) using the method provided by 'method', and make
+    predictions on 'Xtest' and 'Ytest', and export the result to csv files.
 
     Parameters
     ----------
-    Xtest : ndarray
-     X of test points
-
     Xtrain : ndarray
      X of training points
 
-    Ytest : ndarray
-     Y of test points
-
     Ytrain : ndarray
      Y of traiing points
+
+    Xtest : ndarray
+     X of test points
+
+    Ytest : ndarray
+     Y of test points
 
     cond_ll : subclass of likelihood/Likelihood
      Conditional log likelihood function used to build the model.
@@ -296,9 +312,6 @@ def run_model(Xtrain, Ytrain, Xtest, Ytest, cond_ll, kernel, method, name, run_i
      Whether to initialise inducing points randomly on the training data. If False, inducing points
      will be placed using k-means (or mini-batch k-mean) clustering. If True, inducing points will be placed randomly
      on the training data.
-
-    logging_level : string
-     The logging level to use.
 
     export_X : boolean
      Whether to export X to csv files.
@@ -346,7 +359,6 @@ def run_model(Xtrain, Ytrain, Xtest, Ytest, cond_ll, kernel, method, name, run_i
     Xtrain = transformer.transform_X(Xtrain)
     Xtest = transformer.transform_X(Xtest)
 
-    # number of inducing points
     num_inducing = int(Xtrain.shape[0] * sparsity_factor)
 
     opt_max_fun_evals = None
@@ -374,7 +386,7 @@ def run_model(Xtrain, Ytrain, Xtest, Ytest, cond_ll, kernel, method, name, run_i
                   'model_init': model_image_file
                   }
 
-    logger = get_logger(OUTPUT_PATH + folder_name, folder_name, logging_level)
+    logger = get_logger(OUTPUT_PATH + folder_name, folder_name)
     logger.info('experiment started for:' + str(properties))
 
     model_image = None
@@ -417,17 +429,17 @@ def run_model(Xtrain, Ytrain, Xtest, Ytest, cond_ll, kernel, method, name, run_i
     logger.debug("prediction started...")
     y_pred, var_pred, nlpd = m.predict(Xtest, Ytest)
     logger.debug("prediction finished")
-    if not (tracker is None):
+    if tracker is not None:
         export_track(folder_name, tracker)
     export_train(folder_name, transformer.untransform_X(Xtrain), transformer.untransform_Y(Ytrain),
                             export_X)
     export_test(folder_name,
-                           transformer.untransform_X(Xtest),
-                           transformer.untransform_Y(Ytest),
-                           [transformer.untransform_Y(y_pred)],
-                           [transformer.untransform_Y_var(var_pred)],
-                           transformer.untransform_NLPD(nlpd),
-                           [''], export_X)
+                transformer.untransform_X(Xtest),
+                transformer.untransform_Y(Ytest),
+                [transformer.untransform_Y(y_pred)],
+                [transformer.untransform_Y_var(var_pred)],
+                transformer.untransform_NLPD(nlpd),
+                [''], export_X)
 
     if export_model and isinstance(m, SAVIGP):
         export_model(m, folder_name)

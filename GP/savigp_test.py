@@ -1,7 +1,7 @@
 __author__ = 'AT'
 
 import logging
-from data_source import DataSource
+import data_source
 from data_transformation import IdentityTransformation
 import model_learn
 from plot_results import PlotOutput
@@ -54,7 +54,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_Diag(X, Y, num_inducing, 3, ll,
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
@@ -81,7 +81,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_SingleComponent(X, Y, num_inducing, ll,
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
@@ -190,7 +190,7 @@ class SAVIGP_Test:
         num_input_samples = 20
         gaussian_sigma = .2
 
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, gaussian_sigma)
         train_n = int(0.5 * num_input_samples)
 
         Xtrain = X[:train_n, :]
@@ -228,7 +228,7 @@ class SAVIGP_Test:
         num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = .2
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma, 1)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, gaussian_sigma, 1)
         kernel = [GPy.kern.RBF(1, variance=1., lengthscale=np.array((1.,)))]
 
         if method == 'full':

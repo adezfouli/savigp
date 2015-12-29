@@ -3,7 +3,7 @@ from ExtRBF import ExtRBF
 import model_learn
 from data_transformation import MeanTransformation
 from likelihood import UnivariateGaussian
-from data_source import DataSource
+import data_source
 import numpy as np
 
 # defining model type. It can be "mix1", "mix2", or "full"
@@ -13,7 +13,7 @@ method = 'full'
 sparsity_factor = 0.5
 
 # loading data
-data = DataSource.boston_data()[0]
+data = data_source.boston_data()[0]
 
 # is is just of name that will be used for the name of folders and files when exporting results
 name = 'boston'
