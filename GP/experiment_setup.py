@@ -115,7 +115,7 @@ def mining_experiment(method, sparsity_factor, run_id):
                                  opt_per_iter={'mog': 15000},
                                  max_iter=1)
 
-def USPS_experiment(method, sparsity_factor, run_id):
+def usps_experiment(method, sparsity_factor, run_id):
     """
     Run the usps experiment.
 
@@ -129,7 +129,7 @@ def USPS_experiment(method, sparsity_factor, run_id):
         The id of the configuration.
     """
     name = 'usps'
-    data = data_source.USPS_data()[run_id - 1]
+    data = data_source.usps_data()[run_id - 1]
     kernel = [ExtRBF(data['train_X'].shape[1], variance=2, lengthscale=np.array((4.,)), ARD=False)
               for _ in range(3)]
     cond_ll = likelihood.SoftmaxLL(3)
@@ -234,7 +234,7 @@ def creep_experiment(method, sparsity_factor, run_id):
                                  max_iter=200)
 
 
-def MNIST_experiment(method, sparsity_factor, run_id,
+def mnist_experiment(method, sparsity_factor, run_id,
                      image=None, n_threads=1, partition_size=3000):
     """
     Run the mnist experiment.
@@ -275,7 +275,7 @@ def MNIST_experiment(method, sparsity_factor, run_id,
                                  model_image_file=image,
                                  partition_size=partition_size)
 
-def MNIST_binary_experiment(method, sparsity_factor, run_id,
+def mnist_binary_experiment(method, sparsity_factor, run_id,
                             image=None, n_threads=1, partition_size=3000):
     """
     Run the binary mnist experiment.
@@ -315,7 +315,7 @@ def MNIST_binary_experiment(method, sparsity_factor, run_id,
                                  model_image_file=image,
                                  partition_size=partition_size)
 
-def MNIST_binary_inducing_experiment(method, sparsity_factor, run_id,
+def mnist_binary_inducing_experiment(method, sparsity_factor, run_id,
                                      image=None, n_threads=1, partition_size=3000):
     """
     Run the binary mnist experiment with inducing point learning.

@@ -15,12 +15,12 @@ EXPERIMENTS = {
     'boston': experiment_setup.boston_experiment,
     'wisconsin': experiment_setup.wisconsin_experiment,
     'mining': experiment_setup.mining_experiment,
-    'usps': experiment_setup.USPS_experiment,
+    'usps': experiment_setup.mnist_experiment,
     'abalone': experiment_setup.abalone_experiment,
     'creep': experiment_setup.creep_experiment,
-    'mnist': experiment_setup.MNIST_experiment,
-    'mnist_binary': experiment_setup.MNIST_binary_experiment,
-    'mnist_binary_inducing': experiment_setup.MNIST_binary_inducing_experiment,
+    'mnist': experiment_setup.mnist_experiment,
+    'mnist_binary': experiment_setup.mnist_binary_experiment,
+    'mnist_binary_inducing': experiment_setup.mnist_binary_inducing_experiment,
     'sarcos': experiment_setup.sarcos_experiment,
 }
 
