@@ -10,7 +10,7 @@ from savigp_single_comp import SAVIGP_SingleComponent
 from copy import deepcopy
 import GPy
 from matplotlib.pyplot import show
-from optimizer import *
+import optimizer
 from savigp import Configuration
 from likelihood import UnivariateGaussian, MultivariateGaussian
 from grad_checker import GradChecker
@@ -249,7 +249,7 @@ class SAVIGP_Test:
             folder_name = 'test' + '_' + model_learn.get_ID()
             logger = model_learn.get_logger(folder_name, logging.DEBUG)
 
-            Optimizer.optimize_model(m, 10000, logger, ['mog'])
+            optimizer.optimize_model(m, 10000, logger, ['mog'])
         except KeyboardInterrupt:
             pass
         sa_mean, sa_var = m.predict(X)

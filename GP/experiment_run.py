@@ -36,7 +36,7 @@ def main():
         with open(args['file']) as config_file:
             config = json.loads(config_file.read())
             run_parallel(**config)
-    elif 'experiment' in args:
+    elif 'experiment_name' in args:
         # Run a single experiment from commmandline arguments.
         experiment = EXPERIMENTS[args['experiment_name']]
         del args['experiment_name']
@@ -45,7 +45,7 @@ def main():
         print 'You must either chose an experiment (-e) or a config file (-f).'
 
     # uncomment to plots the outputs in results folder
-    plot()
+    # plot()
 
 def setup_args():
     """Get the commandline arguments and return them in a dictionary."""

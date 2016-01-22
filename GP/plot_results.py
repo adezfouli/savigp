@@ -216,4 +216,3 @@ class PlotOutput:
 
 if __name__ == '__main__':
     PlotOutput.plot_output('boston', '../../results/', ['boston_full', 'boston_mix1', 'boston_mix2', 'boston_gp'], None, True)
-
