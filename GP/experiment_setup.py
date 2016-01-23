@@ -35,11 +35,10 @@ def boston_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['hyp', 'mog', 'll'],
                                  data_transformation.MeanTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200)
 
 def wisconsin_experiment(method, sparsity_factor, run_id):
@@ -70,11 +69,11 @@ def wisconsin_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp'],
                                  data_transformation.IdentityTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 # TODO(karl): might need to remove ll.
+                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200)
 
 def mining_experiment(method, sparsity_factor, run_id):
@@ -96,7 +95,7 @@ def mining_experiment(method, sparsity_factor, run_id):
     cond_ll = likelihood.LogGaussianCox(np.log(191. / 811))
 
     kernel[0].variance = 1.0
-    kernel[0].lengthscale = 13516.
+    kernel[0].lengthscale = 13516.0
 
     return model_learn.run_model(data['train_X'],
                                  data['train_Y'],
@@ -108,11 +107,10 @@ def mining_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog'],
                                  data_transformation.IdentityTransformation,
                                  True,
                                  True,
-                                 opt_per_iter={'mog': 15000},
+                                 optimization_config={'mog': 15000},
                                  max_iter=1)
 
 def usps_experiment(method, sparsity_factor, run_id):
@@ -144,11 +142,11 @@ def usps_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp'],
                                  data_transformation.IdentityTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 # TODO(karl): Might need to remove ll
+                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=300)
 
 
@@ -183,11 +181,10 @@ def abalone_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp', 'll'],
                                  data_transformation.MinTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200)
 
 
@@ -226,11 +223,10 @@ def creep_experiment(method, sparsity_factor, run_id):
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp', 'll'],
                                  data_transformation.MinTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
+                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
                                  max_iter=200)
 
 
@@ -264,11 +260,10 @@ def mnist_experiment(method, sparsity_factor, run_id,
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp'],
                                  data_transformation.IdentityTransformation,
                                  False,
                                  False,
-                                 opt_per_iter={'mog': 50, 'hyp': 10},
+                                 optimization_config={'mog': 50, 'hyp': 10},
                                  max_iter=300,
                                  n_threads=n_threads,
                                  ftol=10,
@@ -304,11 +299,10 @@ def mnist_binary_experiment(method, sparsity_factor, run_id,
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp'],
                                  data_transformation.IdentityTransformation,
                                  False,
                                  False,
-                                 opt_per_iter={'mog': 60, 'hyp': 15},
+                                 optimization_config={'mog': 60, 'hyp': 15},
                                  max_iter=300,
                                  n_threads=n_threads,
                                  ftol=10,
@@ -344,11 +338,10 @@ def mnist_binary_inducing_experiment(method, sparsity_factor, run_id,
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'hyp', 'inducing'],
                                  data_transformation.IdentityTransformation,
                                  False,
                                  False,
-                                 opt_per_iter={'mog': 60, 'hyp': 15, 'inducing': 6},
+                                 optimization_config={'mog': 60, 'hyp': 15, 'inducing': 6},
                                  max_iter=9,
                                  n_threads=n_threads,
                                  ftol=10,
@@ -384,11 +377,10 @@ def sarcos_experiment(method, sparsity_factor, run_id,
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'll', 'hyp'],
                                  data_transformation.MeanStdYTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
+                                 optimization_config={'mog': 50, 'hyp': 10, 'll': 10},
                                  max_iter=200,
                                  partition_size=partition_size,
                                  n_threads=n_threads,
@@ -427,11 +419,10 @@ def sarcos_all_joints_experiment(method, sparsity_factor, run_id,
                                  name,
                                  data['id'],
                                  sparsity_factor,
-                                 ['mog', 'll', 'hyp'],
                                  data_transformation.MeanStdYTransformation,
                                  True,
                                  False,
-                                 opt_per_iter={'mog': 50, 'hyp': 10, 'll': 10},
+                                 optimization_config={'mog': 50, 'hyp': 10, 'll': 10},
                                  max_iter=200,
                                  partition_size=partition_size,
                                  ftol=10,

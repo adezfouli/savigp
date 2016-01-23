@@ -19,13 +19,12 @@ def run_model(train_X,
               name,
               run_id,
               sparsity_factor,
-              to_optimize,
               trans_class,
               random_Z,
               export_X,
+              optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
               num_samples=2000,
               latent_noise=0.001,
-              opt_per_iter={'mog': 25, 'hyp': 25, 'll': 25},
               max_iter=200,
               n_threads=1,
               model_image_file=None,
@@ -74,11 +73,6 @@ def run_model(train_X,
     sparsity_factor : float
      Can be any number and will be included in the configuration file. It will not determine
      the number of inducing points
-
-    to_optimize : list
-     The set of parameters to optimize. It should be a list, and it can include 'll', 'mog',
-     'hyp', 'inducing' e.g., it can be ['ll', 'mog'] in which case posterior and ll will be
-     optimised.
 
     trans_class : subclass of DataTransformation
      The class which will be used to transform data.
@@ -136,9 +130,7 @@ def run_model(train_X,
 
     num_inducing = int(train_X.shape[0] * sparsity_factor)
 
-    opt_max_fun_evals = None
     total_time = None
-    timer_per_iter = None
     tracker = None
     git_hash, git_branch = util.get_git()
 
@@ -147,8 +139,7 @@ def run_model(train_X,
         'sparsity_factor': sparsity_factor,
         'sample_num': num_samples,
         'll': cond_ll.__class__.__name__,
-        'opt_max_evals': opt_max_fun_evals,
-        'opt_per_iter': opt_per_iter,
+        'optimization_config': optimization_config,
         'xtol': xtol,
         'ftol': ftol,
         'run_id': run_id,
@@ -208,9 +199,8 @@ def run_model(train_X,
                             image=model_image,
                             partition_size=partition_size)
 
-    _, timer_per_iter, total_time, tracker, total_evals = (
-        optimizer.optimize_model(model, opt_max_fun_evals, to_optimize, xtol, opt_per_iter,
-                                 max_iter, ftol, current_iter))
+    total_time, tracker, total_evals = optimizer.optimize_model(model, optimization_config, xtol,
+                                                                max_iter, ftol, current_iter)
     model_logging.logger.debug("prediction started...")
     y_pred, var_pred, nlpd = model.predict(test_X, test_Y)
     model_logging.logger.debug("prediction finished")
@@ -227,7 +217,6 @@ def run_model(train_X,
                                      export_X)
 
     properties['total_time'] = total_time
-    properties['time_per_iter'] = timer_per_iter
     properties['total_evals'] = total_evals
     model_logging.export_configuration(properties)
 

@@ -186,9 +186,12 @@ def BFGS(model, opt_indices=None, max_fun=None, apply_bound=False):
 def print_short(a):
     return ["%.2f" % a[j] for j in range(len(a))]
 
-def optimize_model(model, max_fun_evals,
-                   method=None, xtol=1e-4, iters_per_opt=[25, 25, 25], max_iters=200,
-                   ftol =1e-5, current_iter=None):
+def optimize_model(model,
+                   optimization_config,
+                   xtol=1e-4,
+                   max_iters=200,
+                   ftol =1e-5,
+                   current_iter=None):
     """
     Optimised model in an EM manner, i.e., each set of parameters are optimised independently, i.e.,
 
@@ -199,13 +202,6 @@ def optimize_model(model, max_fun_evals,
     ----------
     model : model
      the model to optimise
-
-    max_fun_evals : int
-     maximum number of function evaluations.
-
-    method : list
-     the set of parameters to optimise. For example method = ['mog', 'hyp'] will optimise posterior distribution
-     and hyper-parameters.
 
     iters_per_opt : dictionary
      a dictionary containing maximum number of function evaluations for each subset of parameters in each local
@@ -226,12 +222,6 @@ def optimize_model(model, max_fun_evals,
      current iteration of the optimisation. It is useful for example in the case that the optimisation is continued
      from a previous optimisation.
     """
-
-    if not method:
-        method=['hyp', 'mog']
-    if not (max_fun_evals is None):
-        iters_per_opt = min(max_fun_evals, iters_per_opt)
-    converged=False
     start=time.time()
     total_evals = 0
     last_param_m = None
@@ -244,8 +234,8 @@ def optimize_model(model, max_fun_evals,
     delta_s = None
     try:
         while (max_iters is None) or current_iter < max_iters:
-            model_logging.logger.info('iter started ' + str(current_iter))
-            if 'mog' in method:
+            model_logging.logger.info('Iteration %d started.' % current_iter)
+            if 'mog' in optimization_config:
                 model_logging.logger.info('MoG params')
                 model.set_configuration([
                     Configuration.MoG,
@@ -253,7 +243,7 @@ def optimize_model(model, max_fun_evals,
                     Configuration.CROSS,
                     Configuration.ELL,
                 ])
-                d, tracker = BFGS(model, max_fun=iters_per_opt['mog'])
+                d, tracker = BFGS(model, max_fun=optimization_config['mog'])
                 obj_track += tracker
                 total_evals += d['funcalls']
 
@@ -276,17 +266,17 @@ def optimize_model(model, max_fun_evals,
             last_param_s = new_params_s
             last_obj = model.objective_function()
 
-            if 'll' in method:
+            if 'll' in optimization_config:
                 model_logging.logger.info('ll params')
                 model.set_configuration([
                     Configuration.ELL,
                     Configuration.LL
                 ])
-                d, tracker = BFGS(model, max_fun=iters_per_opt['ll'])
+                d, tracker = BFGS(model, max_fun=optimization_config['ll'])
                 obj_track += tracker
                 total_evals += d['funcalls']
 
-            if 'hyp' in method:
+            if 'hyp' in optimization_config:
                 model_logging.logger.info('hyp params')
                 model.set_configuration([
                     Configuration.ENTROPY,
@@ -294,11 +284,11 @@ def optimize_model(model, max_fun_evals,
                     Configuration.ELL,
                     Configuration.HYPER
                 ])
-                d, tracker = BFGS(model, max_fun=iters_per_opt['hyp'], apply_bound=True)
+                d, tracker = BFGS(model, max_fun=optimization_config['hyp'], apply_bound=True)
                 obj_track += tracker
                 total_evals += d['funcalls']
 
-            if 'inducing' in method:
+            if 'inducing' in optimization_config:
                 model_logging.logger.info('inducing params')
                 model.set_configuration([
                     Configuration.ENTROPY,
@@ -306,12 +296,9 @@ def optimize_model(model, max_fun_evals,
                     Configuration.ELL,
                     Configuration.INDUCING
                 ])
-                d, tracker = BFGS(model, max_fun=iters_per_opt['inducing'], apply_bound=True)
+                d, tracker = BFGS(model, max_fun=optimization_config['inducing'], apply_bound=True)
                 obj_track += tracker
                 total_evals += d['funcalls']
-
-            if not (max_fun_evals is None) and total_evals > max_fun_evals:
-                break
 
             current_iter += 1
 
@@ -321,11 +308,8 @@ def optimize_model(model, max_fun_evals,
         if total_evals == 0:
             total_evals = float('Nan')
     end=time.time()
-    if total_evals == 0:
-        avg_time = None
-    else:
-        avg_time = (end - start) / total_evals
-    return model, avg_time, (end - start), obj_track, total_evals
+
+    return (end - start), obj_track, total_evals
 
 
 class OptTermination(Exception):
