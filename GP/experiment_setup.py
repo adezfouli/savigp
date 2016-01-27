@@ -72,8 +72,7 @@ def wisconsin_experiment(method, sparsity_factor, run_id):
                                  data_transformation.IdentityTransformation,
                                  True,
                                  False,
-                                 # TODO(karl): might need to remove ll.
-                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
+                                 optimization_config={'mog': 25, 'hyp': 25},
                                  max_iter=200)
 
 def mining_experiment(method, sparsity_factor, run_id):
@@ -145,8 +144,7 @@ def usps_experiment(method, sparsity_factor, run_id):
                                  data_transformation.IdentityTransformation,
                                  True,
                                  False,
-                                 # TODO(karl): Might need to remove ll
-                                 optimization_config={'mog': 25, 'hyp': 25, 'll': 25},
+                                 optimization_config={'mog': 25, 'hyp': 25},
                                  max_iter=300)
 
 
