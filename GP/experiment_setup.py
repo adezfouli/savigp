@@ -265,7 +265,7 @@ def mnist_experiment(method, sparsity_factor, run_id,
                                  max_iter=300,
                                  n_threads=n_threads,
                                  ftol=10,
-                                 model_image_file=image,
+                                 model_image_dir=image,
                                  partition_size=partition_size)
 
 def mnist_binary_experiment(method, sparsity_factor, run_id,
@@ -304,7 +304,7 @@ def mnist_binary_experiment(method, sparsity_factor, run_id,
                                  max_iter=300,
                                  n_threads=n_threads,
                                  ftol=10,
-                                 model_image_file=image,
+                                 model_image_dir=image,
                                  partition_size=partition_size)
 
 def mnist_binary_inducing_experiment(method, sparsity_factor, run_id,
@@ -343,7 +343,7 @@ def mnist_binary_inducing_experiment(method, sparsity_factor, run_id,
                                  max_iter=9,
                                  n_threads=n_threads,
                                  ftol=10,
-                                 model_image_file=image,
+                                 model_image_dir=image,
                                  partition_size=partition_size)
 
 def sarcos_experiment(method, sparsity_factor, run_id,
@@ -361,7 +361,7 @@ def sarcos_experiment(method, sparsity_factor, run_id,
         The id of the configuration.
     """
     name = 'sarcos'
-    data = data_source.sarcos_data()[run_id]
+    data = data_source.sarcos_data()[run_id - 1]
     kernel = get_kernels(data['train_X'].shape[1], 3, False)
     cond_ll = likelihood.CogLL(0.1, 2, 1)
 
@@ -382,7 +382,7 @@ def sarcos_experiment(method, sparsity_factor, run_id,
                                  max_iter=200,
                                  partition_size=partition_size,
                                  n_threads=n_threads,
-                                 model_image_file=image)
+                                 model_image_dir=image)
 
 def sarcos_all_joints_experiment(method, sparsity_factor, run_id,
                                  image=None, n_threads=1, partition_size=3000):
@@ -425,7 +425,7 @@ def sarcos_all_joints_experiment(method, sparsity_factor, run_id,
                                  partition_size=partition_size,
                                  ftol=10,
                                  n_threads=n_threads,
-                                 model_image_file=image)
+                                 model_image_dir=image)
 
 def get_kernels(input_dim, num_latent_proc, ARD):
     return [ExtRBF(input_dim, variance=1, lengthscale=np.array((1.,)), ARD=ARD)
