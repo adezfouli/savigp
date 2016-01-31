@@ -63,9 +63,9 @@ def setup_args():
                         help='The id of the experiment configuration.')
     parser.add_argument('-i', '--image', default=argparse.SUPPRESS,
                         help='A path to a partially completed large scale experiment')
-    parser.add_argument('-n', '--n_threads', default=argparse.SUPPRESS,
+    parser.add_argument('-n', '--n_threads', type=int, default=argparse.SUPPRESS,
                         help='The number of threads to run for a large scale experiment.')
-    parser.add_argument('-p', '--partition_size', default=argparse.SUPPRESS,
+    parser.add_argument('-p', '--partition_size', type=int, default=argparse.SUPPRESS,
                         help='The size of sample partitions for a large scale experiment.')
     return vars(parser.parse_args())
 

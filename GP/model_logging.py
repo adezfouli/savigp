@@ -27,9 +27,6 @@ def init_logger(name):
     global logger
     global _log_folder_path
 
-    if logger is not None:
-        return
-
     log_start_time = datetime.datetime.now()
     folder_name = name + '_' + log_start_time.strftime('%d-%b-%Y_%Hh%Mm%Ss') + '_%d' % os.getpid()
     _log_folder_path = os.path.join(OUTPUT_PATH, folder_name)
