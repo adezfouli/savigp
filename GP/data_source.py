@@ -283,8 +283,10 @@ def mnist_binary_data():
     data = mnist_data()
     # Transform the labels to be -1 on even numbers and 1 on odd.
     to_bin = lambda x: x[1:10:2].sum() - x[0:10:2].sum()
-    data[0]['train_Y'] = np.apply_along_axis(to_bin, 1, data['train_Y']).astype(int)[:, np.newaxis]
-    data[0]['test_Y'] = np.apply_along_axis(to_bin, 1, data['test_Y']).astype(int)[:, np.newaxis]
+    data[0]['train_Y'] = np.apply_along_axis(
+        to_bin, 1, data[0]['train_Y']).astype(int)[:, np.newaxis]
+    data[0]['test_Y'] = np.apply_along_axis(
+        to_bin, 1, data[0]['test_Y']).astype(int)[:, np.newaxis]
 
     return data
 
