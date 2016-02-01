@@ -1,6 +1,7 @@
 """
 Provides facility for fitting models to data, making predictions and exporting results to csv files.
 """
+import os
 import pickle
 
 import model_logging
@@ -27,7 +28,7 @@ def run_model(train_X,
               latent_noise=0.001,
               max_iter=200,
               n_threads=1,
-              model_image_file=None,
+              model_image_dir=None,
               xtol=1e-3,
               ftol=1e-5,
               partition_size=3000):
@@ -149,7 +150,7 @@ def run_model(train_X,
         'git_branch': git_branch,
         'random_Z': random_Z,
         'latent_noise:': latent_noise,
-        'model_init': model_image_file
+        'model_init': model_image_dir
     }
 
     model_logging.init_logger(name)
@@ -157,10 +158,12 @@ def run_model(train_X,
 
     model_image = None
     current_iter = None
-    if model_image_file is not None:
-        model_image = pickle.load(open(model_image_file + 'model.dump'))
-        opt_params = pickle.load(open(model_image_file + 'opt.dump'))
-        current_iter = opt_params['current_iter']
+    if model_image_dir is not None:
+        model_image_file_path = os.path.join(model_image_dir, 'model.dump')
+        with open(model_image_file_path) as model_image_file:
+            model_image = pickle.load(model_image_file)
+            opt_params = pickle.load(model_image_file)
+            current_iter = opt_params['current_iter']
 
     if model_image:
         model_logging.logger.info('loaded model - iteration started from: ' +
@@ -201,13 +204,14 @@ def run_model(train_X,
 
     total_time, tracker, total_evals = optimizer.optimize_model(model, optimization_config, xtol,
                                                                 max_iter, ftol, current_iter)
+
     model_logging.logger.debug("prediction started...")
     y_pred, var_pred, nlpd = model.predict(test_X, test_Y)
     model_logging.logger.debug("prediction finished")
     if tracker is not None:
         model_logging.export_function_trajectory(tracker)
     model_logging.export_training_data(transformer.untransform_X(train_X),
-                                       transformer.untransform_Y(train_X),
+                                       transformer.untransform_Y(train_Y),
                                        export_X)
     model_logging.export_predictions(transformer.untransform_X(test_X),
                                      transformer.untransform_Y(test_Y),
