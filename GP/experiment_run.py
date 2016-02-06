@@ -44,9 +44,6 @@ def main():
     else:
         print 'You must either chose an experiment (-e) or a config file (-f).'
 
-    # uncomment to plots the outputs in results folder
-    # plot()
-
 def setup_args():
     """Get the commandline arguments and return them in a dictionary."""
     parser = argparse.ArgumentParser(description='Experimental framework for savigp.',
@@ -100,19 +97,6 @@ def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run
     # Now run the experiments.
     pool = Pool(num_processes)
     pool.map(run_config, experiment_configs)
-
-def plot():
-    """Plot the results and generate graph data."""
-    PlotOutput.plot_output_all('boston', model_learn.OUTPUT_PATH,
-                               lambda x: x['experiment'] == 'boston', False)
-
-    # plots all the files
-    # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-    #                            None, False)
-
-    # plots for an specific experiment
-    # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
-    #                            lambda x: x['experiment'] == 'abalone', False)
 
 def run_config(config):
     """Runs an experiment under the given configuration."""

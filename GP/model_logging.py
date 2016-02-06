@@ -10,6 +10,10 @@ import numpy as np
 import util
 
 OUTPUT_PATH = '../results/'
+CONFIG_FILE_NAME = 'config.csv'
+PREDICTIONS_FILE_NAME = 'predictions.csv'
+TRAINING_FILE_NAME = 'train.csv'
+TRAJECTORY_FILE_NAME = 'objective_trajectory.csv'
 LOG_LEVEL = logging.DEBUG
 
 _log_folder_path = None
@@ -77,7 +81,7 @@ def export_training_data(X, Y, export_X=False):
     header = ','.join(header)
 
     # Write the data out to a csv file.
-    file_path = os.path.join(_log_folder_path, 'train.csv')
+    file_path = os.path.join(_log_folder_path, TRAINING_FILE_NAME)
     np.savetxt(file_path, data, header=header, delimiter=',', comments='')
 
 def export_function_trajectory(trajectory):
@@ -93,7 +97,7 @@ def export_function_trajectory(trajectory):
         print "Warning: logger is not initialized."
         return
 
-    file_path = os.path.join(_log_folder_path, 'objective_trajectory.csv')
+    file_path = os.path.join(_log_folder_path, TRAJECTORY_FILE_NAME)
     np.savetxt(file_path, np.array([trajectory]).T, header='objective', delimiter=',', comments='')
 
 def export_predictions(X, true_Y, predicted_Y, predicted_variance, nlpd, export_X=False):
@@ -141,7 +145,7 @@ def export_predictions(X, true_Y, predicted_Y, predicted_variance, nlpd, export_
     data = np.hstack(data)
 
     # Write the data out to a csv file.
-    file_path = os.path.join(_log_folder_path, 'predictions.csv')
+    file_path = os.path.join(_log_folder_path, PREDICTIONS_FILE_NAME)
     np.savetxt(file_path, data, header=header, delimiter=',', comments='')
 
 def export_configuration(config):
@@ -157,7 +161,7 @@ def export_configuration(config):
         print "Warning: logger is not initialized."
         return
 
-    file_path = os.path.join(_log_folder_path, 'config.csv')
+    file_path = os.path.join(_log_folder_path, CONFIG_FILE_NAME)
     with open(file_path, 'wb') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=config.keys())
         writer.writeheader()
