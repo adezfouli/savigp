@@ -1,194 +1,106 @@
-import logging
-from experiment_setup import ExperimentSetup
-from model_learn import ModelLearn
-from plot_results import PlotOutput
+#!/usr/bin/env python
+"""A script to run a set of gaussian process experiments under differing configurations."""
+
+import argparse
+import json
 from multiprocessing.pool import Pool
 
+import numpy as np
 
-class ExperimentRunner:
+import experiment_setup
 
-    def __init__(self):
-        pass
+EXPERIMENTS = {
+    'boston': experiment_setup.boston_experiment,
+    'wisconsin': experiment_setup.wisconsin_experiment,
+    'mining': experiment_setup.mining_experiment,
+    'usps': experiment_setup.usps_experiment,
+    'abalone': experiment_setup.abalone_experiment,
+    'creep': experiment_setup.creep_experiment,
+    'mnist': experiment_setup.mnist_experiment,
+    'mnist_binary': experiment_setup.mnist_binary_experiment,
+    'mnist_binary_inducing': experiment_setup.mnist_binary_inducing_experiment,
+    'sarcos': experiment_setup.sarcos_experiment,
+}
 
-    @staticmethod
-    def get_configs():
-        """
-        Builds an array of configuration for running (in parallel)
-        """
+METHODS = ['mix1', 'mix2', 'full']
 
-        configs = []
-        expr_names = ExperimentRunner.get_experiments()
-        methods = ['full', 'mix1']
-        sparse_factor = [1.0, 0.5, 0.2, 0.1]
-        run_ids = [1]
-        for e in expr_names:
-            for m in methods:
-                for s in sparse_factor:
-                    for run_id in run_ids:
-                        configs.append({'method': m,
-                                        'sparse_factor': s,
-                                        'method_to_run': e,
-                                        'run_id': run_id,
-                                        'log_level': ExperimentRunner.get_log_level()
-                                        })
+def main():
+    """Run the experiments requested by the user."""
+    args = setup_args()
+    np.random.seed(1)
 
-        return configs
+    if 'file' in args:
+        # Run multiple experiments from a configuration file.
+        with open(args['file']) as config_file:
+            config = json.loads(config_file.read())
+            run_parallel(**config)
+    elif 'experiment_name' in args:
+        # Run a single experiment from commmandline arguments.
+        experiment = EXPERIMENTS[args['experiment_name']]
+        del args['experiment_name']
+        experiment(**args)
+    else:
+        print 'You must either chose an experiment (-e) or a config file (-f).'
 
-    @staticmethod
-    def get_experiments():
-        """
-        Builds an array of experiments to run in parallel (the array can contain more than one experiment)
-        """
+def setup_args():
+    """Get the commandline arguments and return them in a dictionary."""
+    parser = argparse.ArgumentParser(description='Experimental framework for savigp.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-e', '--experiment_name', choices=EXPERIMENTS, default=argparse.SUPPRESS,
+                        help='The name of the experiment to run.')
+    parser.add_argument('-f', '--file', default=argparse.SUPPRESS,
+                        help='A json file containing a list of experiment configurations to run.')
+    parser.add_argument('-m', '--method', choices=METHODS, default=METHODS[0],
+                        help='The type of mixture of gaussians to learn.')
+    parser.add_argument('-s', '--sparsity_factor', type=float, default=1.0,
+                        help='The sparsity of inducing points. Value must be between 0 and 1.')
+    parser.add_argument('-r', '--run_id', type=int, default=1,
+                        help='The id of the experiment configuration.')
+    parser.add_argument('-i', '--image', default=argparse.SUPPRESS,
+                        help='A path to a partially completed large scale experiment')
+    parser.add_argument('-n', '--n_threads', type=int, default=argparse.SUPPRESS,
+                        help='The number of threads to run for a large scale experiment.')
+    parser.add_argument('-p', '--partition_size', type=int, default=argparse.SUPPRESS,
+                        help='The size of sample partitions for a large scale experiment.')
+    return vars(parser.parse_args())
 
-        # uncomment to run desired experiment
-        return [ExperimentSetup.boston_data.__name__]
-        # return [ExperimentSetup.wisconsin_breast_cancer_data.__name__]
-        # return [ExperimentSetup.USPS_data.__name__]
-        # return [ExperimentSetup.creep_data.__name__]
-        # return [ExperimentSetup.abalone_data.__name__]
-        # return [ExperimentSetup.mining_data.__name__]
-    #
+def run_parallel(num_processes, experiment_names, methods, sparsity_factors, run_ids):
+    """
+    Run multiple experiments in parallel.
 
-    @staticmethod
-    def run_parallel(n_process):
-        """
-        Creates a process for each element in the array returned by ``get_configs()`` and the experiment corresponding
-        the each element. The maximum number of processes to run in parallel is determined by ``n_process``
-        """
+    Parameters
+    ----------
+    num_processes : int
+        The maximum number of processes that can run concurrently.
+    experiment_names : list of str
+        The names of experiments to run.
+    methods : list of str
+        The methods to run the experiments under (mix1, mix2, or full).
+    sparsity_factors : list of float
+        The sparsity of inducing points to run the experiments at.
+    run_ids : list of int
+        The ids of the configurations under which to run the experiments.
+    """
+    # Setup an array of individual experiment configurations.
+    experiment_configs = []
+    for experiment in experiment_names:
+        for method in methods:
+            for sparsity_factor in sparsity_factors:
+                for run_id in run_ids:
+                    experiment_configs.append({'experiment_name': experiment,
+                                               'method': method,
+                                               'sparsity_factor': sparsity_factor,
+                                               'run_id': run_id})
 
-        p = Pool(n_process)
-        p.map(run_config, ExperimentRunner.get_configs())
-
-
-    @staticmethod
-    def get_log_level():
-        """ debug level """
-        return logging.DEBUG
-        # return logging.INFO
-
-
-    @staticmethod
-    def boston_experiment():
-        ExperimentSetup.boston_data({'method': 'mix2', 'sparse_factor': 0.8, 'run_id': 3, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def wisconsin_breast_experiment():
-        ExperimentSetup.wisconsin_breast_cancer_data(
-            {'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def abalone_experiment():
-        ExperimentSetup.abalone_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def creep_experiment():
-        ExperimentSetup.creep_data({'method': 'full', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def USPS_experiment():
-        ExperimentSetup.USPS_data({'method': 'full', 'sparse_factor': 0.1, 'run_id': 1, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def mining_experiment():
-        ExperimentSetup.mining_data({'method': 'mix1', 'sparse_factor': 1.0, 'run_id': 1, 'log_level': logging.DEBUG})
-
-    @staticmethod
-    def sarcos_experiment():
-        ExperimentSetup.sarcos_data({'method': 'full',
-                                 'sparse_factor': 0.04,
-                                 'run_id': 0,
-                                 'log_level': logging.DEBUG,
-                                 'n_thread': 15,
-                                 'partition_size': 2000,
-                                 # 'image': '../results/all/'
-    })
-
-    @staticmethod
-    def sarcos_all_joins_experiment():
-        ExperimentSetup.sarcos_all_joints_data({'method': 'full',
-                                 'sparse_factor': 0.04,
-                                 'run_id': 0,
-                                 'log_level': logging.DEBUG,
-                                 'n_thread': 15,
-                                 'partition_size': 3000,
-                                 #'image': '../results/sarcos_1/'
-    })
-
-    @staticmethod
-    def mnist_experiment():
-        ExperimentSetup.MNIST_data({'method': 'full',
-                                'sparse_factor': 0.004,
-                                'run_id': 1,
-                                'log_level': logging.DEBUG,
-                                'n_thread': 20,
-                                'partition_size': 2000,
-                                # 'image': '../results/mnist_1/'
-                                })
-
-
-    @staticmethod
-    def mnist_binary_experiment():
-        ExperimentSetup.MNIST_binary_data({'method': 'full',
-                                'sparse_factor': 200. / 60000,
-                                'run_id': 1,
-                                'log_level': logging.DEBUG,
-                                'n_thread': 20,
-                                'partition_size': 2000,
-                                # 'image': '../results/mnist_1/'
-                                })
-
-
-    @staticmethod
-    def mnist_binary_inducing_experiment():
-        ExperimentSetup.MNIST_binary_inducing_data({'method': 'full',
-                                'sparse_factor': 200. / 60000,
-                                'run_id': 1,
-                                'log_level': logging.DEBUG,
-                                'n_thread': 8,
-                                'partition_size': 1000,
-                                # 'image': '../results/mnist_1/'
-                                })
-
-    @staticmethod
-    def plot():
-        PlotOutput.plot_output_all('boston', ModelLearn.get_output_path(),
-                                   lambda x: x['method'] == 'full', False)
-
-        # plots all the files
-        # PlotOutput.plot_output_all('boston', Experiments.get_output_path(),
-        #                            None, False)
-
-        # plots for an specific experiment
-        # PlotOutput.plot_output_all('abalone_graph', Experiments.get_output_path(),
-        #                            lambda x: x['experiment'] == 'abalone', False)
-
+    # Now run the experiments.
+    pool = Pool(num_processes)
+    pool.map(run_config, experiment_configs)
 
 def run_config(config):
-    try:
-        logger.info('started config: ' + str(config))
-        getattr(ExperimentSetup, config['method_to_run'])(config)
-        logger.info('finished config: ' + str(config))
-    except Exception as e:
-        logger.exception(config)
-
+    """Runs an experiment under the given configuration."""
+    experiment = EXPERIMENTS[config['experiment_name']]
+    del config['experiment_name']
+    experiment(**config)
 
 if __name__ == '__main__':
-    logger = ModelLearn.get_logger(ModelLearn.get_logger_path(), 'general_' + ModelLearn.get_ID(), logging.DEBUG)
-
-    # uncomment to run experiments in parallel
-    # ExperimentRunner.run_parallel(3)
-
-    # runs an individual configuration
-    # ExperimentRunner.boston_experiment()
-    # ExperimentRunner.wisconsin_breast_experiment()
-    # ExperimentRunner.USPS_experiment()
-    # ExperimentRunner.mining_experiment()
-    # ExperimentRunner.abalone_experiment()
-    # ExperimentRunner.mnist_binary_inducing_experiment()
-    ExperimentRunner.mnist_binary_experiment()
-    # ExperimentRunner.sarcos_all_joins_experiment()
-    # ExperimentRunner.sarcos_experiment()
-
-
-    # uncomment to plots the outputs in results folder
-    # ExperimentRunner.plot()
+    main()

@@ -1,16 +1,16 @@
 __author__ = 'AT'
 
 import logging
-from data_source import DataSource
+import data_source
 from data_transformation import IdentityTransformation
-from model_learn import ModelLearn
+import model_learn
 from plot_results import PlotOutput
 from savigp_diag import SAVIGP_Diag
 from savigp_single_comp import SAVIGP_SingleComponent
 from copy import deepcopy
 import GPy
 from matplotlib.pyplot import show
-from optimizer import *
+import optimizer
 from savigp import Configuration
 from likelihood import UnivariateGaussian, MultivariateGaussian
 from grad_checker import GradChecker
@@ -54,7 +54,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_Diag(X, Y, num_inducing, 3, ll,
                      [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
@@ -81,7 +81,7 @@ class SAVIGP_Test:
             num_inducing = num_input_samples - 1
         else:
             num_inducing = num_input_samples
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, cov)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, cov)
         s1 = SAVIGP_SingleComponent(X, Y, num_inducing, ll,
                                       [deepcopy(kernel) for j in range(num_process)], num_samples, config, 0, True, True)
 
@@ -184,38 +184,38 @@ class SAVIGP_Test:
         Compares the model output with exact GP
         """
         method = config['method']
-        sparsify_factor = config['sparse_factor']
+        sparsity_factor = config['sparse_factor']
         np.random.seed(12000)
         names = []
         num_input_samples = 20
         gaussian_sigma = .2
 
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, gaussian_sigma)
         train_n = int(0.5 * num_input_samples)
 
         Xtrain = X[:train_n, :]
         Ytrain = Y[:train_n, :]
         Xtest = X[train_n:, :]
         Ytest = Y[train_n:, :]
-        kernel1 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
-        kernel2 = ModelLearn.get_kernels(Xtrain.shape[1], 1, True)
+        kernel1 = model_learn.get_kernels(Xtrain.shape[1], 1, True)
+        kernel2 = model_learn.get_kernels(Xtrain.shape[1], 1, True)
         gaussian_sigma = 1.0
 
         #number of inducing points
-        num_inducing = int(Xtrain.shape[0] * sparsify_factor)
+        num_inducing = int(Xtrain.shape[0] * sparsity_factor)
         num_samples = 10000
         cond_ll = UnivariateGaussian(np.array(gaussian_sigma))
 
-        n1, _ = ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
-                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation, True,
-                                           logging.DEBUG, True)
+        n1, _ = model_learn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel1, method,
+                                      'test_' + model_learn.get_ID(), 'test', num_inducing,
+                                      sparsity_factor, ['mog', 'll', 'hyp'], IdentityTransformation, True,
+                                      logging.DEBUG, True)
 
-        n2, _ =ModelLearn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
-                                           'test_' + ModelLearn.get_ID(), 'test', num_inducing,
-                                     num_samples, sparsify_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
+        n2, _ = model_learn.run_model(Xtest, Xtrain, Ytest, Ytrain, cond_ll, kernel2, 'gp',
+                                      'test_' + model_learn.get_ID(), 'test', num_inducing,
+                                      sparsity_factor, ['mog', 'll', 'hyp'], IdentityTransformation)
 
-        PlotOutput.plot_output('test', ModelLearn.get_output_path(), [n1, n2], None, False)
+        PlotOutput.plot_output('test', model_learn.OUTPUT_PATH, [n1, n2], None, False)
 
 
     @staticmethod
@@ -228,7 +228,7 @@ class SAVIGP_Test:
         num_input_samples = 10
         num_samples = 10000
         gaussian_sigma = .2
-        X, Y, kernel = DataSource.normal_generate_samples(num_input_samples, gaussian_sigma, 1)
+        X, Y, kernel = data_source.normal_generate_samples(num_input_samples, gaussian_sigma, 1)
         kernel = [GPy.kern.RBF(1, variance=1., lengthscale=np.array((1.,)))]
 
         if method == 'full':
@@ -246,10 +246,10 @@ class SAVIGP_Test:
         # m.MoG.update_covariance(0, gp_var - gaussian_sigma * np.eye(10))
 
         try:
-            folder_name = 'test' + '_' + ModelLearn.get_ID()
-            logger = ModelLearn.get_logger(folder_name, logging.DEBUG)
+            folder_name = 'test' + '_' + model_learn.get_ID()
+            logger = model_learn.get_logger(folder_name, logging.DEBUG)
 
-            Optimizer.optimize_model(m, 10000, logger, ['mog'])
+            optimizer.optimize_model(m, 10000, logger, ['mog'])
         except KeyboardInterrupt:
             pass
         sa_mean, sa_var = m.predict(X)

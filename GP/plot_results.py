@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from likelihood import SoftmaxLL, LogisticLL, UnivariateGaussian, LogGaussianCox, WarpLL, CogLL
+import model_logging
 from util import check_dir_exists
 
 
@@ -20,7 +21,7 @@ class PlotOutput:
         pass
 
     @staticmethod
-    def plot_output(name, infile_path, model_names, filter, export_pdf):
+    def plot_output(name, infile_path, model_names, filter):
         """
         Reads predictions from csv files and generates plots and output csv. Input csv files should be in the
         infile_path with following structure:
@@ -49,35 +50,31 @@ class PlotOutput:
         filter : callable
          a filter which will be applied in config files to filter which configs should be considered. For example,
          lambda x: x['method'] == 'full' will only consider outputs which used 'full' method
-
-        export_pdf : boolean
-         whether to export the final plot as the pdf.
-
-        :return: None
         """
-        graphs = {}
-        graphs['SSE'] = {}
-        graphs['MSSE'] = {}
-        graphs['NLPD'] = {}
-        graphs['ER'] = {}
-        graphs['intensity'] = {}
+        graphs = {
+            'SSE': {},
+            'MSSE': {},
+            'NLPD': {},
+            'ER': {},
+            'intensity': {},
+        }
         graph_n = {}
         for m in model_names:
-            data_config = PlotOutput.read_config(infile_path + m + '/' + 'config_' + '.csv')
+            data_config = PlotOutput.read_config(infile_path + m + '/' + model_logging.CONFIG_FILE_NAME)
             if filter is None or filter(data_config):
-                data_test = pandas.read_csv(infile_path + m + '/' + 'test_' +  '.csv')
+                data_test = pandas.read_csv(infile_path + m + '/' + model_logging.PREDICTIONS_FILE_NAME)
                 cols = data_test.columns
                 dim = 0
                 for element in cols:
-                    if element.startswith('Ytrue'):
+                    if element.startswith('true_Y'):
                         dim += 1
 
-                data_train = pandas.read_csv(infile_path + m + '/' + 'train_' + '.csv')
-                Y_mean = data_train['Y0'].mean()
+                data_train = pandas.read_csv(infile_path + m + '/' + model_logging.TRAINING_FILE_NAME)
+                Y_mean = data_train['Y_0'].mean()
 
-                Ypred = np.array([data_test['Ypred__%d' % (d)] for d in range(dim)])
-                Ytrue = np.array([data_test['Ytrue%d' % (d)] for d in range(dim)])
-                Yvar = np.array([data_test['Yvar_pred__%d' % (d)] for d in range(dim)])
+                Ypred = np.array([data_test['predicted_Y_%d' % (d)] for d in range(dim)])
+                Ytrue = np.array([data_test['true_Y_%d' % (d)] for d in range(dim)])
+                Yvar = np.array([data_test['predicted_variance_%d' % (d)] for d in range(dim)])
 
                 if not (PlotOutput.config_to_str(data_config) in graph_n.keys()):
                     graph_n[PlotOutput.config_to_str(data_config)] = 0
@@ -85,7 +82,7 @@ class PlotOutput:
 
                 if data_config['ll'] in [CogLL.__name__]:
                     for i in range(Ytrue.shape[0]):
-                        Y_mean = data_train['Y' + str(i)].mean()
+                        Y_mean = data_train['Y_' + str(i)].mean()
                         PlotOutput.add_to_list(graphs['MSSE'], PlotOutput.config_to_str(data_config) + '_' + str(i),
                                                ((Ypred[i] - Ytrue[i])**2).mean() / ((Y_mean - Ytrue[i]) ** 2).mean())
                         NLPD = np.array(data_test['NLPD_' + str(i)])
@@ -111,7 +108,7 @@ class PlotOutput:
                     PlotOutput.add_to_list(graphs['NLPD'], PlotOutput.config_to_str(data_config), NLPD)
 
                 if data_config['ll'] in [LogGaussianCox.__name__]:
-                    X0 = np.array([data_test['X0']])
+                    X0 = np.array([data_test['X_0']])
 
                     PlotOutput.add_to_list(graphs['intensity'], PlotOutput.config_to_str(data_config),
                                            np.array([X0[0,:]/365+1851.2026, Ypred[0, :], Yvar[0, :], Ytrue[0, :]]).T)
@@ -154,9 +151,6 @@ class PlotOutput:
                     plt.legend(loc='upper center')
                     graph_data.to_csv('../graph_data/' + name  + '_' + n + '_data.csv')
 
-                if export_pdf:
-                    check_dir_exists(infile_path + name + '/graphs/')
-                    savefig(infile_path + name + '/graphs/'+'n' + '.pdf')
                 show(block=True)
 
     @staticmethod
@@ -168,10 +162,10 @@ class PlotOutput:
 
     @staticmethod
     def config_to_str(config):
-        return config['method'] +':' + str(config['sparsify_factor'])
+        return config['method'] +':' + str(config['sparsity_factor'])
 
     @staticmethod
-    def plot_output_all(name, path, filter, export_pdf):
+    def plot_output_all(name, path, filter):
         """
         A helper function which will extract plot data for all the folders in ``path`` which satisfy the filter.
 
@@ -186,14 +180,9 @@ class PlotOutput:
         filter : callable
          a filter which will be applied in config files to filter which configs should be considered. For example,
          lambda x: x['method'] == 'full' will only consider outputs which used 'full' method
-
-        export_pdf: boolean
-         whether to export output graphs as pdf
-
-        :return: None
         """
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-        PlotOutput.plot_output(name, path, dir, filter, export_pdf)
+        PlotOutput.plot_output(name, path, dir, filter)
 
 
     @staticmethod
@@ -204,7 +193,7 @@ class PlotOutput:
 
         dir = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         for m in dir:
-            data_config = PlotOutput.read_config(path + m + '/' + 'config_' + '.csv')
+            data_config = PlotOutput.read_config(path + m + '/' + model_logging.CONFIG_FILE_NAME)
             if filter is None or filter(data_config):
                 print m
 
@@ -215,5 +204,5 @@ class PlotOutput:
             return reader.next()
 
 if __name__ == '__main__':
-    PlotOutput.plot_output('boston', '../../results/', ['boston_full', 'boston_mix1', 'boston_mix2', 'boston_gp'], None, True)
-
+    PlotOutput.plot_output_all('sarcos', model_logging.OUTPUT_PATH,
+                               lambda x: x['experiment'] == 'sarcos')
