@@ -130,9 +130,6 @@ def run_model(train_X,
     test_X = transformer.transform_X(test_X)
 
     num_inducing = int(train_X.shape[0] * sparsity_factor)
-
-    total_time = None
-    tracker = None
     git_hash, git_branch = util.get_git()
 
     properties = {

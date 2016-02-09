@@ -8,8 +8,6 @@ from multiprocessing.pool import Pool
 import numpy as np
 
 import experiment_setup
-import model_learn
-from plot_results import PlotOutput
 
 EXPERIMENTS = {
     'boston': experiment_setup.boston_experiment,
